@@ -57,16 +57,16 @@ func main() {
 		price, restaurantType := parser.SplitUnpack(priceAndType, "•")
 		price = parser.TrimWhiteSpaces(price)
 
+		googleMapsUrl := e.ChildAttr("//div[@class='google-map__static']/iframe", "src")
+		longitude, latitude := parser.ExtractCoordinates(googleMapsUrl)
+
 		phoneNumber := e.ChildText("//span[@class='flex-fill']")
 		phoneNumber = strings.ReplaceAll(phoneNumber, " ", "")
 
-		classification := e.ChildText("//ul[@class='restaurant-details__classification--list']/li")
-		classification = parser.TrimWhiteSpaces(classification)
-
 		websiteUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
 
-		googleMapsUrl := e.ChildAttr("//div[@class='google-map__static']/iframe", "src")
-		longitude, latitude := parser.ExtractCoordinates(googleMapsUrl)
+		classification := e.ChildText("//ul[@class='restaurant-details__classification--list']/li")
+		classification = parser.TrimWhiteSpaces(classification)
 
 		restaurant := model.Restaurant{
 			Name:           name,
@@ -82,7 +82,6 @@ func main() {
 		}
 
 		log.Println(restaurant)
-
 	})
 
 	// Start scraping
