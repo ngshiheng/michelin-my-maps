@@ -65,15 +65,18 @@ func main() {
 
 		websiteUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
 
+		googleMapsUrl := e.ChildAttr("//div[@class='google-map__static']/iframe", "src")
+		longitude, latitude := parser.ExtractCoordinates(googleMapsUrl)
+
 		restaurant := model.Restaurant{
 			Name:           name,
 			Address:        address,
 			Price:          price,
 			Type:           restaurantType,
-			Latitude:       0.00,
-			Longitude:      0.00,
+			Longitude:      longitude,
+			Latitude:       latitude,
 			PhoneNumber:    phoneNumber,
-			MichelinUrl:    e.Request.URL.String(),
+			Url:            e.Request.URL.String(),
 			WebsiteUrl:     websiteUrl,
 			Classification: classification,
 		}

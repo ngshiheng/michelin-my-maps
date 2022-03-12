@@ -6,10 +6,10 @@ type Restaurant struct {
 	Address        string
 	Price          string
 	Type           string
-	Latitude       float64
-	Longitude      float64
+	Longitude      string
+	Latitude       string
 	PhoneNumber    string
-	MichelinUrl    string
+	Url            string
 	WebsiteUrl     string
 	Classification string
 }
