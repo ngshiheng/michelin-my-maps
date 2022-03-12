@@ -63,8 +63,7 @@ func main() {
 		classification := e.ChildText("//ul[@class='restaurant-details__classification--list']/li")
 		classification = parser.TrimWhiteSpaces(classification)
 
-		michelinUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
-		michelinUrl = parser.TrimWhiteSpaces(michelinUrl)
+		websiteUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
 
 		restaurant := model.Restaurant{
 			Name:           name,
@@ -74,8 +73,8 @@ func main() {
 			Latitude:       0.00,
 			Longitude:      0.00,
 			PhoneNumber:    phoneNumber,
-			MichelinUrl:    michelinUrl,
-			WebsiteUrl:     e.Request.URL.String(),
+			MichelinUrl:    e.Request.URL.String(),
+			WebsiteUrl:     websiteUrl,
 			Classification: classification,
 		}
 
