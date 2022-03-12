@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/csv"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -12,10 +14,45 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/util/parser"
 )
 
+var urls = []string{
+	"https://guide.michelin.com/en/restaurants/3-stars-michelin/",
+	"https://guide.michelin.com/en/restaurants/2-stars-michelin/",
+	"https://guide.michelin.com/en/restaurants/1-star-michelin/",
+	"https://guide.michelin.com/en/restaurants/bib-gourmand",
+}
+
+var writer *csv.Writer
+
 func main() {
 	defer logger.TimeTrack(time.Now(), "main")
 
+	crawl()
+}
+
+func writeToCsv() {
+	defer logger.TimeTrack(time.Now(), "writeToCsv")
+
+	fName := "michelin-my-maps.csv"
+	file, err := os.Create(fName)
+	if err != nil {
+		log.Fatalf("Cannot create file %q: %s\n", fName, err)
+		return
+	}
+
+	defer file.Close()
+	writer = csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write CSV header
+	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
+	writer.Write(csvHeader)
+}
+
+func crawl() {
+	defer logger.TimeTrack(time.Now(), "crawl")
+
 	c := colly.NewCollector(
+		colly.Async(true),
 		colly.CacheDir("./cache"),
 		colly.AllowedDomains("guide.michelin.com", "michelin.com"),
 	)
@@ -86,14 +123,13 @@ func main() {
 			Classification: classification,
 		}
 
-		log.Println("scraped", restaurant)
+		log.Println("scraped", restaurant.ToSlice())
 	})
 
 	// Start scraping
-	c.Visit("https://guide.michelin.com/en/restaurants/3-stars-michelin/")
-	c.Visit("https://guide.michelin.com/en/restaurants/2-stars-michelin/")
-	c.Visit("https://guide.michelin.com/en/restaurants/1-star-michelin/")
-	c.Visit("https://guide.michelin.com/en/restaurants/bib-gourmand")
+	for _, url := range urls {
+		c.Visit(url)
+	}
 
 	// Wait until threads are finished
 	c.Wait()
