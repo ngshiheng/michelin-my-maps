@@ -18,17 +18,26 @@ type Restaurant struct {
 	Classification string
 }
 
-func (r Restaurant) ToSlice() reflect.Value {
-	return reflect.ValueOf(r)
+// Generate field values slice from struct
+func GenerateFieldValueSlice(class interface{}) []string {
+	v := reflect.Indirect(reflect.ValueOf(class))
+
+	var values = []string{}
+
+	for i := 0; i < v.NumField(); i++ {
+		values = append(values, v.Field(i).String())
+	}
+
+	return values
 }
 
-// Generate a slice of field names from a struct
+// Generate field names slice from struct
 func GenerateFieldNameSlice(class interface{}) []string {
 	t := reflect.TypeOf(class)
 
 	fields := make([]string, t.NumField())
 
-	for i := range fields {
+	for i := 0; i < len(fields); i++ {
 		fields[i] = t.Field(i).Name
 	}
 

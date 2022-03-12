@@ -21,16 +21,13 @@ var urls = []string{
 	"https://guide.michelin.com/en/restaurants/bib-gourmand",
 }
 
-var writer *csv.Writer
-
 func main() {
 	defer logger.TimeTrack(time.Now(), "main")
-
 	crawl()
 }
 
-func writeToCsv() {
-	defer logger.TimeTrack(time.Now(), "writeToCsv")
+func crawl() {
+	defer logger.TimeTrack(time.Now(), "crawl")
 
 	fName := "michelin-my-maps.csv"
 	file, err := os.Create(fName)
@@ -40,16 +37,11 @@ func writeToCsv() {
 	}
 
 	defer file.Close()
-	writer = csv.NewWriter(file)
+	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	// Write CSV header
 	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
 	writer.Write(csvHeader)
-}
-
-func crawl() {
-	defer logger.TimeTrack(time.Now(), "crawl")
 
 	c := colly.NewCollector(
 		colly.Async(true),
@@ -123,7 +115,8 @@ func crawl() {
 			Classification: classification,
 		}
 
-		log.Println("scraped", restaurant.ToSlice())
+		log.Println(restaurant)
+		writer.Write(model.GenerateFieldValueSlice(restaurant))
 	})
 
 	// Start scraping
