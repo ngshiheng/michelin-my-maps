@@ -17,6 +17,7 @@ func TestSplitUnpack(t *testing.T) {
 		{"75 - 115 EUR • Piedmontese, Creative", "75 - 115 EUR", "Piedmontese, Creative"},
 		{"70 EUR • Regional Cuisine", "70 EUR", "Regional Cuisine"},
 		{"31,000 JPY • Innovative", "31,000 JPY", "Innovative"},
+		{"25,000 - 28,000 JPY • Sushi", "25,000 - 28,000 JPY", "Sushi"},
 	}
 
 	for _, tt := range cases {
@@ -42,6 +43,25 @@ func TestTrimWhiteSpaces(t *testing.T) {
 		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
 			got := TrimWhiteSpaces(tt.Got)
 			assert.Equal(t, tt.Expected, got)
+		})
+	}
+}
+
+func TestExtractCoordinates(t *testing.T) {
+	cases := []struct {
+		Got       string
+		Longitude string
+		Latitude  string
+	}{
+		{"https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=41.3906717,2.1695083&language=en-US", "41.3906717", "2.1695083"},
+		{"https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=35.0067137,135.7760153&language=en-US", "35.0067137", "135.7760153"},
+	}
+
+	for _, tt := range cases {
+		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
+			longitude, latitude := ExtractCoordinates(tt.Got)
+			assert.Equal(t, tt.Longitude, longitude)
+			assert.Equal(t, tt.Latitude, latitude)
 		})
 	}
 }
