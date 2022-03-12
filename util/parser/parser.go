@@ -5,6 +5,11 @@ import "strings"
 // SplitN and unpack a string
 func SplitUnpack(str string, separator string) (string, string) {
 	parsedStr := strings.SplitN(str, separator, 2)
+
+	for i, s := range parsedStr {
+		parsedStr[i] = strings.TrimSpace(s)
+	}
+
 	return parsedStr[0], parsedStr[1]
 }
 
