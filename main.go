@@ -102,7 +102,7 @@ func crawl() {
 		price = parser.TrimWhiteSpaces(price)
 
 		googleMapsUrl := e.ChildAttr("//div[@class='google-map__static']/iframe", "src")
-		longitude, latitude := parser.ExtractCoordinates(googleMapsUrl)
+		latitude, longitude := parser.ExtractCoordinates(googleMapsUrl)
 
 		phoneNumber := e.ChildText("//span[@class='flex-fill']")
 		phoneNumber = strings.ReplaceAll(phoneNumber, " ", "")
