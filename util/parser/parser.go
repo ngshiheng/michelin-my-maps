@@ -3,6 +3,7 @@ package parser
 import (
 	"log"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -31,7 +32,11 @@ func TrimWhiteSpaces(str string) string {
 	return trimWhiteSpace.Replace(str)
 }
 
-// Extract longitude and latitude from Google Maps URL
+/*
+Extract longitude and latitude from Google Maps URL
+
+Example input_url "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"
+*/
 func ExtractCoordinates(input_url string) (string, string) {
 	url, err := url.Parse(input_url)
 	if err != nil {
@@ -39,7 +44,18 @@ func ExtractCoordinates(input_url string) (string, string) {
 	}
 
 	queryParams := url.Query()
-	coordinates := queryParams["q"]
+	coordinates := queryParams["q"][0] // e.g. "45.4215425,11.8096633"
 
-	return SplitUnpack(coordinates[0], ",")
+	if !(IsValidCoordinates(coordinates)) {
+		log.Printf("invalid coordinates %q.", coordinates)
+		return "", ""
+	}
+
+	return SplitUnpack(coordinates, ",")
+}
+
+// Check if a string contains a valid longitude or latitude (reference: https://stackoverflow.com/a/18690202/10067850)
+func IsValidCoordinates(coordinates string) bool {
+	re := regexp.MustCompile(`^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$`)
+	return re.MatchString(coordinates)
 }
