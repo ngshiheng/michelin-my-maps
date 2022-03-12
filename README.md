@@ -1,6 +1,8 @@
 # Michelin My Maps
 
-Go Colly spider which curates a list of awesome restaurants from the Michelin Guide
+Go Colly spider which curates a list of awesome restaurants from the Michelin Guide.
+
+Download the [csv file](./generated/michelin_my_maps.csv) to view the full restaurant list.
 
 ## Usage
 

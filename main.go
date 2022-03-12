@@ -32,7 +32,7 @@ func crawl() {
 	fName := "generated/michelin_my_maps.csv"
 	file, err := os.Create(fName)
 	if err != nil {
-		log.Fatalf("Cannot create file %q: %s\n", fName, err)
+		log.Fatalf("cannot create file %q: %s\n", fName, err)
 		return
 	}
 
@@ -72,6 +72,17 @@ func crawl() {
 		location := e.ChildText("//div[@class='card__menu-footer--location flex-fill pl-text']/i/following-sibling::text()")
 
 		e.Request.Ctx.Put("location", location)
+
+		switch requestUrl := e.Request.URL.String(); requestUrl {
+		case "https://guide.michelin.com/en/restaurants/3-stars-michelin/":
+			e.Request.Ctx.Put("classification", "3 MICHELIN Stars")
+		case "https://guide.michelin.com/en/restaurants/2-stars-michelin/":
+			e.Request.Ctx.Put("classification", "2 MICHELIN Stars")
+		case "https://guide.michelin.com/en/restaurants/1-star-michelin/":
+			e.Request.Ctx.Put("classification", "1 MICHELIN Star")
+		case "https://guide.michelin.com/en/restaurants/bib-gourmand":
+			e.Request.Ctx.Put("classification", "Bib Gourmand")
+		}
 		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
 
@@ -98,9 +109,6 @@ func crawl() {
 
 		websiteUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
 
-		classification := e.ChildText("//ul[@class='restaurant-details__classification--list']/li")
-		classification = parser.TrimWhiteSpaces(classification)
-
 		restaurant := model.Restaurant{
 			Name:           name,
 			Address:        address,
@@ -112,7 +120,7 @@ func crawl() {
 			PhoneNumber:    phoneNumber,
 			Url:            e.Request.URL.String(),
 			WebsiteUrl:     websiteUrl,
-			Classification: classification,
+			Classification: e.Request.Ctx.Get("classification"),
 		}
 
 		log.Println(restaurant)
