@@ -18,6 +18,7 @@ func TestSplitUnpack(t *testing.T) {
 		{"70 EUR • Regional Cuisine", "70 EUR", "Regional Cuisine"},
 		{"31,000 JPY • Innovative", "31,000 JPY", "Innovative"},
 		{"25,000 - 28,000 JPY • Sushi", "25,000 - 28,000 JPY", "Sushi"},
+		{"European Contemporary", "", "European Contemporary"},
 	}
 
 	for _, tt := range cases {

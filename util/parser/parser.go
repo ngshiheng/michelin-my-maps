@@ -8,10 +8,18 @@ import (
 
 // SplitN and unpack a string
 func SplitUnpack(str string, separator string) (string, string) {
+	if len(str) == 0 {
+		return str, str
+	}
+
 	parsedStr := strings.SplitN(str, separator, 2)
 
 	for i, s := range parsedStr {
 		parsedStr[i] = strings.TrimSpace(s)
+	}
+
+	if len(parsedStr) == 1 {
+		return "", parsedStr[0] // Always assume price is missing
 	}
 
 	return parsedStr[0], parsedStr[1]
