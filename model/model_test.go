@@ -15,6 +15,7 @@ func TestGenerateFieldValueSlice(t *testing.T) {
 			Restaurant{
 				"The Table Kevin Fehlin",
 				"Shanghaiallee 15, Hamburg, 20457, Germany",
+				"Hamburg",
 				"230 EUR",
 				"Creative",
 				"53.5426229",
@@ -24,8 +25,10 @@ func TestGenerateFieldValueSlice(t *testing.T) {
 				"https://thetable-hamburg.de/",
 				"Three MICHELIN Stars: Exceptional cuisine, worth a special journey!",
 			},
-			[]string{"The Table Kevin Fehlin",
+			[]string{
+				"The Table Kevin Fehlin",
 				"Shanghaiallee 15, Hamburg, 20457, Germany",
+				"Hamburg",
 				"230 EUR",
 				"Creative",
 				"53.5426229",
