@@ -29,7 +29,7 @@ func main() {
 func crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 
-	fName := "michelin-my-maps.csv"
+	fName := "generated/michelin-my-maps.csv"
 	file, err := os.Create(fName)
 	if err != nil {
 		log.Fatalf("Cannot create file %q: %s\n", fName, err)
@@ -44,7 +44,6 @@ func crawl() {
 	writer.Write(csvHeader)
 
 	c := colly.NewCollector(
-		colly.Async(true),
 		colly.CacheDir("./cache"),
 		colly.AllowedDomains("guide.michelin.com", "michelin.com"),
 	)
