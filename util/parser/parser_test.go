@@ -57,6 +57,7 @@ func TestExtractCoordinates(t *testing.T) {
 	}{
 		{"https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=41.3906717,2.1695083&language=en-US", "41.3906717", "2.1695083"},
 		{"https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=35.0067137,135.7760153&language=en-US", "35.0067137", "135.7760153"},
+		{"https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=53.5426229,10.0029797&language=en-US", "53.5426229", "10.0029797"},
 	}
 
 	for _, tt := range cases {
