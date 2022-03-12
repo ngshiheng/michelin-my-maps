@@ -8,6 +8,7 @@ import (
 type Restaurant struct {
 	Name           string
 	Address        string
+	Location       string
 	Price          string
 	Type           string
 	Longitude      string

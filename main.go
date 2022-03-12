@@ -29,7 +29,7 @@ func main() {
 func crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 
-	fName := "generated/michelin-my-maps.csv"
+	fName := "generated/michelin_my_maps.csv"
 	file, err := os.Create(fName)
 	if err != nil {
 		log.Fatalf("Cannot create file %q: %s\n", fName, err)
@@ -69,9 +69,15 @@ func crawl() {
 		log.Println("finished", r.Request.URL)
 	})
 
+	c.OnXML("//div[@class='row restaurant__list-row js-toggle-result js-geolocation js-restaurant__list_items']", func(e *colly.XMLElement) {
+		location := e.ChildText("//div[@class='card__menu-footer--location flex-fill pl-text']/i/following-sibling::text()")
+		e.Request.Ctx.Put("location", location)
+		log.Println("location", e.Request.Ctx.Get("location"))
+	})
+
 	// Extract url of each restaurant and visit them
-	c.OnXML("//a[@class='link']", func(e *colly.XMLElement) {
-		restaurantUrl := e.Request.AbsoluteURL(e.Attr("href"))
+	c.OnXML("//div[@class='col-md-6 col-lg-6 col-xl-3']", func(e *colly.XMLElement) {
+		restaurantUrl := e.Request.AbsoluteURL(e.ChildAttr("//a[@class='link']", "href"))
 		detailCollector.Visit(restaurantUrl)
 	})
 
@@ -104,6 +110,7 @@ func crawl() {
 		restaurant := model.Restaurant{
 			Name:           name,
 			Address:        address,
+			Location:       e.Request.Ctx.Get("location"),
 			Price:          price,
 			Type:           restaurantType,
 			Longitude:      longitude,
