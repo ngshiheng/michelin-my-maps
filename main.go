@@ -57,28 +57,22 @@ func crawl() {
 	extensions.RandomUserAgent(c)
 	extensions.Referer(c)
 
-	c.OnRequest(func(r *colly.Request) {
-		log.Println("visiting", r.URL.String())
-	})
-
 	c.OnResponse(func(r *colly.Response) {
 		log.Println("visited", r.Request.URL)
+		r.Request.Visit(r.Ctx.Get("url"))
 	})
 
 	c.OnScraped(func(r *colly.Response) {
 		log.Println("finished", r.Request.URL)
 	})
 
-	c.OnXML("//div[@class='row restaurant__list-row js-toggle-result js-geolocation js-restaurant__list_items']", func(e *colly.XMLElement) {
-		location := e.ChildText("//div[@class='card__menu-footer--location flex-fill pl-text']/i/following-sibling::text()")
-		e.Request.Ctx.Put("location", location)
-		log.Println("location", e.Request.Ctx.Get("location"))
-	})
-
 	// Extract url of each restaurant and visit them
 	c.OnXML("//div[@class='col-md-6 col-lg-6 col-xl-3']", func(e *colly.XMLElement) {
-		restaurantUrl := e.Request.AbsoluteURL(e.ChildAttr("//a[@class='link']", "href"))
-		detailCollector.Visit(restaurantUrl)
+		url := e.Request.AbsoluteURL(e.ChildAttr("//a[@class='link']", "href"))
+		location := e.ChildText("//div[@class='card__menu-footer--location flex-fill pl-text']/i/following-sibling::text()")
+
+		e.Request.Ctx.Put("location", location)
+		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
 
 	// Extract and visit next page links
