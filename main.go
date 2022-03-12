@@ -41,10 +41,15 @@ func main() {
 		log.Println("finished", r.Request.URL)
 	})
 
-	// Extract url of each restaurant
+	// Extract url of each restaurant and visit them
 	c.OnXML("//a[@class='link']", func(e *colly.XMLElement) {
 		restaurantUrl := e.Request.AbsoluteURL(e.Attr("href"))
 		detailCollector.Visit(restaurantUrl)
+	})
+
+	// Extract and visit next page links
+	c.OnXML("//a[@class='btn btn-outline-secondary btn-sm']", func(e *colly.XMLElement) {
+		e.Request.Visit(e.Attr("href"))
 	})
 
 	// Extract details of the restaurant
@@ -81,11 +86,14 @@ func main() {
 			Classification: classification,
 		}
 
-		log.Println(restaurant)
+		log.Println("scraped", restaurant)
 	})
 
 	// Start scraping
-	c.Visit("https://guide.michelin.com/en/restaurants")
+	c.Visit("https://guide.michelin.com/en/restaurants/3-stars-michelin/")
+	c.Visit("https://guide.michelin.com/en/restaurants/2-stars-michelin/")
+	c.Visit("https://guide.michelin.com/en/restaurants/1-star-michelin/")
+	c.Visit("https://guide.michelin.com/en/restaurants/bib-gourmand")
 
 	// Wait until threads are finished
 	c.Wait()
