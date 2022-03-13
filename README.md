@@ -34,6 +34,10 @@ The output of this command is the [csv file](./generated/michelin_my_maps.csv) c
 
 ## Development
 
+### Selector
+
+To extract relevant information from the site's HTML, we use XPath as our choice of selector language. You can make use of this [XPath cheat sheet](https://devhints.io/xpath).
+
 ### Testing
 
 To run all tests locally, run:

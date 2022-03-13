@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -21,27 +22,43 @@ var urls = []string{
 	"https://guide.michelin.com/en/restaurants/bib-gourmand",
 }
 
+var (
+	writer *csv.Writer
+	file   *os.File
+)
+
 func main() {
 	defer logger.TimeTrack(time.Now(), "main")
+
+	initCsvWriter()
 	crawl()
+}
+
+// Initialize csv file and writer
+func initCsvWriter() {
+	defer logger.TimeTrack(time.Now(), "initCsvWriter")
+
+	fName := filepath.Join("generated", "michelin_my_maps.csv")
+
+	var osErr error
+	file, osErr = os.Create(fName)
+	if osErr != nil {
+		log.Fatalf("cannot create file %q: %s\n", fName, osErr)
+	}
+
+	writer = csv.NewWriter(file)
+
+	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
+	writer.Write(csvHeader)
 }
 
 func crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 
-	fName := "generated/michelin_my_maps.csv"
-	file, err := os.Create(fName)
-	if err != nil {
-		log.Fatalf("cannot create file %q: %s\n", fName, err)
-		return
+	if writer != nil {
+		defer file.Close()
+		defer writer.Flush()
 	}
-
-	defer file.Close()
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
-	writer.Write(csvHeader)
 
 	c := colly.NewCollector(
 		colly.CacheDir("./cache"),
@@ -124,7 +141,10 @@ func crawl() {
 		}
 
 		log.Println(restaurant)
-		writer.Write(model.GenerateFieldValueSlice(restaurant))
+
+		if writer != nil {
+			writer.Write(model.GenerateFieldValueSlice(restaurant))
+		}
 	})
 
 	// Start scraping
