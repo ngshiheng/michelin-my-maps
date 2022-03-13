@@ -59,3 +59,29 @@ func IsValidCoordinates(coordinates string) bool {
 	re := regexp.MustCompile(`^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$`)
 	return re.MatchString(coordinates)
 }
+
+/*
+Extract minPrice, maxPrice, and currency from a price string
+
+Example input_price "148-248 USD", "1,000-1,280 CNY"
+*/
+func ExtractPrice(input_price string) (string, string, string) {
+	if input_price == "" {
+		return "", "", ""
+	}
+
+	currencyRegex := regexp.MustCompile(`(.{3})\s*$`) // Match last 3 characters
+	currency := currencyRegex.FindString(input_price)
+
+	minPrice, maxPrice := SplitUnpack(input_price[:len(input_price)-3], "-")
+
+	numberRegex := regexp.MustCompile(`^\d{1,3}(,\d{3})*(\.\d+)?$`) // Match 0,000 format
+	minPrice = numberRegex.FindString(minPrice)
+	maxPrice = numberRegex.FindString(maxPrice)
+
+	if minPrice == "" {
+		minPrice = maxPrice
+	}
+
+	return minPrice, maxPrice, currency
+}

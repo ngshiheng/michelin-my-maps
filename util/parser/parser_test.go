@@ -70,3 +70,27 @@ func TestExtractCoordinates(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractPrice(t *testing.T) {
+	cases := []struct {
+		Got      string
+		MinPrice string
+		MaxPrice string
+		Currency string
+	}{
+		{"", "", "", ""},
+		{"350-450USD", "350", "450", "USD"},
+		{"19,000-53,000JPY", "19,000", "53,000", "JPY"},
+		{"65-155EUR", "65", "155", "EUR"},
+		{"275CHF", "275", "275", "CHF"},
+	}
+
+	for _, tt := range cases {
+		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
+			minPrice, maxPrice, currency := ExtractPrice(tt.Got)
+			assert.Equal(t, tt.MinPrice, minPrice)
+			assert.Equal(t, tt.MaxPrice, maxPrice)
+			assert.Equal(t, tt.Currency, currency)
+		})
+	}
+}

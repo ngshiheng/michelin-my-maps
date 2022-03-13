@@ -122,6 +122,8 @@ func crawl() {
 		price, restaurantType := parser.SplitUnpack(priceAndType, "•")
 		price = parser.TrimWhiteSpaces(price)
 
+		minPrice, maxPrice, currency := parser.ExtractPrice(price)
+
 		googleMapsUrl := e.ChildAttr("//div[@class='google-map__static']/iframe", "src")
 		latitude, longitude := parser.ExtractCoordinates(googleMapsUrl)
 
@@ -134,7 +136,9 @@ func crawl() {
 			Name:        name,
 			Address:     address,
 			Location:    e.Request.Ctx.Get("location"),
-			Price:       price,
+			MinPrice:    minPrice,
+			MaxPrice:    maxPrice,
+			Currency:    currency,
 			Type:        restaurantType,
 			Longitude:   longitude,
 			Latitude:    latitude,
