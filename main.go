@@ -49,7 +49,11 @@ func initCsvWriter() {
 	writer = csv.NewWriter(file)
 
 	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
-	writer.Write(csvHeader)
+
+	err := writer.Write(csvHeader)
+	if err != nil {
+		log.Fatalf("cannot write header to csv %q: %s\n", fName, osErr)
+	}
 }
 
 func crawl() {
@@ -143,7 +147,10 @@ func crawl() {
 		log.Println(restaurant)
 
 		if writer != nil {
-			writer.Write(model.GenerateFieldValueSlice(restaurant))
+			err := writer.Write(model.GenerateFieldValueSlice(restaurant))
+			if err != nil {
+				log.Fatalf("cannot write data %q: %s\n", restaurant, err)
+			}
 		}
 	})
 
