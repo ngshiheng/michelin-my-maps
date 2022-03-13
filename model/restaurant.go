@@ -9,7 +9,9 @@ type Restaurant struct {
 	Name        string
 	Address     string
 	Location    string
-	Price       string
+	MinPrice    string
+	MaxPrice    string
+	Currency    string
 	Type        string
 	Longitude   string
 	Latitude    string
