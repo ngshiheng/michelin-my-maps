@@ -12,7 +12,7 @@ type Restaurant struct {
 	MinPrice    string
 	MaxPrice    string
 	Currency    string
-	Type        string
+	Cuisine     string
 	Longitude   string
 	Latitude    string
 	PhoneNumber string

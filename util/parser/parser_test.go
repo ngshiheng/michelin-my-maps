@@ -8,9 +8,9 @@ import (
 
 func TestSplitUnpack(t *testing.T) {
 	cases := []struct {
-		Got   string
-		Price string
-		Type  string
+		Got     string
+		Price   string
+		Cuisine string
 	}{
 		{"145 - 195 EUR • Modern Cuisine, Classic Cuisin", "145 - 195 EUR", "Modern Cuisine, Classic Cuisin"},
 		{"45 - 160 CHF • Italian Contemporary", "45 - 160 CHF", "Italian Contemporary"},
@@ -25,7 +25,7 @@ func TestSplitUnpack(t *testing.T) {
 		t.Run("test split SplitUnack", func(t *testing.T) {
 			got1, got2 := SplitUnpack(tt.Got, "•")
 			assert.Equal(t, tt.Price, got1)
-			assert.Equal(t, tt.Type, got2)
+			assert.Equal(t, tt.Cuisine, got2)
 		})
 	}
 }

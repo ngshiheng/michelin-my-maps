@@ -139,7 +139,7 @@ func crawl() {
 			MinPrice:    minPrice,
 			MaxPrice:    maxPrice,
 			Currency:    currency,
-			Type:        restaurantType,
+			Cuisine:     restaurantType,
 			Longitude:   longitude,
 			Latitude:    latitude,
 			PhoneNumber: phoneNumber,
