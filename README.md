@@ -19,19 +19,32 @@ The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
 
 ## Usage
 
-To begin scraping, simply run the command below:
+Check out the [Makefile](./Makefile) for basic usage.
+
+To begin scraping, run:
 
 ```sh
 go run main.go
+
+# OR
+make run
 ```
 
 The output of this command is the [csv file](./generated/michelin_my_maps.csv) created/updated inside [`generated/`](./generated/) folder.
 
 ## Development
 
+### Testing
+
+To run all tests locally, run:
+
+```sh
+make test
+```
+
 ### Caching
 
-Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~1.3GB) will be created. Your subsequent run should be cached and should take less than a minute to finish scraping.
+Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~1.3GB) will be created. Your subsequent runs should be cached, they should take less than a minute to finish scraping the entire site.
 
 To clear the cache, simply delete the [`cache/`](./cache/) folder.
 
