@@ -8,7 +8,7 @@ At the beginning of the automobile era, [Michelin](https://www.michelin.com/), a
 
 Download the [csv file](./generated/michelin_my_maps.csv) to view the full restaurant list.
 
-This dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. 'Classification' in the dataset) of the restaurants included are:
+This dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. 'Award' column in the dataset) of the restaurants included are:
 
 -   3 Stars
 -   2 Stars
@@ -19,9 +19,19 @@ The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
 
 ## Usage
 
+To begin scraping, simply run the command below:
+
 ```sh
 go run main.go
 ```
+
+The output of this command is the [csv file](./generated/michelin_my_maps.csv) created/updated inside [`generated/`](./generated/) folder.
+
+## Development
+
+### Caching
+
+Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. On your first run, a [`cache/`](./cache/) folder (size of ~1.3GB) will be created. Your subsequent run should be cached and should take less than a minute to finish scraping.
 
 ## Contributing
 
@@ -38,5 +48,3 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 ## Inspiration
 
 Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Map.
-
-Go Colly spider which curates a list of awesome restaurants from the Michelin Guide.
