@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -13,6 +12,7 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/model"
 	"github.com/ngshiheng/michelin-my-maps/util/logger"
 	"github.com/ngshiheng/michelin-my-maps/util/parser"
+	"github.com/nyaruka/phonenumbers"
 )
 
 var urls = []string{
@@ -127,8 +127,8 @@ func crawl() {
 		googleMapsUrl := e.ChildAttr("//div[@class='google-map__static']/iframe", "src")
 		latitude, longitude := parser.ExtractCoordinates(googleMapsUrl)
 
-		phoneNumber := e.ChildText("//span[@class='flex-fill']")
-		phoneNumber = strings.ReplaceAll(phoneNumber, " ", "")
+		phoneNumberString := e.ChildText("//span[@class='flex-fill']")
+		phoneNumber, _ := phonenumbers.Parse(phoneNumberString, "")
 
 		websiteUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
 
@@ -142,7 +142,7 @@ func crawl() {
 			Cuisine:     restaurantType,
 			Longitude:   longitude,
 			Latitude:    latitude,
-			PhoneNumber: phoneNumber,
+			PhoneNumber: phonenumbers.Format(phoneNumber, phonenumbers.E164),
 			Url:         e.Request.URL.String(),
 			WebsiteUrl:  websiteUrl,
 			Award:       e.Request.Ctx.Get("award"),
