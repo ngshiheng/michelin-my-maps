@@ -6,8 +6,6 @@ At the beginning of the automobile era, [Michelin](https://www.michelin.com/), a
 
 ## Content
 
-Download the [csv file](./generated/michelin_my_maps.csv) to view the full restaurant list.
-
 This dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. 'Award' column in the dataset) of the restaurants included are:
 
 -   3 Stars
@@ -16,6 +14,12 @@ This dataset contains a list of restaurants along with additional details (e.g. 
 -   Bib Gourmand
 
 The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
+
+| Content | Link                                                                       | Description                                |
+| :------ | :------------------------------------------------------------------------- | :----------------------------------------- |
+| CSV     | [CSV](./generated/michelin_my_maps.csv)                                    | Good'ol comma-separated values             |
+| Kaggle  | [Kaggle](https://www.kaggle.com/ngshiheng/michelin-guide-restaurants-2021) | Data science community                     |
+| Search  | [Polymer Search](https://app.polymersearch.com/jerrynsh/michelin_my_maps/) | For advanced search and data visualization |
 
 ## Usage
 
