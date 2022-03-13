@@ -31,7 +31,9 @@ The output of this command is the [csv file](./generated/michelin_my_maps.csv) c
 
 ### Caching
 
-Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. On your first run, a [`cache/`](./cache/) folder (size of ~1.3GB) will be created. Your subsequent run should be cached and should take less than a minute to finish scraping.
+Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~1.3GB) will be created. Your subsequent run should be cached and should take less than a minute to finish scraping.
+
+To clear the cache, simply delete the [`cache/`](./cache/) folder.
 
 ## Contributing
 

@@ -75,13 +75,13 @@ func crawl() {
 
 		switch requestUrl := e.Request.URL.String(); requestUrl {
 		case "https://guide.michelin.com/en/restaurants/3-stars-michelin/":
-			e.Request.Ctx.Put("classification", "3 MICHELIN Stars")
+			e.Request.Ctx.Put("award", "3 MICHELIN Stars")
 		case "https://guide.michelin.com/en/restaurants/2-stars-michelin/":
-			e.Request.Ctx.Put("classification", "2 MICHELIN Stars")
+			e.Request.Ctx.Put("award", "2 MICHELIN Stars")
 		case "https://guide.michelin.com/en/restaurants/1-star-michelin/":
-			e.Request.Ctx.Put("classification", "1 MICHELIN Star")
+			e.Request.Ctx.Put("award", "1 MICHELIN Star")
 		case "https://guide.michelin.com/en/restaurants/bib-gourmand":
-			e.Request.Ctx.Put("classification", "Bib Gourmand")
+			e.Request.Ctx.Put("award", "Bib Gourmand")
 		}
 		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
@@ -110,17 +110,17 @@ func crawl() {
 		websiteUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
 
 		restaurant := model.Restaurant{
-			Name:           name,
-			Address:        address,
-			Location:       e.Request.Ctx.Get("location"),
-			Price:          price,
-			Type:           restaurantType,
-			Longitude:      longitude,
-			Latitude:       latitude,
-			PhoneNumber:    phoneNumber,
-			Url:            e.Request.URL.String(),
-			WebsiteUrl:     websiteUrl,
-			Classification: e.Request.Ctx.Get("classification"),
+			Name:        name,
+			Address:     address,
+			Location:    e.Request.Ctx.Get("location"),
+			Price:       price,
+			Type:        restaurantType,
+			Longitude:   longitude,
+			Latitude:    latitude,
+			PhoneNumber: phoneNumber,
+			Url:         e.Request.URL.String(),
+			WebsiteUrl:  websiteUrl,
+			Award:       e.Request.Ctx.Get("award"),
 		}
 
 		log.Println(restaurant)
