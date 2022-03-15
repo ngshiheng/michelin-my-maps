@@ -28,10 +28,13 @@ Check out the [Makefile](./Makefile) for basic usage.
 To begin scraping, run:
 
 ```sh
-go run main.go
+make run # go run main.go
+```
 
-# OR
-make run
+To build binary, run:
+
+```sh
+make build # go build -o bin/main .
 ```
 
 The output of this command is the [csv file](./generated/michelin_my_maps.csv) created/updated inside [`generated/`](./generated/) folder.
@@ -47,7 +50,7 @@ To extract relevant information from the site's HTML, we use XPath as our choice
 To run all tests locally, run:
 
 ```sh
-make test
+make test # go test ./... -v -count=1
 ```
 
 ### Caching
