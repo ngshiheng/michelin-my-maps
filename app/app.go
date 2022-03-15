@@ -81,9 +81,9 @@ func (app *App) Crawl() {
 	})
 
 	// Extract url of each restaurant and visit them
-	app.collector.OnXML("//div[@class='col-md-6 col-lg-6 col-xl-3']", func(e *colly.XMLElement) {
-		url := e.Request.AbsoluteURL(e.ChildAttr("//a[@class='link']", "href"))
-		location := e.ChildText("//div[@class='card__menu-footer--location flex-fill pl-text']/i/following-sibling::text()")
+	app.collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
+		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
+		location := e.ChildText(restaurantLocationXPath)
 
 		e.Request.Ctx.Put("location", location)
 
@@ -111,8 +111,8 @@ func (app *App) Crawl() {
 
 		address := e.ChildText(restaurantAddressXPath)
 
-		priceAndType := e.ChildText(restaurantPriceAndTypeXPath)
-		price, restaurantType := parser.SplitUnpack(priceAndType, "•")
+		priceAndCuisine := e.ChildText(restaurantpriceAndCuisineXPath)
+		price, restaurantType := parser.SplitUnpack(priceAndCuisine, "•")
 		price = parser.TrimWhiteSpaces(price)
 
 		minPrice, maxPrice, currency := parser.ExtractPrice(price)
