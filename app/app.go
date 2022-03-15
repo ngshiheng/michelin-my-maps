@@ -25,50 +25,40 @@ type App struct {
 
 func New() *App {
 	// Initialize csv file and writer
-	fName := filepath.Join("generated", "michelin_my_maps.csv")
-
-	file, err := os.Create(fName)
+	file, err := os.Create(filepath.Join(outputPath, outputFileName))
 	if err != nil {
-		log.Fatalf("cannot create file %q: %s\n", fName, err)
+		log.Fatalf("cannot create file: %s\n", err)
 	}
 
 	writer := csv.NewWriter(file)
 
 	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
-
 	if err := writer.Write(csvHeader); err != nil {
-		log.Fatalf("cannot write header to csv %q: %s\n", fName, err)
+		log.Fatalf("cannot write header to file: %s\n", err)
 	}
 
 	// Initialize colly collectors
-	urls := []string{
-		"https://guide.michelin.com/en/restaurants/3-stars-michelin/",
-		"https://guide.michelin.com/en/restaurants/2-stars-michelin/",
-		"https://guide.michelin.com/en/restaurants/1-star-michelin/",
-		"https://guide.michelin.com/en/restaurants/bib-gourmand",
-	}
+	cacheDir := filepath.Join(cachePath)
 
-	cacheDir := filepath.Join("cache")
-
-	collector := colly.NewCollector(
+	c := colly.NewCollector(
 		colly.CacheDir(cacheDir),
-		colly.AllowedDomains("guide.michelin.com", "michelin.com"),
+		colly.AllowedDomains(allowedDomain),
 	)
 
-	collector.Limit(&colly.LimitRule{
-		Parallelism: 5,
-		Delay:       2 * time.Second,
-		RandomDelay: 2 * time.Second,
+	c.Limit(&colly.LimitRule{
+		Parallelism: parallelism,
+		Delay:       delay,
+		RandomDelay: randomDelay,
 	})
 
-	detailCollector := collector.Clone()
+	dc := c.Clone()
 
-	extensions.RandomUserAgent(collector)
-	extensions.Referer(collector)
+	extensions.RandomUserAgent(c)
+	extensions.Referer(c)
 
 	return &App{
-		collector,
-		detailCollector,
+		c,
+		dc,
 		writer,
 		file,
 		urls,
@@ -111,29 +101,29 @@ func (app *App) Crawl() {
 	})
 
 	// Extract and visit next page links
-	app.collector.OnXML("//a[@class='btn btn-outline-secondary btn-sm']", func(e *colly.XMLElement) {
+	app.collector.OnXML(nextPageArrowButtonXPath, func(e *colly.XMLElement) {
 		e.Request.Visit(e.Attr("href"))
 	})
 
 	// Extract details of the restaurant
-	app.detailCollector.OnXML("//div[@class='restaurant-details']", func(e *colly.XMLElement) {
-		name := e.ChildText("//h2[@class='restaurant-details__heading--title']")
+	app.detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
+		name := e.ChildText(restaurantNameXPath)
 
-		address := e.ChildText("//ul[@class='restaurant-details__heading--list']/li")
+		address := e.ChildText(restaurantAddressXPath)
 
-		priceAndType := e.ChildText("//li[@class='restaurant-details__heading-price']")
+		priceAndType := e.ChildText(restaurantPriceAndTypeXPath)
 		price, restaurantType := parser.SplitUnpack(priceAndType, "•")
 		price = parser.TrimWhiteSpaces(price)
 
 		minPrice, maxPrice, currency := parser.ExtractPrice(price)
 
-		googleMapsUrl := e.ChildAttr("//div[@class='google-map__static']/iframe", "src")
+		googleMapsUrl := e.ChildAttr(restarauntGoogleMapsXPath, "src")
 		latitude, longitude := parser.ExtractCoordinates(googleMapsUrl)
 
-		phoneNumberString := e.ChildText("//span[@class='flex-fill']")
+		phoneNumberString := e.ChildText(restarauntPhoneNumberXPath)
 		phoneNumber, _ := phonenumbers.Parse(phoneNumberString, "")
 
-		websiteUrl := e.ChildAttr("//div[@class='collapse__block-item link-item']/a", "href")
+		websiteUrl := e.ChildAttr(restarauntWebsiteUrlXPath, "href")
 
 		restaurant := model.Restaurant{
 			Name:        name,
@@ -156,7 +146,6 @@ func (app *App) Crawl() {
 		if err := app.writer.Write(model.GenerateFieldValueSlice(restaurant)); err != nil {
 			log.Fatalf("cannot write data %q: %s\n", restaurant, err)
 		}
-
 	})
 
 	// Start scraping
