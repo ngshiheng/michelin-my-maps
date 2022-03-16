@@ -4,7 +4,8 @@ go 1.17
 
 require (
 	github.com/gocolly/colly v1.2.0
-	github.com/stretchr/testify v1.7.0
+	github.com/nyaruka/phonenumbers v1.0.74
+	github.com/stretchr/testify v1.7.1
 )
 
 require (
@@ -18,7 +19,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
-	github.com/nyaruka/phonenumbers v1.0.74 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
