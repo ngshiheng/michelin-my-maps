@@ -1,5 +1,14 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["config:base", ":semanticCommits"],
+    "extends": [
+        "config:base",
+        "automergePr",
+        ":gomod",
+        ":semanticCommits",
+        ":automergeMinor",
+        ":automergePatch",
+        ":automergeDigest",
+        ":label(renovate-bot)"
+    ],
     "timezone": "Asia/Singapore"
 }
