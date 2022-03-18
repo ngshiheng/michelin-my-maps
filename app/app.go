@@ -89,7 +89,12 @@ func (app *App) Crawl() {
 		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
 		location := e.ChildText(restaurantLocationXPath)
 
+		longitude := e.ChildAttr(restaurantXPath, "data-lng")
+		latitude := e.ChildAttr(restaurantXPath, "data-lat")
+
 		e.Request.Ctx.Put("location", location)
+		e.Request.Ctx.Put("longitude", longitude)
+		e.Request.Ctx.Put("latitude", latitude)
 
 		switch requestUrl := e.Request.URL.String(); requestUrl {
 		case "https://guide.michelin.com/en/restaurants/3-stars-michelin/":
@@ -124,9 +129,6 @@ func (app *App) Crawl() {
 
 		minPrice, maxPrice, currency := parser.ParsePrice(price)
 
-		googleMapsUrl := e.ChildAttr(restarauntGoogleMapsXPath, "src")
-		latitude, longitude := parser.ParseCoordinates(googleMapsUrl)
-
 		phoneNumber := e.ChildText(restarauntPhoneNumberXPath)
 		formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
 
@@ -138,8 +140,8 @@ func (app *App) Crawl() {
 			MaxPrice:    maxPrice,
 			Currency:    currency,
 			Cuisine:     cuisine,
-			Longitude:   longitude,
-			Latitude:    latitude,
+			Longitude:   e.Request.Ctx.Get("longitude"),
+			Latitude:    e.Request.Ctx.Get("latitude"),
 			PhoneNumber: formattedPhoneNumber,
 			Url:         url,
 			WebsiteUrl:  websiteUrl,

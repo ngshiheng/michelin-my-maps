@@ -34,7 +34,7 @@ func TrimWhiteSpaces(str string) string {
 	return trimWhiteSpace.Replace(str)
 }
 
-/*
+/* DEPRECATED
 Extract and parse longitude and latitude from Google Maps URL
 
 Example inputUrl "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"

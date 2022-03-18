@@ -26,7 +26,7 @@ const (
 	// All restaurants page
 	// E.g.: https://guide.michelin.com/en/restaurants/3-stars-michelin/
 	nextPageArrowButtonXPath = "//a[@class='btn btn-outline-secondary btn-sm']"
-	restaurantXPath          = "//div[@class='col-md-6 col-lg-6 col-xl-3']"
+	restaurantXPath          = "//div[@class='card__menu box-placeholder js-restaurant__list_item js-match-height js-map ']"
 	restaurantDetailUrlXPath = "//a[@class='link']"
 	restaurantLocationXPath  = "//div[@class='card__menu-footer--location flex-fill pl-text']/i/following-sibling::text()"
 
