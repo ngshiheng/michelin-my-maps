@@ -73,4 +73,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## Inspiration
 
-Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Map.
+Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Maps ([example](https://www.google.com/maps/d/edit?mid=1wSXxkPcNY50R78_T83tUZdZuYRk2L6jY&usp=sharing)).
