@@ -2,7 +2,7 @@ package app
 
 import (
 	"encoding/csv"
-	"log"
+
 	"os"
 	"path/filepath"
 	"time"
@@ -13,6 +13,8 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/util/logger"
 	"github.com/ngshiheng/michelin-my-maps/util/parser"
 	"github.com/nyaruka/phonenumbers"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type App struct {
@@ -27,14 +29,17 @@ func New() *App {
 	// Initialize csv file and writer
 	file, err := os.Create(filepath.Join(outputPath, outputFileName))
 	if err != nil {
-		log.Fatalf("cannot create file: %s\n", err)
+		log.WithFields(log.Fields{"file": file}).Fatal("cannot create file")
 	}
 
 	writer := csv.NewWriter(file)
 
 	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
 	if err := writer.Write(csvHeader); err != nil {
-		log.Fatalf("cannot write header to file: %s\n", err)
+		log.WithFields(log.Fields{
+			"file":      file,
+			"csvHeader": csvHeader,
+		}).Fatal("cannot write header to file")
 	}
 
 	// Initialize colly collectors
@@ -72,12 +77,12 @@ func (app *App) Crawl() {
 	defer app.writer.Flush()
 
 	app.collector.OnResponse(func(r *colly.Response) {
-		log.Println("visited", r.Request.URL)
+		log.Info("visited ", r.Request.URL)
 		r.Request.Visit(r.Ctx.Get("url"))
 	})
 
 	app.collector.OnScraped(func(r *colly.Response) {
-		log.Println("finished", r.Request.URL)
+		log.Info("finished ", r.Request.URL)
 	})
 
 	// Extract url of each restaurant and visit them
@@ -107,6 +112,9 @@ func (app *App) Crawl() {
 
 	// Extract details of the restaurant
 	app.detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
+		url := e.Request.URL.String()
+		websiteUrl := e.ChildAttr(restarauntWebsiteUrlXPath, "href")
+
 		name := e.ChildText(restaurantNameXPath)
 
 		address := e.ChildText(restaurantAddressXPath)
@@ -120,10 +128,18 @@ func (app *App) Crawl() {
 		googleMapsUrl := e.ChildAttr(restarauntGoogleMapsXPath, "src")
 		latitude, longitude := parser.ExtractCoordinates(googleMapsUrl)
 
+		var formattedPhoneNumber string
 		phoneNumberString := e.ChildText(restarauntPhoneNumberXPath)
-		phoneNumber, _ := phonenumbers.Parse(phoneNumberString, "")
-
-		websiteUrl := e.ChildAttr(restarauntWebsiteUrlXPath, "href")
+		phoneNumber, err := phonenumbers.Parse(phoneNumberString, "")
+		if err != nil {
+			log.WithFields(log.Fields{
+				"restaurant": name,
+				"url":        url,
+			}).Warn("phone number is not available")
+			formattedPhoneNumber = ""
+		} else {
+			formattedPhoneNumber = phonenumbers.Format(phoneNumber, phonenumbers.E164)
+		}
 
 		restaurant := model.Restaurant{
 			Name:        name,
@@ -135,13 +151,13 @@ func (app *App) Crawl() {
 			Cuisine:     restaurantType,
 			Longitude:   longitude,
 			Latitude:    latitude,
-			PhoneNumber: phonenumbers.Format(phoneNumber, phonenumbers.E164),
-			Url:         e.Request.URL.String(),
+			PhoneNumber: formattedPhoneNumber,
+			Url:         url,
 			WebsiteUrl:  websiteUrl,
 			Award:       e.Request.Ctx.Get("award"),
 		}
 
-		log.Println(restaurant)
+		log.Debug(restaurant)
 
 		if err := app.writer.Write(model.GenerateFieldValueSlice(restaurant)); err != nil {
 			log.Fatalf("cannot write data %q: %s\n", restaurant, err)

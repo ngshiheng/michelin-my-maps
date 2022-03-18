@@ -1,10 +1,11 @@
 package parser
 
 import (
-	"log"
 	"net/url"
 	"regexp"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // SplitN and unpack a string
@@ -40,14 +41,14 @@ Example input_url "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVp
 func ExtractCoordinates(input_url string) (string, string) {
 	url, err := url.Parse(input_url)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"input_url": input_url}).Fatal(err)
 	}
 
 	queryParams := url.Query()
 	coordinates := queryParams["q"][0] // e.g. "45.4215425,11.8096633"
 
 	if !(IsValidCoordinates(coordinates)) {
-		log.Printf("invalid coordinates %q.", coordinates)
+		log.WithFields(log.Fields{"coordinates": coordinates}).Warn("invalid coordinates")
 		return "", ""
 	}
 
