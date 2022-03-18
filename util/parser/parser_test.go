@@ -49,7 +49,7 @@ func TestTrimWhiteSpaces(t *testing.T) {
 	}
 }
 
-func TestExtractCoordinates(t *testing.T) {
+func TestParseCoordinates(t *testing.T) {
 	cases := []struct {
 		Got       string
 		Longitude string
@@ -64,14 +64,14 @@ func TestExtractCoordinates(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
-			longitude, latitude := ExtractCoordinates(tt.Got)
+			longitude, latitude := ParseCoordinates(tt.Got)
 			assert.Equal(t, tt.Longitude, longitude)
 			assert.Equal(t, tt.Latitude, latitude)
 		})
 	}
 }
 
-func TestExtractPrice(t *testing.T) {
+func TestParsePrice(t *testing.T) {
 	cases := []struct {
 		Got      string
 		MinPrice string
@@ -87,10 +87,30 @@ func TestExtractPrice(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
-			minPrice, maxPrice, currency := ExtractPrice(tt.Got)
+			minPrice, maxPrice, currency := ParsePrice(tt.Got)
 			assert.Equal(t, tt.MinPrice, minPrice)
 			assert.Equal(t, tt.MaxPrice, maxPrice)
 			assert.Equal(t, tt.Currency, currency)
+		})
+	}
+}
+
+func TestParsePhoneNumber(t *testing.T) {
+	cases := []struct {
+		Got      string
+		Expected string
+	}{
+		{"", ""},
+		{"some test string", ""},
+		{"https://www.queensenglishdc.com/", ""},
+		{"+32 2 771 14 47", "+3227711447"},
+		{"+81 50-3138-5225", "+815031385225"},
+	}
+
+	for _, tt := range cases {
+		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
+			got := ParsePhoneNumber(tt.Got)
+			assert.Equal(t, tt.Expected, got)
 		})
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/model"
 	"github.com/ngshiheng/michelin-my-maps/util/logger"
 	"github.com/ngshiheng/michelin-my-maps/util/parser"
-	"github.com/nyaruka/phonenumbers"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -120,26 +119,16 @@ func (app *App) Crawl() {
 		address := e.ChildText(restaurantAddressXPath)
 
 		priceAndCuisine := e.ChildText(restaurantpriceAndCuisineXPath)
-		price, restaurantType := parser.SplitUnpack(priceAndCuisine, "•")
+		price, cuisine := parser.SplitUnpack(priceAndCuisine, "•")
 		price = parser.TrimWhiteSpaces(price)
 
-		minPrice, maxPrice, currency := parser.ExtractPrice(price)
+		minPrice, maxPrice, currency := parser.ParsePrice(price)
 
 		googleMapsUrl := e.ChildAttr(restarauntGoogleMapsXPath, "src")
-		latitude, longitude := parser.ExtractCoordinates(googleMapsUrl)
+		latitude, longitude := parser.ParseCoordinates(googleMapsUrl)
 
-		var formattedPhoneNumber string
-		phoneNumberString := e.ChildText(restarauntPhoneNumberXPath)
-		phoneNumber, err := phonenumbers.Parse(phoneNumberString, "")
-		if err != nil {
-			log.WithFields(log.Fields{
-				"restaurant": name,
-				"url":        url,
-			}).Warn("phone number is not available")
-			formattedPhoneNumber = ""
-		} else {
-			formattedPhoneNumber = phonenumbers.Format(phoneNumber, phonenumbers.E164)
-		}
+		phoneNumber := e.ChildText(restarauntPhoneNumberXPath)
+		formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
 
 		restaurant := model.Restaurant{
 			Name:        name,
@@ -148,7 +137,7 @@ func (app *App) Crawl() {
 			MinPrice:    minPrice,
 			MaxPrice:    maxPrice,
 			Currency:    currency,
-			Cuisine:     restaurantType,
+			Cuisine:     cuisine,
 			Longitude:   longitude,
 			Latitude:    latitude,
 			PhoneNumber: formattedPhoneNumber,

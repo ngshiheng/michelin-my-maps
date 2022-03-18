@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/nyaruka/phonenumbers"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,14 +35,14 @@ func TrimWhiteSpaces(str string) string {
 }
 
 /*
-Extract longitude and latitude from Google Maps URL
+Extract and parse longitude and latitude from Google Maps URL
 
-Example input_url "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"
+Example inputUrl "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"
 */
-func ExtractCoordinates(input_url string) (string, string) {
-	url, err := url.Parse(input_url)
+func ParseCoordinates(inputUrl string) (string, string) {
+	url, err := url.Parse(inputUrl)
 	if err != nil {
-		log.WithFields(log.Fields{"input_url": input_url}).Fatal(err)
+		log.WithFields(log.Fields{"inputUrl": inputUrl}).Fatal(err)
 	}
 
 	queryParams := url.Query()
@@ -62,19 +63,19 @@ func IsValidCoordinates(coordinates string) bool {
 }
 
 /*
-Extract minPrice, maxPrice, and currency from a price string
+Extract and parse minPrice, maxPrice, and currency from a raw price string
 
-Example input_price "148-248 USD", "1,000-1,280 CNY"
+Example inputPrice "148-248 USD", "1,000-1,280 CNY"
 */
-func ExtractPrice(input_price string) (string, string, string) {
-	if input_price == "" {
+func ParsePrice(inputPrice string) (string, string, string) {
+	if inputPrice == "" {
 		return "", "", ""
 	}
 
 	currencyRegex := regexp.MustCompile(`(.{3})\s*$`) // Match last 3 characters
-	currency := currencyRegex.FindString(input_price)
+	currency := currencyRegex.FindString(inputPrice)
 
-	minPrice, maxPrice := SplitUnpack(input_price[:len(input_price)-3], "-")
+	minPrice, maxPrice := SplitUnpack(inputPrice[:len(inputPrice)-3], "-")
 
 	numberRegex := regexp.MustCompile(`^\d{1,3}(,\d{3})*(\.\d+)?$`) // Match 0,000 format
 	minPrice = numberRegex.FindString(minPrice)
@@ -85,4 +86,20 @@ func ExtractPrice(input_price string) (string, string, string) {
 	}
 
 	return minPrice, maxPrice, currency
+}
+
+/*
+Extract and parse phone number from a raw string
+
+Example inputPhoneNumber "+81 3-3874-1552"
+*/
+func ParsePhoneNumber(inputPhoneNumber string) string {
+	parsedPhoneNumber, err := phonenumbers.Parse(inputPhoneNumber, "")
+
+	if err != nil {
+		log.WithFields(log.Fields{"inputPhoneNumber": inputPhoneNumber}).Warn("phone number is not available")
+		return ""
+	}
+
+	return phonenumbers.Format(parsedPhoneNumber, phonenumbers.E164)
 }
