@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/csv"
+	"net/http"
 
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ type App struct {
 	detailCollector *colly.Collector
 	writer          *csv.Writer
 	file            *os.File
-	URLs            []string
+	startUrls       []startUrl
 }
 
 func New() *App {
@@ -87,8 +88,8 @@ func (app *App) Crawl() {
 	// Extract url of each restaurant and visit them
 	app.collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
 		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
-		location := e.ChildText(restaurantLocationXPath)
 
+		location := e.ChildText(restaurantLocationXPath)
 		longitude := e.ChildAttr(restaurantXPath, "data-lng")
 		latitude := e.ChildAttr(restaurantXPath, "data-lat")
 
@@ -96,16 +97,6 @@ func (app *App) Crawl() {
 		e.Request.Ctx.Put("longitude", longitude)
 		e.Request.Ctx.Put("latitude", latitude)
 
-		switch requestUrl := e.Request.URL.String(); requestUrl {
-		case "https://guide.michelin.com/en/restaurants/3-stars-michelin/":
-			e.Request.Ctx.Put("award", "3 MICHELIN Stars")
-		case "https://guide.michelin.com/en/restaurants/2-stars-michelin/":
-			e.Request.Ctx.Put("award", "2 MICHELIN Stars")
-		case "https://guide.michelin.com/en/restaurants/1-star-michelin/":
-			e.Request.Ctx.Put("award", "1 MICHELIN Star")
-		case "https://guide.michelin.com/en/restaurants/bib-gourmand":
-			e.Request.Ctx.Put("award", "Bib Gourmand")
-		}
 		app.detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
 
@@ -156,8 +147,10 @@ func (app *App) Crawl() {
 	})
 
 	// Start scraping
-	for _, url := range app.URLs {
-		app.collector.Visit(url)
+	for _, url := range app.startUrls {
+		ctx := colly.NewContext()
+		ctx.Put("award", url.Award)
+		app.collector.Request(http.MethodGet, url.Url, nil, ctx, nil)
 	}
 
 	// Wait until threads are finished

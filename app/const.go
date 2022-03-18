@@ -2,12 +2,17 @@ package app
 
 import "time"
 
+type startUrl struct {
+	Award string
+	Url   string
+}
+
 // Start URLs
-var urls = []string{
-	"https://guide.michelin.com/en/restaurants/3-stars-michelin/",
-	"https://guide.michelin.com/en/restaurants/2-stars-michelin/",
-	"https://guide.michelin.com/en/restaurants/1-star-michelin/",
-	"https://guide.michelin.com/en/restaurants/bib-gourmand",
+var urls = []startUrl{
+	{"3 MICHELIN Stars", "https://guide.michelin.com/en/restaurants/3-stars-michelin/"},
+	{"2 MICHELIN Stars", "https://guide.michelin.com/en/restaurants/2-stars-michelin/"},
+	{"1 MICHELIN Star", "https://guide.michelin.com/en/restaurants/1-star-michelin/"},
+	{"Bib Gourmand", "https://guide.michelin.com/en/restaurants/bib-gourmand"},
 }
 
 // Crawler app settings

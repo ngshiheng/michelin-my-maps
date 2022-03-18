@@ -21,6 +21,10 @@ The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
 | Kaggle  | [Kaggle](https://www.kaggle.com/ngshiheng/michelin-guide-restaurants-2021) | Data science community                     |
 | Search  | [Polymer Search](https://app.polymersearch.com/jerrynsh/michelin_my_maps/) | For advanced search and data visualization |
 
+## Inspiration
+
+Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Maps ([example](https://www.google.com/maps/d/edit?mid=1wSXxkPcNY50R78_T83tUZdZuYRk2L6jY&usp=sharing)).
+
 ## Usage
 
 Check out the [Makefile](./Makefile) for basic usage.
@@ -70,7 +74,3 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 3. Commit your changes (`git commit -am 'feat: add some bar'`, make sure that your commits are [semantic](https://www.conventionalcommits.org/en/v1.0.0/#summary))
 4. Push to the branch (`git push origin feature/bar`)
 5. Create a new Pull Request
-
-## Inspiration
-
-Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Maps ([example](https://www.google.com/maps/d/edit?mid=1wSXxkPcNY50R78_T83tUZdZuYRk2L6jY&usp=sharing)).
