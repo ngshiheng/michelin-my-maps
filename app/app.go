@@ -56,10 +56,10 @@ func New() *App {
 		RandomDelay: randomDelay,
 	})
 
-	dc := c.Clone()
-
 	extensions.RandomUserAgent(c)
 	extensions.Referer(c)
+
+	dc := c.Clone()
 
 	return &App{
 		c,
@@ -70,7 +70,7 @@ func New() *App {
 	}
 }
 
-// Crawl Michelin Guide Restaurants information from app.URLs
+// Crawl Michelin Guide Restaurants information from app.startUrls
 func (app *App) Crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 	defer app.file.Close()
@@ -85,7 +85,7 @@ func (app *App) Crawl() {
 		log.Info("finished ", r.Request.URL)
 	})
 
-	// Extract url of each restaurant and visit them
+	// Extract url of each restaurant from the main page and visit them
 	app.collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
 		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
 
@@ -105,7 +105,7 @@ func (app *App) Crawl() {
 		e.Request.Visit(e.Attr("href"))
 	})
 
-	// Extract details of the restaurant
+	// Extract details of each restaurant and write to csv file
 	app.detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
 		url := e.Request.URL.String()
 		websiteUrl := e.ChildAttr(restarauntWebsiteUrlXPath, "href")
