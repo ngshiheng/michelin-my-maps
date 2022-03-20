@@ -10,5 +10,6 @@
         ":label(renovate-bot)",
         ":semanticCommits"
     ],
-    "timezone": "Asia/Singapore"
+    "timezone": "Asia/Singapore",
+    "postUpdateOptions": ["gomodTidy"]
 }
