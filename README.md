@@ -2,18 +2,22 @@
 
 ## Context
 
-At the beginning of the automobile era, [Michelin](https://www.michelin.com/), a tire company, created a travel guide, including a restaurant guide. Through the years, Michelin stars have become very prestigious due to their high standards and very strict anonymous testers. Michelin Stars are incredibly coveted. Gaining just one can change a chef's life; losing one, however, can change it as well.
+At the beginning of the automobile era, [Michelin](https://www.michelin.com/), a tire company, created a travel guide, including a restaurant guide.
+
+Through the years, Michelin stars have become very prestigious due to their high standards and very strict anonymous testers. Michelin Stars are incredibly coveted. Gaining just one can change a chef's life; losing one, however, can change it as well.
+
+The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
+
+[Read more...](https://jerrynsh.com/how-i-scraped-michelin-guide-using-golang/)
 
 ## Content
 
-This dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. 'Award' column in the dataset) of the restaurants included are:
+The dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. the 'Award' column) of the restaurants included are:
 
 -   3 Stars
 -   2 Stars
 -   1 Star
 -   Bib Gourmand
-
-The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
 
 | Content | Link                                                                       | Description                                |
 | :------ | :------------------------------------------------------------------------- | :----------------------------------------- |
@@ -23,7 +27,7 @@ The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
 
 ## Inspiration
 
-Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Maps ([example](https://www.google.com/maps/d/edit?mid=1wSXxkPcNY50R78_T83tUZdZuYRk2L6jY&usp=sharing)).
+Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my initial intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Maps ([see an example](https://www.google.com/maps/d/edit?mid=1wSXxkPcNY50R78_T83tUZdZuYRk2L6jY&usp=sharing)).
 
 ## Usage
 
