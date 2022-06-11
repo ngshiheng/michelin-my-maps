@@ -1,0 +1,41 @@
+name: Scrape Data
+on:
+    schedule:
+        - cron: "0 0 1 */3 *" # https://crontab.guru/every-quarter
+env:
+    AUTHOR_NAME: "GitHub Action"
+    AUTHOR_EMAIL: "action@github.com"
+    CSV_FILENAME: "generated/michelin_my_maps.csv"
+jobs:
+    scrape:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: "1.17"
+                  cache: true
+            - name: Get and set current CSV file line count
+              id: lc
+              run: echo ::set-output name=line_count::$(wc -l < "$CSV_FILENAME")
+            - name: Run scraper
+              run: go run main.go
+            - name: Check newly generated line count
+              run: |
+                  upper_lc = $(( 1.2*${{ steps.lc.outputs.line_count }} ))
+                  lower_lc = $(( 0.8*${{ steps.lc.outputs.line_count }} ))
+                  new_line_count=$(wc -l < "$CSV_FILENAME")    
+
+                  if (( new_line_count < lower_lc || new_line_count > upper_lc )); then
+                    echo "Error: new_line_count=$new_line_count vs. current_line_count=${{ steps.lc.outputs.line_count }} lines"
+                    exit 1
+                  fi
+            - name: Commit changes
+              if: ${{ success() }}
+              uses: EndBug/add-and-commit@v9
+              with:
+                  add: "${{ env.CSV_FILENAME }}"
+                  author_name: ${{ env.AUTHOR_NAME }}
+                  author_email: ${{ env.AUTHOR_EMAIL }}
+                  message: "chore: updated csv on `date +'%Y-%m-%d'`"
