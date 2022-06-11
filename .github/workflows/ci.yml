@@ -1,17 +1,11 @@
----
-name: CI
+name: Continuos Integration
 
 on:
     push:
         branches:
             - "**"
-
-    pull_request:
-        branches:
-            - "**"
-
+            - "!main"
     workflow_call:
-
 jobs:
     test:
         strategy:
