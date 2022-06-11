@@ -1,5 +1,16 @@
 <h1 align="center"><strong>Michelin My Maps</strong></h1>
 
+- [Context](#context)
+- [Disclaimer](#disclaimer)
+- [Content](#content)
+- [Inspiration](#inspiration)
+- [Usage](#usage)
+- [Development](#development)
+  - [Selector](#selector)
+  - [Testing](#testing)
+  - [Caching](#caching)
+- [Contributing](#contributing)
+
 ## Context
 
 At the beginning of the automobile era, [Michelin](https://www.michelin.com/), a tire company, created a travel guide, including a restaurant guide.
@@ -9,6 +20,10 @@ Through the years, Michelin stars have become very prestigious due to their high
 The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
 
 [Read more...](https://jerrynsh.com/how-i-scraped-michelin-guide-using-golang/)
+
+## Disclaimer
+
+This software is only used for research purposes, users must abide by the relevant laws and regulations of their location, please do not use it for illegal purposes. The user shall bear all the consequences caused by illegal use.
 
 ## Content
 
@@ -70,8 +85,6 @@ To clear the cache, simply delete the [`cache/`](./cache/) folder.
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-### Steps
 
 1. Fork this
 2. Create your feature branch (`git checkout -b feature/bar`)
