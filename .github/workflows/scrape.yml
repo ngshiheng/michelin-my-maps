@@ -7,6 +7,7 @@ env:
     AUTHOR_NAME: "GitHub Action"
     AUTHOR_EMAIL: "action@github.com"
     CSV_FILENAME: "generated/michelin_my_maps.csv"
+    THRESHOLD: 1000
 jobs:
     scrape:
         runs-on: ubuntu-latest
@@ -17,6 +18,8 @@ jobs:
               with:
                   go-version: "1.17"
                   cache: true
+            - name: Check cache
+              run: echo ::set-output name=is_cached::$(du -sh "$CSV_FILENAME")
             - name: Get and set current CSV file line count
               id: lc
               run: echo ::set-output name=line_count::$(wc -l < "$CSV_FILENAME")
@@ -24,12 +27,13 @@ jobs:
               run: go run main.go
             - name: Check newly generated line count
               run: |
-                  upper_lc = $(( 1.2*${{ steps.lc.outputs.line_count }} ))
-                  lower_lc = $(( 0.8*${{ steps.lc.outputs.line_count }} ))
+                  upper_lc=$(( ${{ steps.lc.outputs.line_count }} + $THRESHOLD ))
+                  lower_lc=$(( ${{ steps.lc.outputs.line_count }} - $THRESHOLD ))
                   new_line_count=$(wc -l < "$CSV_FILENAME")    
 
+                  echo "INFO: is_cached=$is_cached."
                   if (( new_line_count < lower_lc || new_line_count > upper_lc )); then
-                    echo "Error: new_line_count=$new_line_count vs. current_line_count=${{ steps.lc.outputs.line_count }} lines"
+                    echo "ERROR: new_line_count=$new_line_count vs. current_line_count=${{ steps.lc.outputs.line_count }} lines."
                     exit 1
                   fi
             - name: Commit changes
