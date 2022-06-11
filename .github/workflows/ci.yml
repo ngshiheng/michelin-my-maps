@@ -5,6 +5,9 @@ on:
         branches:
             - "**"
             - "!main"
+        paths:
+            - "**.go"
+            - "**.mod"
     workflow_call:
 jobs:
     test:

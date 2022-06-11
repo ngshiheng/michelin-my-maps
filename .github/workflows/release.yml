@@ -4,6 +4,9 @@ on:
     push:
         branches:
             - main
+        paths:
+            - "**.go"
+            - "**.mod"
 jobs:
     test:
         uses: ./.github/workflows/ci.yml
