@@ -18,8 +18,6 @@ jobs:
               with:
                   go-version: "1.17"
                   cache: true
-            - name: Check cache
-              run: echo ::set-output name=is_cached::$(du -sh "$CSV_FILENAME")
             - name: Get and set current CSV file line count
               id: lc
               run: echo ::set-output name=line_count::$(wc -l < "$CSV_FILENAME")
@@ -27,13 +25,13 @@ jobs:
               run: go run main.go
             - name: Check newly generated line count
               run: |
-                  upper_lc=$(( ${{ steps.lc.outputs.line_count }} + $THRESHOLD ))
-                  lower_lc=$(( ${{ steps.lc.outputs.line_count }} - $THRESHOLD ))
-                  new_line_count=$(wc -l < "$CSV_FILENAME")    
+                  upper_lc=$(( ${{ steps.lc.outputs.line_count }} + THRESHOLD ))
+                  lower_lc=$(( ${{ steps.lc.outputs.line_count }} - THRESHOLD ))
+                  new_line_count=$(wc -l < "$CSV_FILENAME")
 
-                  echo "INFO: is_cached=$is_cached."
+                  echo "INFO: No. of new lines: $new_line_count vs. No. of current lines: ${{ steps.lc.outputs.line_count }}."
                   if (( new_line_count < lower_lc || new_line_count > upper_lc )); then
-                    echo "ERROR: new_line_count=$new_line_count vs. current_line_count=${{ steps.lc.outputs.line_count }} lines."
+                    echo "WARNING: drastic line change, please verify and generated the CSV manually."
                     exit 1
                   fi
             - name: Commit changes
@@ -43,4 +41,8 @@ jobs:
                   add: "${{ env.CSV_FILENAME }}"
                   author_name: ${{ env.AUTHOR_NAME }}
                   author_email: ${{ env.AUTHOR_EMAIL }}
-                  message: "chore: updated csv on `date +'%Y-%m-%d'`"
+                  message: "chore: update generated csv automatically"
+            - name: Upload artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  path: $CSV_FILENAME
