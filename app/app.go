@@ -122,6 +122,15 @@ func (app *App) Crawl() {
 
 		phoneNumber := e.ChildAttr(restaurantPhoneNumberXPath, "href")
 		formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
+		if formattedPhoneNumber == "" {
+			log.WithFields(
+				log.Fields{
+					"url":                  url,
+					"phoneNumber":          phoneNumber,
+					"formattedPhoneNumber": formattedPhoneNumber,
+				},
+			).Warn("phone number is not available")
+		}
 
 		restaurant := model.Restaurant{
 			Name:        name,
