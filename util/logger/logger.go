@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// A utility function used to time function calls
+// TimeTrack is used to time function calls
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	log.WithFields(log.Fields{"name": name}).Infof("running %s took %s", name, elapsed)

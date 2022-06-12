@@ -21,7 +21,7 @@ type Restaurant struct {
 	Award       string
 }
 
-// Generate field values slice from struct
+// GenerateFieldValueSlice generates field values slice from struct
 func GenerateFieldValueSlice(class interface{}) []string {
 	v := reflect.Indirect(reflect.ValueOf(class))
 
@@ -34,7 +34,7 @@ func GenerateFieldValueSlice(class interface{}) []string {
 	return values
 }
 
-// Generate field names slice from struct
+// GenerateFieldNameSlice generates field names slice from struct
 func GenerateFieldNameSlice(class interface{}) []string {
 	t := reflect.TypeOf(class)
 
