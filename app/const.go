@@ -40,8 +40,8 @@ const (
 	restaurantDetailXPath          = "//div[@class='restaurant-details']"
 	restaurantNameXPath            = "//h2[@class='restaurant-details__heading--title']"
 	restaurantAddressXPath         = "//ul[@class='restaurant-details__heading--list']/li"
-	restaurantpriceAndCuisineXPath = "//li[@class='restaurant-details__heading-price']"
-	restarauntGoogleMapsXPath      = "//div[@class='google-map__static']/iframe"
-	restarauntPhoneNumberXPath     = "//span[@class='flex-fill']"
-	restarauntWebsiteUrlXPath      = "//div[@class='collapse__block-item link-item']/a"
+	restaurantPriceAndCuisineXPath = "//li[@class='restaurant-details__heading-price']"
+	restaurantGoogleMapsXPath      = "//div[@class='google-map__static']/iframe"
+	restaurantPhoneNumberXPath     = "//a[@data-event='CTA_tel']"
+	restaurantWebsiteUrlXPath      = "//a[@data-event='CTA_website']"
 )

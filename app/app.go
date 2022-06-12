@@ -108,19 +108,19 @@ func (app *App) Crawl() {
 	// Extract details of each restaurant and write to csv file
 	app.detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
 		url := e.Request.URL.String()
-		websiteUrl := e.ChildAttr(restarauntWebsiteUrlXPath, "href")
+		websiteUrl := e.ChildAttr(restaurantWebsiteUrlXPath, "href")
 
 		name := e.ChildText(restaurantNameXPath)
 
 		address := e.ChildText(restaurantAddressXPath)
 
-		priceAndCuisine := e.ChildText(restaurantpriceAndCuisineXPath)
+		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
 		price, cuisine := parser.SplitUnpack(priceAndCuisine, "•")
 		price = parser.TrimWhiteSpaces(price)
 
 		minPrice, maxPrice, currency := parser.ParsePrice(price)
 
-		phoneNumber := e.ChildText(restarauntPhoneNumberXPath)
+		phoneNumber := e.ChildAttr(restaurantPhoneNumberXPath, "href")
 		formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
 
 		restaurant := model.Restaurant{
