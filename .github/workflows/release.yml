@@ -7,9 +7,6 @@ on:
         paths:
             - "**.go"
             - "**.mod"
-env:
-    AUTHOR_NAME: "GitHub Action"
-    AUTHOR_EMAIL: "action@github.com"
 jobs:
     test:
         uses: ./.github/workflows/ci.yml
@@ -39,6 +36,6 @@ jobs:
               uses: EndBug/add-and-commit@v9
               with:
                   add: "bin/"
-                  author_name: ${{ env.AUTHOR_NAME }}
-                  author_email: ${{ env.AUTHOR_EMAIL }}
+                  pull: "--rebase"
                   message: "chore(bin): update bin automatically"
+                  default_author: github_actions
