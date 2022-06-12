@@ -21,4 +21,5 @@ jobs:
             - uses: actions/setup-go@v3
               with:
                   go-version: ${{ matrix.go-version }}
+                  cache: true
             - run: go test ./... -v -count=1

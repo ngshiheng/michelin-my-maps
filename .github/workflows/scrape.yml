@@ -41,7 +41,7 @@ jobs:
                   add: "${{ env.CSV_FILENAME }}"
                   author_name: ${{ env.AUTHOR_NAME }}
                   author_email: ${{ env.AUTHOR_EMAIL }}
-                  message: "chore: update generated csv automatically"
+                  message: "chore(generated): update generated csv automatically"
             - name: Upload artifact
               uses: actions/upload-artifact@v3
               with:
