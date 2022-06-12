@@ -7,6 +7,9 @@ on:
         paths:
             - "**.go"
             - "**.mod"
+env:
+    AUTHOR_NAME: "GitHub Action"
+    AUTHOR_EMAIL: "action@github.com"
 jobs:
     test:
         uses: ./.github/workflows/ci.yml
