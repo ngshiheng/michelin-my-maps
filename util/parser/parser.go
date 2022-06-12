@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// SplitN and unpack a string
+// SplitUnpack performs SplitN and unpacks a string
 func SplitUnpack(str string, separator string) (string, string) {
 	if len(str) == 0 {
 		return str, str
@@ -28,16 +28,16 @@ func SplitUnpack(str string, separator string) (string, string) {
 	return parsedStr[0], parsedStr[1]
 }
 
-// Trim whitespace character such as line breaks or double spaces
+// TrimWhiteSpaces trims whitespace character such as line breaks or double spaces
 func TrimWhiteSpaces(str string) string {
 	trimWhiteSpace := strings.NewReplacer("\n", "", "  ", "")
 	return trimWhiteSpace.Replace(str)
 }
 
 /* DEPRECATED
-Extract and parse longitude and latitude from Google Maps URL
+ParseCoordinates extracts and parses longitude and latitude from a Google Maps URL
 
-Example inputUrl "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"
+Example inputUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"
 */
 func ParseCoordinates(inputUrl string) (string, string) {
 	url, err := url.Parse(inputUrl)
@@ -56,16 +56,21 @@ func ParseCoordinates(inputUrl string) (string, string) {
 	return SplitUnpack(coordinates, ",")
 }
 
-// Check if a string contains a valid longitude or latitude (reference: https://stackoverflow.com/a/18690202/10067850)
+/*
+IsValidCoordinates checks if a string contains a valid longitude or latitude
+
+Reference: https://stackoverflow.com/a/18690202/10067850
+*/
 func IsValidCoordinates(coordinates string) bool {
-	re := regexp.MustCompile(`^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$`)
+	longitudeAndLatitudeRegex := `^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$`
+	re := regexp.MustCompile(longitudeAndLatitudeRegex)
 	return re.MatchString(coordinates)
 }
 
 /*
-Extract and parse minPrice, maxPrice, and currency from a raw price string
+ParsePrice extracts and parses minPrice, maxPrice, and currency from a raw price string
 
-Example inputPrice "148-248 USD", "1,000-1,280 CNY"
+Example inputPrice: "148-248 USD", "1,000-1,280 CNY"
 */
 func ParsePrice(inputPrice string) (string, string, string) {
 	if inputPrice == "" {
@@ -89,15 +94,13 @@ func ParsePrice(inputPrice string) (string, string, string) {
 }
 
 /*
-Extract and parse phone number from a raw string
+ParsePhoneNumber extracts and parses phone number from a raw string
 
-Example inputPhoneNumber "+81 3-3874-1552"
+Example inputPhoneNumber: "+81 3-3874-1552"
 */
 func ParsePhoneNumber(inputPhoneNumber string) string {
 	parsedPhoneNumber, err := phonenumbers.Parse(inputPhoneNumber, "")
-
 	if err != nil {
-		log.WithFields(log.Fields{"inputPhoneNumber": inputPhoneNumber}).Warn("phone number is not available")
 		return ""
 	}
 
