@@ -11,16 +11,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
-            - name: Setup Go
-              uses: actions/setup-go@v3
-              with:
-                  go-version: "1.17"
-                  cache: true
             - name: Get and set current CSV file line count
               id: lc
               run: echo ::set-output name=line_count::$(wc -l < "$CSV_FILENAME")
             - name: Run scraper
-              run: go run main.go
+              run: ./bin/main
             - name: Check newly generated line count
               run: |
                   upper_lc=$(( ${{ steps.lc.outputs.line_count }} + THRESHOLD ))
