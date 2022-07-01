@@ -22,7 +22,7 @@ func TestSplitUnpack(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		t.Run("test split SplitUnack", func(t *testing.T) {
+		t.Run("test split SplitUnpack", func(t *testing.T) {
 			got1, got2 := SplitUnpack(tt.Got, "•")
 			assert.Equal(t, tt.Price, got1)
 			assert.Equal(t, tt.Cuisine, got2)
