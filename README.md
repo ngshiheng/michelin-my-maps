@@ -36,7 +36,7 @@ The dataset contains a list of restaurants along with additional details (e.g. a
 
 | Content | Link                                                                       | Description                                        |
 | :------ | :------------------------------------------------------------------------- | :------------------------------------------------- |
-| CSV     | [CSV](./generated/michelin_my_maps.csv)                                    | Good'ol comma-separated values (updated quarterly) |
+| CSV     | [CSV](./data/michelin_my_maps.csv)                                         | Good'ol comma-separated values (updated quarterly) |
 | Kaggle  | [Kaggle](https://www.kaggle.com/ngshiheng/michelin-guide-restaurants-2021) | Data science community                             |
 | Search  | [Polymer Search](https://app.polymersearch.com/jerrynsh/michelin_my_maps/) | For advanced search and data visualization         |
 
@@ -60,7 +60,7 @@ To build binary, run:
 make build # go build -o bin/main .
 ```
 
-The output of this command is the [csv file](./generated/michelin_my_maps.csv) created/updated inside [`generated/`](./generated/) folder.
+The output of this command is the [csv file](./data/michelin_my_maps.csv) created/updated inside [`data/`](./data/) folder.
 
 ## Development
 

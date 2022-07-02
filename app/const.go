@@ -19,7 +19,7 @@ var urls = []startUrl{
 const (
 	allowedDomain  = "guide.michelin.com"
 	outputFileName = "michelin_my_maps.csv"
-	outputPath     = "generated"
+	outputPath     = "data"
 	cachePath      = "cache"
 	delay          = 2 * time.Second
 	randomDelay    = 2 * time.Second
