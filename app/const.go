@@ -37,11 +37,12 @@ const (
 
 	// Individual restaurant detail page
 	// E.g.: https://guide.michelin.com/en/singapore-region/singapore/restaurant/les-amis
-	restaurantDetailXPath          = "//div[@class='restaurant-details']"
-	restaurantNameXPath            = "//h2[@class='restaurant-details__heading--title']"
-	restaurantAddressXPath         = "//ul[@class='restaurant-details__heading--list']/li"
-	restaurantPriceAndCuisineXPath = "//li[@class='restaurant-details__heading-price']"
-	restaurantGoogleMapsXPath      = "//div[@class='google-map__static']/iframe"
-	restaurantPhoneNumberXPath     = "//a[@data-event='CTA_tel']"
-	restaurantWebsiteUrlXPath      = "//a[@data-event='CTA_website']"
+	restaurantDetailXPath                = "//div[@class='restaurant-details']"
+	restaurantNameXPath                  = "//h2[@class='restaurant-details__heading--title']"
+	restaurantAddressXPath               = "//ul[@class='restaurant-details__heading--list']/li"
+	restaurantPriceAndCuisineXPath       = "//li[@class='restaurant-details__heading-price']"
+	restaurantFacilitiesAndServicesXPath = "//div[@class='restaurant-details__services--content']/i/following-sibling::text()"
+	restaurantGoogleMapsXPath            = "//div[@class='google-map__static']/iframe"
+	restaurantPhoneNumberXPath           = "//a[@data-event='CTA_tel']"
+	restaurantWebsiteUrlXPath            = "//a[@data-event='CTA_website']"
 )

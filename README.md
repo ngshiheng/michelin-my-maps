@@ -1,5 +1,9 @@
 <h1 align="center"><strong>Michelin My Maps</strong></h1>
 
+[![Continuos Integration](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/ci.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/ci.yml)
+[![Scrape Data](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/scrape.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/scrape.yml)
+[![Semantic Release](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/release.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/release.yml)
+
 - [Context](#context)
 - [Disclaimer](#disclaimer)
 - [Content](#content)
@@ -26,6 +30,8 @@ The dataset is curated using [Go Colly](https://github.com/gocolly/colly).
 This software is only used for research purposes, users must abide by the relevant laws and regulations of their location, please do not use it for illegal purposes. The user shall bear all the consequences caused by illegal use.
 
 ## Content
+
+> This is a **live** dataset that is updated **quarterly**.
 
 The dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. the 'Award' column) of the restaurants included are:
 

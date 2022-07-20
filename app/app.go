@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/csv"
 	"net/http"
+	"strings"
 
 	"os"
 	"path/filepath"
@@ -25,6 +26,7 @@ type App struct {
 	startUrls       []startUrl
 }
 
+// New constructs a new crawler application
 func New() *App {
 	// Initialize csv file and writer
 	file, err := os.Create(filepath.Join(outputPath, outputFileName))
@@ -70,7 +72,7 @@ func New() *App {
 	}
 }
 
-// Crawl Michelin Guide Restaurants information from app.startUrls
+// Crawl crawls Michelin Guide Restaurants information from app.startUrls
 func (app *App) Crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 	defer app.file.Close()
@@ -132,20 +134,24 @@ func (app *App) Crawl() {
 			).Warn("phone number is not available")
 		}
 
+		facilitiesAndServicesSlice := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
+		facilitiesAndServices := strings.Join(facilitiesAndServicesSlice, ",")
+
 		restaurant := model.Restaurant{
-			Name:        name,
-			Address:     address,
-			Location:    e.Request.Ctx.Get("location"),
-			MinPrice:    minPrice,
-			MaxPrice:    maxPrice,
-			Currency:    currency,
-			Cuisine:     cuisine,
-			Longitude:   e.Request.Ctx.Get("longitude"),
-			Latitude:    e.Request.Ctx.Get("latitude"),
-			PhoneNumber: formattedPhoneNumber,
-			Url:         url,
-			WebsiteUrl:  websiteUrl,
-			Award:       e.Request.Ctx.Get("award"),
+			Name:                  name,
+			Address:               address,
+			Location:              e.Request.Ctx.Get("location"),
+			MinPrice:              minPrice,
+			MaxPrice:              maxPrice,
+			Currency:              currency,
+			Cuisine:               cuisine,
+			Longitude:             e.Request.Ctx.Get("longitude"),
+			Latitude:              e.Request.Ctx.Get("latitude"),
+			PhoneNumber:           formattedPhoneNumber,
+			Url:                   url,
+			WebsiteUrl:            websiteUrl,
+			Award:                 e.Request.Ctx.Get("award"),
+			FacilitiesAndServices: facilitiesAndServices,
 		}
 
 		log.Debug(restaurant)
