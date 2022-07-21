@@ -1,6 +1,6 @@
 module github.com/ngshiheng/michelin-my-maps
 
-go 1.17
+go 1.18
 
 require (
 	github.com/gocolly/colly v1.2.0
