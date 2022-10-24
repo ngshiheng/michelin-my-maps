@@ -6,7 +6,7 @@ require (
 	github.com/gocolly/colly v1.2.0
 	github.com/nyaruka/phonenumbers v1.1.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
