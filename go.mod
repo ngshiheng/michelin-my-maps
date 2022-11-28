@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/gocolly/colly v1.2.0
-	github.com/nyaruka/phonenumbers v1.1.2
+	github.com/nyaruka/phonenumbers v1.1.4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 )
