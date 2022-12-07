@@ -40,11 +40,11 @@ The dataset contains a list of restaurants along with additional details (e.g. a
 -   1 Star
 -   Bib Gourmand
 
-| Content | Link                                                                       | Description                                        |
-| :------ | :------------------------------------------------------------------------- | :------------------------------------------------- |
-| CSV     | [CSV](./data/michelin_my_maps.csv)                                         | Good'ol comma-separated values (updated quarterly) |
-| Kaggle  | [Kaggle](https://www.kaggle.com/ngshiheng/michelin-guide-restaurants-2021) | Data science community                             |
-| Search  | [Polymer Search](https://app.polymersearch.com/jerrynsh/michelin_my_maps/) | For advanced search and data visualization         |
+| Content | Link                                                                                                           | Description                                        |
+| :------ | :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------- |
+| CSV     | [CSV](./data/michelin_my_maps.csv)                                                                             | Good'ol comma-separated values (updated quarterly) |
+| Kaggle  | [Kaggle](https://www.kaggle.com/ngshiheng/michelin-guide-restaurants-2021)                                     | Data science community                             |
+| Search  | [Polymer Search](https://app.polymersearch.com/jerrynsh/michelin_my_maps/23436316-69d3-4e72-8171-bb5dacf6d490) | For advanced search and data visualization         |
 
 ## Inspiration
 
