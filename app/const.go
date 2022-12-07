@@ -30,18 +30,18 @@ const (
 const (
 	// All restaurants page
 	// E.g.: https://guide.michelin.com/en/restaurants/3-stars-michelin/
-	nextPageArrowButtonXPath = "//a[@class='btn btn-outline-secondary btn-sm']"
+	nextPageArrowButtonXPath = "//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']"
 	restaurantXPath          = "//div[@class='card__menu box-placeholder js-restaurant__list_item js-match-height js-map ']"
-	restaurantDetailUrlXPath = "//a[@class='link']"
-	restaurantLocationXPath  = "//div[@class='card__menu-footer--location flex-fill pl-text']/i/following-sibling::text()"
+	restaurantDetailUrlXPath = "//a[@class='link with-love']"
+	restaurantLocationXPath  = "//div[@class='card__menu-footer--location flex-fill pl-text']"
 
 	// Individual restaurant detail page
 	// E.g.: https://guide.michelin.com/en/singapore-region/singapore/restaurant/les-amis
 	restaurantDetailXPath                = "//div[@class='restaurant-details']"
-	restaurantNameXPath                  = "//h2[@class='restaurant-details__heading--title']"
-	restaurantAddressXPath               = "//ul[@class='restaurant-details__heading--list']/li"
-	restaurantPriceAndCuisineXPath       = "//li[@class='restaurant-details__heading-price']"
-	restaurantFacilitiesAndServicesXPath = "//div[@class='restaurant-details__services--content']/i/following-sibling::text()"
+	restaurantNameXPath                  = "//*[@class='restaurant-details__heading--title']"
+	restaurantAddressXPath               = "//*[@class='restaurant-details__heading--address']"
+	restaurantPriceAndCuisineXPath       = "//*[@class='restaurant-details__heading-price']"
+	restaurantFacilitiesAndServicesXPath = "//div[@class='restaurant-details__services']//li"
 	restaurantGoogleMapsXPath            = "//div[@class='google-map__static']/iframe"
 	restaurantPhoneNumberXPath           = "//a[@data-event='CTA_tel']"
 	restaurantWebsiteUrlXPath            = "//a[@data-event='CTA_website']"

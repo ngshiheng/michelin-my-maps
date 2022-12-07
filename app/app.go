@@ -117,10 +117,7 @@ func (app *App) Crawl() {
 		address := e.ChildText(restaurantAddressXPath)
 
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
-		price, cuisine := parser.SplitUnpack(priceAndCuisine, "•")
-		price = parser.TrimWhiteSpaces(price)
-
-		minPrice, maxPrice, currency := parser.ParsePrice(price)
+		price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
 
 		phoneNumber := e.ChildAttr(restaurantPhoneNumberXPath, "href")
 		formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
@@ -141,9 +138,7 @@ func (app *App) Crawl() {
 			Name:                  name,
 			Address:               address,
 			Location:              e.Request.Ctx.Get("location"),
-			MinPrice:              minPrice,
-			MaxPrice:              maxPrice,
-			Currency:              currency,
+			Price:                 price,
 			Cuisine:               cuisine,
 			Longitude:             e.Request.Ctx.Get("longitude"),
 			Latitude:              e.Request.Ctx.Get("latitude"),

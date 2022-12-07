@@ -67,7 +67,7 @@ func IsValidCoordinates(coordinates string) bool {
 	return re.MatchString(coordinates)
 }
 
-/*
+/* DEPRECATED
 ParsePrice extracts and parses minPrice, maxPrice, and currency from a raw price string
 
 Example inputPrice: "148-248 USD", "1,000-1,280 CNY"
