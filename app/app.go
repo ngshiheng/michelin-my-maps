@@ -115,6 +115,7 @@ func (app *App) Crawl() {
 		name := e.ChildText(restaurantNameXPath)
 
 		address := e.ChildText(restaurantAddressXPath)
+		address = strings.Replace(address, "\n", " ", -1)
 
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
 		price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
