@@ -14,7 +14,7 @@ help:  ## display this help message.
 
 .PHONY: test
 test:	## run all the tests.
-	go test ./... -v -count=1
+	@go test ./... -v -count=1
 
 .PHONY: lint
 lint:	## run lint with golangci-lint in docker.
@@ -23,8 +23,8 @@ lint:	## run lint with golangci-lint in docker.
 	
 .PHONY: build
 build:	## build binary.
-	@go build -o bin/main .
+	@go build -o michelin-my-maps cmd/app/main.go
 
 .PHONY: run
 run:	## go run main.go.
-	@go run main.go
+	@go run cmd/app/main.go
