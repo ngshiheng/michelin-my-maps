@@ -1,4 +1,4 @@
-package app
+package crawler
 
 import (
 	"encoding/csv"
@@ -11,9 +11,8 @@ import (
 
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/extensions"
-	"github.com/ngshiheng/michelin-my-maps/model"
-	"github.com/ngshiheng/michelin-my-maps/util/logger"
-	"github.com/ngshiheng/michelin-my-maps/util/parser"
+	"github.com/ngshiheng/michelin-my-maps/pkg/logger"
+	"github.com/ngshiheng/michelin-my-maps/pkg/parser"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -36,7 +35,7 @@ func New() *App {
 
 	writer := csv.NewWriter(file)
 
-	csvHeader := model.GenerateFieldNameSlice(model.Restaurant{})
+	csvHeader := GenerateFieldNameSlice(Restaurant{})
 	if err := writer.Write(csvHeader); err != nil {
 		log.WithFields(log.Fields{
 			"file":      file,
@@ -135,7 +134,7 @@ func (app *App) Crawl() {
 		facilitiesAndServicesSlice := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
 		facilitiesAndServices := strings.Join(facilitiesAndServicesSlice, ",")
 
-		restaurant := model.Restaurant{
+		restaurant := Restaurant{
 			Name:                  name,
 			Address:               address,
 			Location:              e.Request.Ctx.Get("location"),
@@ -152,7 +151,7 @@ func (app *App) Crawl() {
 
 		log.Debug(restaurant)
 
-		if err := app.writer.Write(model.GenerateFieldValueSlice(restaurant)); err != nil {
+		if err := app.writer.Write(GenerateFieldValueSlice(restaurant)); err != nil {
 			log.Fatalf("cannot write data %q: %s\n", restaurant, err)
 		}
 	})

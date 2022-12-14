@@ -1,7 +1,6 @@
 <h1 align="center"><strong>Michelin My Maps</strong></h1>
 
 [![Continuos Integration](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/ci.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/ci.yml)
-[![Scrape Data](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/scrape.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/scrape.yml)
 [![Semantic Release](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/release.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/release.yml)
 
 - [Context](#context)
@@ -57,13 +56,13 @@ Check out the [Makefile](./Makefile) for basic usage.
 To begin scraping, run:
 
 ```sh
-make run # go run main.go
+make run # go run cmd/app/main.go
 ```
 
 To build binary, run:
 
 ```sh
-make build # go build -o bin/main .
+make build # go build -o michelin-my-maps cmd/app/main.go
 ```
 
 The output of this command is the [csv file](./data/michelin_my_maps.csv) created/updated inside [`data/`](./data/) folder.

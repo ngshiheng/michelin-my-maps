@@ -23,8 +23,8 @@ lint:	## run lint with golangci-lint in docker.
 	
 .PHONY: build
 build:	## build binary.
-	@go build -o bin/main .
+	@go build -o michelin-my-maps cmd/app/main.go
 
 .PHONY: run
 run:	## go run main.go.
-	@go run main.go
+	@go run cmd/app/main.go
