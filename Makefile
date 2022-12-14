@@ -14,7 +14,7 @@ help:  ## display this help message.
 
 .PHONY: test
 test:	## run all the tests.
-	go test ./... -v -count=1
+	@go test ./... -v -count=1
 
 .PHONY: lint
 lint:	## run lint with golangci-lint in docker.
