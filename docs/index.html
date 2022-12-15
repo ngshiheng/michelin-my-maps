@@ -4,6 +4,7 @@
         <title>Michelin My Map</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/x-icon" href="favicon.ico" />
         <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/holiday.css"
@@ -19,7 +20,7 @@
 
             let restaurantDB;
 
-            window.addEventListener("load", async (event) => {
+            async function createLyraInstance(event) {
                 const endpoint = "data.json";
                 const response = await fetch(endpoint);
                 const data = await response.json();
@@ -40,12 +41,12 @@
                         FacilitiesAndServices: "string",
                     },
                 });
-                await insertBatch(restaurantDB, data, {
-                    batchSize: 500,
-                });
-            });
+                await insertBatch(restaurantDB, data, { batchSize: 500 });
+            }
 
             function jsonToHtmlTable(json) {
+                if (!json[0]) return;
+
                 let columns = Object.keys(json[0].document);
                 let table = document.getElementById("search-results");
 
@@ -99,8 +100,8 @@
                 }
             }
 
-            document.body.addEventListener("input", function (evt) {
-                const searchTerm = evt.target.value;
+            function handleSearch(event) {
+                const searchTerm = event.target.value;
                 const searchResult = search(restaurantDB, {
                     term: searchTerm,
                     properties: ["Name", "Address", "Location", "Cuisine"],
@@ -108,18 +109,24 @@
                     tolerance: 3,
                 });
                 jsonToHtmlTable(searchResult.hits);
-            });
+            }
+
+            window.addEventListener("load", createLyraInstance);
+            document.body.addEventListener("input", handleSearch);
         </script>
         <div>
             <h1>Michelin My Map</h1>
             <p>
                 Search for
                 <a href="https://guide.michelin.com/">MICHELIN Guide</a>
-                restaurants in <b>microseconds</b>.
+                restaurants in <b>microseconds</b>. The dataset is curated using
+                <a href="https://github.com/ngshiheng/michelin-my-maps"
+                    >Go Colly</a
+                >.
             </p>
             <p>
-                Try to search for Restaurant name, address, location, or
-                cuisine!
+                Try to search for restaurant name, address, location, or
+                cuisine.
             </p>
             <div>
                 <input
@@ -133,11 +140,7 @@
     </body>
     <footer>
         <div>
-            ©
-            <a href="https://github.com/ngshiheng/michelin-my-maps"
-                >Michelin My Map</a
-            >
-            by <a href="https://jerrynsh.com/">Jerry Ng</a> with
+            © Made by <a href="https://jerrynsh.com/">Jerry Ng</a> & built with
             <a href="https://github.com/lyrasearch/lyra">LyraSearch</a>.
         </div>
         <div></div>
