@@ -8,24 +8,27 @@ import (
 
 func TestSplitUnpack(t *testing.T) {
 	cases := []struct {
-		Got     string
-		Price   string
-		Cuisine string
+		Separator string
+		Got       string
+		Price     string
+		Cuisine   string
 	}{
-		{"145 - 195 EUR • Modern Cuisine, Classic Cuisin", "145 - 195 EUR", "Modern Cuisine, Classic Cuisin"},
-		{"45 - 160 CHF • Italian Contemporary", "45 - 160 CHF", "Italian Contemporary"},
-		{"75 - 115 EUR • Piedmontese, Creative", "75 - 115 EUR", "Piedmontese, Creative"},
-		{"70 EUR • Regional Cuisine", "70 EUR", "Regional Cuisine"},
-		{"31,000 JPY • Innovative", "31,000 JPY", "Innovative"},
-		{"25,000 - 28,000 JPY • Sushi", "25,000 - 28,000 JPY", "Sushi"},
-		{"European Contemporary", "", "European Contemporary"},
+		{"•", "145 - 195 EUR • Modern Cuisine, Classic Cuisin", "145 - 195 EUR", "Modern Cuisine, Classic Cuisin"},
+		{"•", "45 - 160 CHF • Italian Contemporary", "45 - 160 CHF", "Italian Contemporary"},
+		{"•", "75 - 115 EUR • Piedmontese, Creative", "75 - 115 EUR", "Piedmontese, Creative"},
+		{"•", "70 EUR • Regional Cuisine", "70 EUR", "Regional Cuisine"},
+		{"•", "31,000 JPY • Innovative", "31,000 JPY", "Innovative"},
+		{"•", "25,000 - 28,000 JPY • Sushi", "25,000 - 28,000 JPY", "Sushi"},
+		{"•", "European Contemporary", "", "European Contemporary"},
+		{"•", "$$$$ • French", "$$$$", "French"},
+		{"·", "¥¥¥ · Japanese", "¥¥¥", "Japanese"},
 	}
 
 	for _, tt := range cases {
 		t.Run("test split SplitUnpack", func(t *testing.T) {
-			got1, got2 := SplitUnpack(tt.Got, "•")
-			assert.Equal(t, tt.Price, got1)
-			assert.Equal(t, tt.Cuisine, got2)
+			price, cuisine := SplitUnpack(tt.Got, tt.Separator)
+			assert.Equal(t, tt.Price, price)
+			assert.Equal(t, tt.Cuisine, cuisine)
 		})
 	}
 }
