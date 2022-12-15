@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Michelin My Map</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/x-icon" href="favicon.ico" />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/holiday.css"
+        />
+    </head>
+    <body>
+        <script type="module">
+            import {
+                create,
+                search,
+                insertBatch,
+            } from "https://unpkg.com/@lyrasearch/lyra@latest/dist/esm/src/lyra.js";
+
+            let restaurantDB;
+
+            async function createLyraInstance(event) {
+                const endpoint = "data.json";
+                const response = await fetch(endpoint);
+                const data = await response.json();
+
+                restaurantDB = create({
+                    schema: {
+                        Name: "string",
+                        Address: "string",
+                        Location: "string",
+                        Price: "string",
+                        Cuisine: "string",
+                        Longitude: "number",
+                        Latitude: "number",
+                        PhoneNumber: "number",
+                        Url: "string",
+                        WebsiteUrl: "string",
+                        Award: "string",
+                        FacilitiesAndServices: "string",
+                    },
+                });
+                await insertBatch(restaurantDB, data, { batchSize: 500 });
+            }
+
+            function jsonToHtmlTable(json) {
+                if (!json[0]) return;
+
+                let columns = Object.keys(json[0].document);
+                let table = document.getElementById("search-results");
+
+                const ignoreList = [
+                    "Longitude",
+                    "Latitude",
+                    "Url",
+                    "WebsiteUrl",
+                    "FacilitiesAndServices",
+                ];
+
+                // Clear existing table
+                table.innerHTML = "";
+
+                // Create table header
+                let thead = table.createTHead();
+                let row = thead.insertRow();
+                for (let key of columns) {
+                    // Skip keys that should be ignored
+                    if (ignoreList.includes(key)) continue;
+
+                    let th = document.createElement("th");
+                    let text = document.createTextNode(key);
+                    th.appendChild(text);
+                    row.appendChild(th);
+                }
+
+                // Create table body
+                let tbody = table.createTBody();
+                for (let element of json) {
+                    row = tbody.insertRow();
+                    for (let key of columns) {
+                        // Skip keys that should be ignored
+                        if (ignoreList.includes(key)) continue;
+
+                        let cell = row.insertCell();
+
+                        // If the key is "Name", create a link element and set its href attribute
+                        if (key === "Name") {
+                            let link = document.createElement("a");
+                            link.setAttribute("href", element.document["Url"]);
+                            link.innerText = element.document[key];
+                            cell.appendChild(link);
+                        } else {
+                            let text = document.createTextNode(
+                                element.document[key],
+                            );
+                            cell.appendChild(text);
+                        }
+                    }
+                }
+            }
+
+            function handleSearch(event) {
+                const searchTerm = event.target.value;
+                const searchResult = search(restaurantDB, {
+                    term: searchTerm,
+                    properties: ["Name", "Address", "Location", "Cuisine"],
+                    limit: 50,
+                    tolerance: 3,
+                });
+                jsonToHtmlTable(searchResult.hits);
+            }
+
+            window.addEventListener("load", createLyraInstance);
+            document.body.addEventListener("input", handleSearch);
+        </script>
+        <div>
+            <h1>Michelin My Map</h1>
+            <p>
+                Search for
+                <a href="https://guide.michelin.com/">MICHELIN Guide</a>
+                restaurants in <b>microseconds</b>. The dataset is curated using
+                <a href="https://github.com/ngshiheng/michelin-my-maps"
+                    >Go Colly</a
+                >.
+            </p>
+            <p>
+                Try to search for restaurant name, address, location, or
+                cuisine.
+            </p>
+            <div>
+                <input
+                    autofocus
+                    type="search"
+                    placeholder="Begin typing to search..."
+                />
+            </div>
+            <table id="search-results"></table>
+        </div>
+    </body>
+    <footer>
+        <div>
+            © Made by <a href="https://jerrynsh.com/">Jerry Ng</a> & built with
+            <a href="https://github.com/lyrasearch/lyra">LyraSearch</a>.
+        </div>
+        <div></div>
+    </footer>
+</html>
