@@ -1,38 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>The MICHELIN Guide Restaurants</title>
+        <title>Michelin My Map</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script
-            src="https://unpkg.com/htmx.org@1.8.4"
-            integrity="sha384-wg5Y/JwF7VxGk4zLsJEcAojRtlVp1FKKdGy1qN+OMtdq72WRvX/EdRdqg/LOhYeV"
-            crossorigin="anonymous"
-        ></script>
-        <style>
-            body {
-                margin: 5% auto;
-                background: #f2f2f2;
-                color: #444444;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                    Roboto, Helvetica, Arial, sans-serif;
-                font-size: 16px;
-                line-height: 1.8;
-                text-shadow: 0 1px 0 #ffffff;
-                max-width: 73%;
-            }
-            code {
-                background: white;
-            }
-            a {
-                border-bottom: 1px solid #444444;
-                color: #444444;
-                text-decoration: none;
-            }
-            a:hover {
-                border-bottom: 0;
-            }
-        </style>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/holiday.css"
+        />
     </head>
     <body>
         <script type="module">
@@ -42,13 +17,12 @@
                 insertBatch,
             } from "https://unpkg.com/@lyrasearch/lyra@latest/dist/esm/src/lyra.js";
 
-            let data;
             let restaurantDB;
 
             window.addEventListener("load", async (event) => {
                 const endpoint = "data.json";
                 const response = await fetch(endpoint);
-                data = await response.json();
+                const data = await response.json();
 
                 restaurantDB = create({
                     schema: {
@@ -67,81 +41,105 @@
                     },
                 });
                 await insertBatch(restaurantDB, data, {
-                    batchSize: 50,
+                    batchSize: 500,
                 });
             });
+
+            function jsonToHtmlTable(json) {
+                let columns = Object.keys(json[0].document);
+                let table = document.getElementById("search-results");
+
+                const ignoreList = [
+                    "Longitude",
+                    "Latitude",
+                    "Url",
+                    "WebsiteUrl",
+                    "FacilitiesAndServices",
+                ];
+
+                // Clear existing table
+                table.innerHTML = "";
+
+                // Create table header
+                let thead = table.createTHead();
+                let row = thead.insertRow();
+                for (let key of columns) {
+                    // Skip keys that should be ignored
+                    if (ignoreList.includes(key)) continue;
+
+                    let th = document.createElement("th");
+                    let text = document.createTextNode(key);
+                    th.appendChild(text);
+                    row.appendChild(th);
+                }
+
+                // Create table body
+                let tbody = table.createTBody();
+                for (let element of json) {
+                    row = tbody.insertRow();
+                    for (let key of columns) {
+                        // Skip keys that should be ignored
+                        if (ignoreList.includes(key)) continue;
+
+                        let cell = row.insertCell();
+
+                        // If the key is "Name", create a link element and set its href attribute
+                        if (key === "Name") {
+                            let link = document.createElement("a");
+                            link.setAttribute("href", element.document["Url"]);
+                            link.innerText = element.document[key];
+                            cell.appendChild(link);
+                        } else {
+                            let text = document.createTextNode(
+                                element.document[key],
+                            );
+                            cell.appendChild(text);
+                        }
+                    }
+                }
+            }
 
             document.body.addEventListener("input", function (evt) {
                 const searchTerm = evt.target.value;
                 const searchResult = search(restaurantDB, {
                     term: searchTerm,
-                    properties: ["Name", "Location"],
+                    properties: ["Name", "Address", "Location", "Cuisine"],
                     limit: 50,
+                    tolerance: 3,
                 });
-
-                let table = document.getElementById("search-results");
-                table.innerHTML = ""; // delete table
-
-                if (searchResult.hits.length > 0) {
-                    for (let i = 0; i < searchResult.hits.length; i++) {
-                        const row = table.insertRow(i);
-
-                        for (const [key, value] of Object.entries(
-                            searchResult.hits[i].document,
-                        )) {
-                            // Only add keys specified in restaurantDB schema
-                            if (key in restaurantDB.schema) {
-                                const cell = row.insertCell();
-                                cell.innerHTML = value;
-                            }
-                        }
-                    }
-                }
+                jsonToHtmlTable(searchResult.hits);
             });
         </script>
         <div>
-            <h1>The MICHELIN Guide Restaurants</h1>
-            <div>
-                A
-                <a href="https://htmx.org/examples/active-search/"
-                    >htmx Active Search</a
-                >
-                demo.
-            </div>
-            <br />
+            <h1>Michelin My Map</h1>
+            <p>
+                Search for
+                <a href="https://guide.michelin.com/">MICHELIN Guide</a>
+                restaurants in <b>microseconds</b>.
+            </p>
+            <p>
+                Try to search for Restaurant name, address, location, or
+                cuisine!
+            </p>
             <div>
                 <input
                     autofocus
-                    id="search-bar"
-                    class="form-control"
                     type="search"
-                    placeholder="Type to search..."
-                    hx-trigger="load delay:1s, keyup changed delay:500ms, search"
-                    hx-indicator=".htmx-indicator"
+                    placeholder="Begin typing to search..."
                 />
-                <span class="htmx-indicator">
-                    <img src="bars.svg" />
-                </span>
             </div>
-            <table id="search-results" class="table">
-                <thead>
-                    <th>Name</th>
-                    <th>Address</th>
-                    <th>Location</th>
-                    <th>Price</th>
-                    <th>Cuisine</th>
-                    <th>Longitude</th>
-                    <th>Latitude</th>
-                    <th>PhoneNumber</th>
-                    <th>Url</th>
-                    <th>WebsiteUrl</th>
-                    <th>Award</th>
-                    <th>FacilitiesAndServices</th>
-                </thead>
-            </table>
+            <table id="search-results"></table>
         </div>
     </body>
     <footer>
-        <div>Made by <a href="https://jerrynsh.com/">Jerry Ng</a>.</div>
+        <div>
+            ©
+            <a href="https://github.com/ngshiheng/michelin-my-maps"
+                >Michelin My Map</a
+            >
+            by <a href="https://jerrynsh.com/">Jerry Ng</a> with
+            <a href="https://github.com/lyrasearch/lyra">LyraSearch</a>.
+        </div>
+        <div></div>
     </footer>
 </html>
