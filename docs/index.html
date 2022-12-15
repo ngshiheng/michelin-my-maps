@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>The MICHELIN Guide Restaurants</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script
+            src="https://unpkg.com/htmx.org@1.8.4"
+            integrity="sha384-wg5Y/JwF7VxGk4zLsJEcAojRtlVp1FKKdGy1qN+OMtdq72WRvX/EdRdqg/LOhYeV"
+            crossorigin="anonymous"
+        ></script>
+        <style>
+            body {
+                margin: 5% auto;
+                background: #f2f2f2;
+                color: #444444;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, Helvetica, Arial, sans-serif;
+                font-size: 16px;
+                line-height: 1.8;
+                text-shadow: 0 1px 0 #ffffff;
+                max-width: 73%;
+            }
+            code {
+                background: white;
+            }
+            a {
+                border-bottom: 1px solid #444444;
+                color: #444444;
+                text-decoration: none;
+            }
+            a:hover {
+                border-bottom: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <script type="module">
+            import {
+                create,
+                search,
+                insertBatch,
+            } from "https://unpkg.com/@lyrasearch/lyra@latest/dist/esm/src/lyra.js";
+
+            let data;
+            let restaurantDB;
+
+            window.addEventListener("load", async (event) => {
+                const endpoint = "data.json";
+                const response = await fetch(endpoint);
+                data = await response.json();
+
+                restaurantDB = create({
+                    schema: {
+                        Name: "string",
+                        Address: "string",
+                        Location: "string",
+                        Price: "string",
+                        Cuisine: "string",
+                        Longitude: "number",
+                        Latitude: "number",
+                        PhoneNumber: "number",
+                        Url: "string",
+                        WebsiteUrl: "string",
+                        Award: "string",
+                        FacilitiesAndServices: "string",
+                    },
+                });
+                await insertBatch(restaurantDB, data, {
+                    batchSize: 50,
+                });
+            });
+
+            document.body.addEventListener("input", function (evt) {
+                const searchTerm = evt.target.value;
+                const searchResult = search(restaurantDB, {
+                    term: searchTerm,
+                    properties: ["Name", "Location"],
+                    limit: 50,
+                });
+
+                let table = document.getElementById("search-results");
+                table.innerHTML = ""; // delete table
+
+                if (searchResult.hits.length > 0) {
+                    for (let i = 0; i < searchResult.hits.length; i++) {
+                        const row = table.insertRow(i);
+
+                        for (const [key, value] of Object.entries(
+                            searchResult.hits[i].document,
+                        )) {
+                            // Only add keys specified in restaurantDB schema
+                            if (key in restaurantDB.schema) {
+                                const cell = row.insertCell();
+                                cell.innerHTML = value;
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+        <div>
+            <h1>The MICHELIN Guide Restaurants</h1>
+            <div>
+                A
+                <a href="https://htmx.org/examples/active-search/"
+                    >htmx Active Search</a
+                >
+                demo.
+            </div>
+            <br />
+            <div>
+                <input
+                    autofocus
+                    id="search-bar"
+                    class="form-control"
+                    type="search"
+                    placeholder="Type to search..."
+                    hx-trigger="load delay:1s, keyup changed delay:500ms, search"
+                    hx-indicator=".htmx-indicator"
+                />
+                <span class="htmx-indicator">
+                    <img src="bars.svg" />
+                </span>
+            </div>
+            <table id="search-results" class="table">
+                <thead>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Location</th>
+                    <th>Price</th>
+                    <th>Cuisine</th>
+                    <th>Longitude</th>
+                    <th>Latitude</th>
+                    <th>PhoneNumber</th>
+                    <th>Url</th>
+                    <th>WebsiteUrl</th>
+                    <th>Award</th>
+                    <th>FacilitiesAndServices</th>
+                </thead>
+            </table>
+        </div>
+    </body>
+    <footer>
+        <div>Made by <a href="https://jerrynsh.com/">Jerry Ng</a>.</div>
+    </footer>
+</html>
