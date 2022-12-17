@@ -20,7 +20,7 @@ async function createLyraInstance(event) {
             Cuisine: "string",
             Longitude: "number",
             Latitude: "number",
-            PhoneNumber: "number",
+            PhoneNumber: "string",
             Url: "string",
             WebsiteUrl: "string",
             Award: "string",
@@ -90,7 +90,7 @@ function jsonToHtmlTable(json) {
                     const phoneNumber = element.document["PhoneNumber"];
                     if (phoneNumber) {
                         let text = document.createTextNode(
-                            `+${element.document[key]}`,
+                            element.document[key],
                         );
                         cell.appendChild(text);
                     }
