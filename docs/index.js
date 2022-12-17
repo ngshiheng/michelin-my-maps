@@ -6,6 +6,7 @@ import {
 } from "https://unpkg.com/@lyrasearch/lyra@latest/dist/esm/src/lyra.js";
 
 let restaurantDB;
+const summary = document.getElementById("search-summary");
 const table = document.getElementById("search-results");
 
 async function createLyraInstance(event) {
@@ -117,6 +118,7 @@ function jsonToHtmlTable(json) {
 function handleSearch(event) {
     const searchTerm = document.getElementById("search-term").value;
     if (!searchTerm || !restaurantDB) {
+        summary.innerText = "";
         table.innerHTML = "";
         return;
     }
@@ -127,8 +129,8 @@ function handleSearch(event) {
         tolerance: 3,
         limit: 20,
     });
-    const searchSpeed = document.getElementById("search-speed");
-    searchSpeed.innerText = `Found ${
+
+    summary.innerText = `Found ${
         searchResult.count
     } results. Search took ${formatNanoseconds(searchResult.elapsed)}.`;
     jsonToHtmlTable(searchResult.hits);
