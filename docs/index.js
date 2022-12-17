@@ -68,15 +68,47 @@ function jsonToHtmlTable(json) {
 
             let cell = row.insertCell();
 
-            // If the key is "Name", create a link element and set its href attribute
-            if (key === "Name") {
-                let link = document.createElement("a");
-                link.setAttribute("href", element.document["Url"]);
-                link.innerText = element.document[key];
-                cell.appendChild(link);
-            } else {
-                let text = document.createTextNode(element.document[key]);
-                cell.appendChild(text);
+            // Add relevant attribute based on key.
+            // E.g. if the key is "Name", create a link element and set its href attribute
+            switch (key) {
+                case "Name": {
+                    const websiteUrl = element.document["WebsiteUrl"];
+                    if (!websiteUrl) {
+                        const text = document.createTextNode(
+                            element.document[key],
+                        );
+                        cell.appendChild(text);
+                        break;
+                    }
+                    const link = document.createElement("a");
+                    link.setAttribute("href", websiteUrl);
+                    link.innerText = element.document[key];
+                    cell.appendChild(link);
+                    break;
+                }
+                case "PhoneNumber": {
+                    const phoneNumber = element.document["PhoneNumber"];
+                    if (phoneNumber) {
+                        let text = document.createTextNode(
+                            element.document[key],
+                        );
+                        cell.appendChild(text);
+                    }
+                    break;
+                }
+                case "Award": {
+                    const link = document.createElement("a");
+                    const url = element.document["Url"];
+                    link.setAttribute("href", url);
+                    link.innerText = element.document[key];
+                    cell.appendChild(link);
+                    break;
+                }
+                default: {
+                    const text = document.createTextNode(element.document[key]);
+                    cell.appendChild(text);
+                    break;
+                }
             }
         }
     }
@@ -84,7 +116,7 @@ function jsonToHtmlTable(json) {
 
 function handleSearch(event) {
     const searchTerm = document.getElementById("search-term").value;
-    if (!searchTerm) return;
+    if (!searchTerm || !restaurantDB) return;
 
     const searchResult = search(restaurantDB, {
         term: searchTerm,
