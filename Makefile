@@ -38,4 +38,4 @@ crawl:	## crawl data and save it into /data directory.
 .PHONY: csvtojson
 csvtojson:	## convert data from csv to json.
 	@if [ -z $(MILLER) ]; then echo "Miller could not be found. See https://github.com/johnkerl/miller"; exit 2; fi
-	@mlr --c2j --jlistwrap cat data/michelin_my_maps.csv > docs/data.json
+	$(sh mlr --c2j --jlistwrap then put 'for (k, v in $*) { $[k] = string(v) }' then cat data/michelin_my_maps.csv > docs/data.json)
