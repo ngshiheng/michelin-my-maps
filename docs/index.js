@@ -2,9 +2,11 @@ import {
     create,
     search,
     insertBatch,
+    formatNanoseconds,
 } from "https://unpkg.com/@lyrasearch/lyra@latest/dist/esm/src/lyra.js";
 
 let restaurantDB;
+const table = document.getElementById("search-results");
 
 async function createLyraInstance(event) {
     const endpoint = "data.json";
@@ -31,8 +33,6 @@ async function createLyraInstance(event) {
 }
 
 function jsonToHtmlTable(json) {
-    const table = document.getElementById("search-results");
-
     // Clear existing table
     table.innerHTML = "";
     if (!json[0]) return;
@@ -116,7 +116,10 @@ function jsonToHtmlTable(json) {
 
 function handleSearch(event) {
     const searchTerm = document.getElementById("search-term").value;
-    if (!searchTerm || !restaurantDB) return;
+    if (!searchTerm || !restaurantDB) {
+        table.innerHTML = "";
+        return;
+    }
 
     const searchResult = search(restaurantDB, {
         term: searchTerm,
