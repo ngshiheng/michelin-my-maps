@@ -90,7 +90,7 @@ function jsonToHtmlTable(json) {
                     const phoneNumber = element.document["PhoneNumber"];
                     if (phoneNumber) {
                         let text = document.createTextNode(
-                            element.document[key],
+                            `+${element.document[key]}`,
                         );
                         cell.appendChild(text);
                     }
