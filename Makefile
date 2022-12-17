@@ -1,5 +1,6 @@
 NAME := michelin-my-maps
 DOCKER := $(shell command -v docker 2> /dev/null)
+MILLER := $(shell command -v mlr 2> /dev/null)
 
 .DEFAULT_GOAL := help
 .PHONY: help
@@ -28,3 +29,9 @@ build:	## build binary.
 .PHONY: run
 run:	## go run main.go.
 	@go run cmd/app/main.go
+
+
+.PHONY: csvtojson
+csvtojson:	## convert dataset from csv to json.
+	@if [ -z $(MILLER) ]; then echo "Miller could not be found. See https://github.com/johnkerl/miller"; exit 2; fi
+	@mlr --c2j --jlistwrap cat data/michelin_my_maps.csv > docs/data.json
