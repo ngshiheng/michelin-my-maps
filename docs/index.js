@@ -83,7 +83,9 @@ function jsonToHtmlTable(json) {
 }
 
 function handleSearch(event) {
-    const searchTerm = event.target.value;
+    const searchTerm = document.getElementById("search-term").value;
+    if (!searchTerm) return;
+
     const searchResult = search(restaurantDB, {
         term: searchTerm,
         properties: ["Name", "Address", "Location", "Cuisine"],
@@ -93,5 +95,9 @@ function handleSearch(event) {
     jsonToHtmlTable(searchResult.hits);
 }
 
-window.addEventListener("load", createLyraInstance);
+window.onload = async function (event) {
+    await createLyraInstance(event);
+    handleSearch(event);
+};
+
 document.body.addEventListener("input", handleSearch);
