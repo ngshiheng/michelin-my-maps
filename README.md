@@ -30,8 +30,6 @@ This software is only used for research purposes, users must abide by the releva
 
 ## Content
 
-> This is a **live** dataset that is updated **quarterly**.
-
 The dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. the 'Award' column) of the restaurants included are:
 
 -   3 Stars
@@ -51,18 +49,13 @@ Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd
 
 ## Usage
 
-Check out the [Makefile](./Makefile) for basic usage.
+> **NOTE**
+> Check out the [Makefile](./Makefile).
 
-To begin scraping, run:
-
-```sh
-make run # go run cmd/app/main.go
-```
-
-To build binary, run:
+To crawl, run:
 
 ```sh
-make build # go build -o michelin-my-maps cmd/app/main.go
+make crawl # go run cmd/app/main.go
 ```
 
 The output of this command is the [csv file](./data/michelin_my_maps.csv) created/updated inside [`data/`](./data/) folder.
