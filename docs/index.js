@@ -124,9 +124,13 @@ function handleSearch(event) {
     const searchResult = search(restaurantDB, {
         term: searchTerm,
         properties: ["Name", "Address", "Location", "Cuisine"],
-        limit: 50,
         tolerance: 3,
+        limit: 20,
     });
+    const searchSpeed = document.getElementById("search-speed");
+    searchSpeed.innerText = `Found ${
+        searchResult.count
+    } results. Search took ${formatNanoseconds(searchResult.elapsed)}.`;
     jsonToHtmlTable(searchResult.hits);
 }
 
