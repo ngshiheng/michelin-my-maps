@@ -30,7 +30,7 @@ async function createLyraInstance(event) {
             FacilitiesAndServices: "string",
         },
     });
-    await insertBatch(restaurantDB, data, { batchSize: 500 });
+    await insertBatch(restaurantDB, data, { batchSize: 100 });
 }
 
 function jsonToHtmlTable(json) {
