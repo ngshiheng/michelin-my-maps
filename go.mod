@@ -1,9 +1,9 @@
 module github.com/ngshiheng/michelin-my-maps
 
-go 1.18
+go 1.19
 
 require (
-	github.com/gocolly/colly v1.2.0
+	github.com/gocolly/colly/v2 v2.1.0
 	github.com/nyaruka/phonenumbers v1.1.4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1

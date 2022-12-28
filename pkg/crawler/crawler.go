@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/gocolly/colly"
-	"github.com/gocolly/colly/extensions"
+	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/extensions"
 	"github.com/ngshiheng/michelin-my-maps/pkg/logger"
 	"github.com/ngshiheng/michelin-my-maps/pkg/parser"
 
