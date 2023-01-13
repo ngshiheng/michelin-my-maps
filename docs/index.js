@@ -3,7 +3,7 @@ import {
     search,
     insertBatch,
     formatNanoseconds,
-} from "https://unpkg.com/@lyrasearch/lyra@latest/dist/esm/src/lyra.js";
+} from "https://unpkg.com/@lyrasearch/lyra@0.3.1/dist/esm/src/lyra.js";
 
 let restaurantDB;
 const summary = document.getElementById("search-summary");
