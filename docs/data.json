@@ -1241,7 +1241,7 @@
   "Latitude": "48.8687604",
   "PhoneNumber": "+33149527154",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/le-cinq6102",
-  "WebsiteUrl": "https://www.fourseasons.com/paris/dining/restaurants/le_cinq/?seo=google_local_par2_emea",
+  "WebsiteUrl": "https://www.fourseasons.com",
   "Award": "3 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -1255,7 +1255,7 @@
   "Latitude": "46.1557284",
   "PhoneNumber": "+33546414819",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/la-rochelle/restaurant/christopher-coutanceau",
-  "WebsiteUrl": "https://christophercoutanceau.com/fr/",
+  "WebsiteUrl": "http://www.christophercoutanceau.com/fr/",
   "Award": "3 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -1269,7 +1269,7 @@
   "Latitude": "44.9177848",
   "PhoneNumber": "+33475441532",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/valence/restaurant/pic",
-  "WebsiteUrl": "https://anne-sophie-pic.com/",
+  "WebsiteUrl": "http://www.anne-sophie-pic.com",
   "Award": "3 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Garden or park,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Visa credit card,Wheelchair access"
 },
@@ -1293,8 +1293,8 @@
   "Location": "Chagny, France",
   "Price": "€€€€",
   "Cuisine": "Modern Cuisine",
-  "Longitude": "4.7530169",
-  "Latitude": "46.9079964",
+  "Longitude": "4.7529917",
+  "Latitude": "46.9078385",
   "PhoneNumber": "+33385876565",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/chagny/restaurant/maison-lameloise",
   "WebsiteUrl": "https://www.lameloise.fr/",
@@ -1311,7 +1311,7 @@
   "Latitude": "48.8732506",
   "PhoneNumber": "+33158361250",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/pierre-gagnaire6112",
-  "WebsiteUrl": "https://pierregagnaire.com/restaurants/pierre_gagnaire",
+  "WebsiteUrl": "http://www.pierregagnaire.com/restaurants/pierre_gagnaire",
   "Award": "3 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -1415,7 +1415,7 @@
 },
 {
   "Name": "La Villa Madie",
-  "Address": "Avenue du Revestel, Cassis, 13260, France",
+  "Address": "Avenue de Revestel, Cassis, 13260, France",
   "Location": "Cassis, France",
   "Price": "€€€€",
   "Cuisine": "Creative, Mediterranean Cuisine",
@@ -1577,7 +1577,7 @@
   "Latitude": "43.2803346",
   "PhoneNumber": "+33491592592",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/marseille/restaurant/le-petit-nice",
-  "WebsiteUrl": "https://www.passedat.fr/fr/hotel-5-etoiles-restaurant-etoile-marseille",
+  "WebsiteUrl": "https://www.passedat.fr",
   "Award": "3 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Great view,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Terrace,Visa credit card,Wheelchair access"
 },
@@ -4085,7 +4085,7 @@
   "Url": "https://guide.michelin.com/en/graubunden/sankt-moritz/restaurant/da-vittorio384903",
   "WebsiteUrl": "https://carlton-stmoritz.ch/en/restaurants/da-vittorio-st-moritz",
   "Award": "2 MICHELIN Stars",
-  "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card"
+  "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
 {
   "Name": "7132 Silver",
@@ -4233,13 +4233,13 @@
   "Location": "Saint Moritz, Switzerland",
   "Price": "€€€€",
   "Cuisine": "Creative",
-  "Longitude": "9.8412809",
-  "Latitude": "46.4977033",
+  "Longitude": "9.8411622",
+  "Latitude": "46.4973738",
   "PhoneNumber": "+41818372822",
   "Url": "https://guide.michelin.com/en/graubunden/sankt-moritz/restaurant/igniv-by-andreas-caminada522914",
   "WebsiteUrl": "https://badruttspalace.com/de/restaurants/igniv-st-moritz/",
   "Award": "2 MICHELIN Stars",
-  "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
+  "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Valet parking,Visa credit card,Wheelchair access"
 },
 {
   "Name": "Pavillon",
@@ -4789,7 +4789,7 @@
 },
 {
   "Name": "KAHALA",
-  "Address": "2F, Kishimoto Bldg, 1-9-2 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "2F, 1-9-2 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥¥",
   "Cuisine": "Innovative",
@@ -4831,12 +4831,12 @@
 },
 {
   "Name": "Numata",
-  "Address": "7F, Kitashinchi Place Bldg, 1-10-2 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "7F, 1-10-2 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Tempura",
-  "Longitude": "135.4979204",
-  "Latitude": "34.6979933",
+  "Longitude": "135.497901",
+  "Latitude": "34.697954",
   "PhoneNumber": "+81663470707",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/numata",
   "WebsiteUrl": "",
@@ -5544,20 +5544,6 @@
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
 {
-  "Name": "Gastrologik",
-  "Address": "Artillerigatan 14, Stockholm, 114 51, Sweden",
-  "Location": "Stockholm, Sweden",
-  "Price": "€€€€",
-  "Cuisine": "Creative",
-  "Longitude": "18.0808749",
-  "Latitude": "59.3336953",
-  "PhoneNumber": "+4686623060",
-  "Url": "https://guide.michelin.com/en/stockholm-region/stockholm/restaurant/gastrologik",
-  "WebsiteUrl": "https://gastrologik.com/",
-  "Award": "2 MICHELIN Stars",
-  "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Visa credit card"
-},
-{
   "Name": "KOKS",
   "Address": "Frammi við Gjónna, Leynavatn, 335, Denmark",
   "Location": "Leynavatn, Denmark",
@@ -6160,20 +6146,6 @@
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card"
 },
 {
-  "Name": "Pastorale",
-  "Address": "Laarstraat 22, Reet, 2840, Belgium",
-  "Location": "Reet, Belgium",
-  "Price": "€€€€",
-  "Cuisine": "Creative",
-  "Longitude": "4.4152963",
-  "Latitude": "51.1008376",
-  "PhoneNumber": "+3238446526",
-  "Url": "https://guide.michelin.com/en/antwerpen/reet/restaurant/pastorale",
-  "WebsiteUrl": "https://www.depastorale.be/en",
-  "Award": "2 MICHELIN Stars",
-  "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Terrace,Visa credit card"
-},
-{
   "Name": "Château du Mylord",
   "Address": "rue Saint-Mortier 35, Ellezelles, 7890, Belgium",
   "Location": "Ellezelles, Belgium",
@@ -6275,7 +6247,7 @@
   "Name": "Oryori Hanagaki",
   "Address": "2-13-2 Gakuen Minami, Nara, Nara, 631-0034, Japan",
   "Location": "Nara, Japan",
-  "Price": "¥¥¥¥",
+  "Price": "¥¥¥",
   "Cuisine": "Japanese",
   "Longitude": "135.753435",
   "Latitude": "34.692643",
@@ -6421,7 +6393,7 @@
   "Latitude": "44.8935395",
   "PhoneNumber": "+33557550755",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/saint-milion/restaurant/la-table-de-pavie",
-  "WebsiteUrl": "https://hoteldepavie.com/",
+  "WebsiteUrl": "http://www.hoteldepavie.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -6477,7 +6449,7 @@
   "Latitude": "48.865799",
   "PhoneNumber": "+33140200027",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/restaurant-du-palais-royal",
-  "WebsiteUrl": "https://palaisroyalrestaurant.com/",
+  "WebsiteUrl": "http://www.palaisroyalrestaurant.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Terrace,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -6533,7 +6505,7 @@
   "Latitude": "48.874195",
   "PhoneNumber": "+33144951501",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/le-taillevent",
-  "WebsiteUrl": "https://letaillevent.com/",
+  "WebsiteUrl": "http://www.letaillevent.com/",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -6631,7 +6603,7 @@
   "Latitude": "48.8486151",
   "PhoneNumber": "+33143431226",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/table-bruno-verjus",
-  "WebsiteUrl": "https://table.paris/",
+  "WebsiteUrl": "http://www.table.paris",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Visa credit card"
 },
@@ -6673,7 +6645,7 @@
   "Latitude": "48.8701983",
   "PhoneNumber": "+33153050000",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/le-grand-restaurant-jean-francois-piege",
-  "WebsiteUrl": "https://jeanfrançoispiege.com/le-grand-restaurant",
+  "WebsiteUrl": "http://www.jeanfrançoispiege.com/le-grand-restaurant",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -6701,7 +6673,7 @@
   "Latitude": "44.606014",
   "PhoneNumber": "+33556220606",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/pyla-sur-mer/restaurant/le-skiff-club",
-  "WebsiteUrl": "https://haaitza.com/",
+  "WebsiteUrl": "http://www.haaitza.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -6729,7 +6701,7 @@
   "Latitude": "47.1547317",
   "PhoneNumber": "+33240215472",
   "Url": "https://guide.michelin.com/en/pays-de-la-loire/la-plaine-sur-mer/restaurant/anne-de-bretagne",
-  "WebsiteUrl": "https://annedebretagne.com/",
+  "WebsiteUrl": "http://www.annedebretagne.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -6743,7 +6715,7 @@
   "Latitude": "48.9185",
   "PhoneNumber": "+33388719898",
   "Url": "https://guide.michelin.com/en/grand-est/wingen-sur-moder/restaurant/villa-rene-lalique",
-  "WebsiteUrl": "https://villarenelalique.com/",
+  "WebsiteUrl": "http://www.villarenelalique.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -6771,7 +6743,7 @@
   "Latitude": "45.767953",
   "PhoneNumber": "+33472741274",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/lyon/restaurant/le-neuvieme-art",
-  "WebsiteUrl": "https://leneuviemeart.com/fr/",
+  "WebsiteUrl": "http://www.leneuviemeart.com/fr",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -6841,7 +6813,7 @@
   "Latitude": "45.1417394",
   "PhoneNumber": "+33458174830",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/uriage-les-bains/restaurant/maison-aribert",
-  "WebsiteUrl": "https://maisonaribert.com/",
+  "WebsiteUrl": "http://www.maisonaribert.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -6953,7 +6925,7 @@
   "Latitude": "45.7714309",
   "PhoneNumber": "+33478231720",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/lyon/restaurant/mere-brazier",
-  "WebsiteUrl": "https://lamerebrazier.fr/",
+  "WebsiteUrl": "http://www.lamerebrazier.fr",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card"
 },
@@ -7051,7 +7023,7 @@
   "Latitude": "46.9992762",
   "PhoneNumber": "+33384738585",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/port-lesney/restaurant/chateau-de-germigney",
-  "WebsiteUrl": "https://chateaudegermigney.com/",
+  "WebsiteUrl": "http://www.chateaudegermigney.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card"
 },
@@ -7149,7 +7121,7 @@
   "Latitude": "43.1742548",
   "PhoneNumber": "+33468413737",
   "Url": "https://guide.michelin.com/en/occitanie/narbonne/restaurant/la-table-saint-crescent",
-  "WebsiteUrl": "https://maison.saintcrescent.com",
+  "WebsiteUrl": "http://www.maison.saintcrescent.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -7219,7 +7191,7 @@
   "Latitude": "43.590856",
   "PhoneNumber": "+33562074111",
   "Url": "https://guide.michelin.com/en/occitanie/pujaudran/restaurant/le-puits-st-jacques",
-  "WebsiteUrl": "https://lepuitssaintjacques.fr/",
+  "WebsiteUrl": "http://www.lepuitssaintjacques.fr",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -7289,7 +7261,7 @@
   "Latitude": "45.8156437",
   "PhoneNumber": "+33472429090",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/collonges-au-mont-d-or/restaurant/paul-bocuse",
-  "WebsiteUrl": "https://bocuse.fr/fr/",
+  "WebsiteUrl": "http://www.bocuse.fr",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -7369,8 +7341,8 @@
   "Location": "Courchevel, France",
   "Price": "€€€€",
   "Cuisine": "Creative",
-  "Longitude": "6.6387485",
-  "Latitude": "45.4121633",
+  "Longitude": "6.638871",
+  "Latitude": "45.4122032",
   "PhoneNumber": "+33479400880",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/courchevel/restaurant/sarkara",
   "WebsiteUrl": "https://www.lek2palace.com/fr/deguster/le-sarkara.html",
@@ -7378,7 +7350,7 @@
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Great view,Mastercard credit card,Valet parking,Visa credit card,Wheelchair access"
 },
 {
-  "Name": "L'Atelier d'Edmond",
+  "Name": "Maison Benoît Vidal",
   "Address": "Le Fornet, Val-d'Isère, 73150, France",
   "Location": "Val-d'Isère, France",
   "Price": "€€€€",
@@ -7429,7 +7401,7 @@
   "Latitude": "49.2410909",
   "PhoneNumber": "+33326249000",
   "Url": "https://guide.michelin.com/en/grand-est/reims/restaurant/le-parc-les-crayeres",
-  "WebsiteUrl": "https://lescrayeres.com/",
+  "WebsiteUrl": "http://www.lescrayeres.com",
   "Award": "2 MICHELIN Stars",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Valet parking,Visa credit card"
 },
@@ -8083,8 +8055,8 @@
   "Location": "Dublin City, Ireland",
   "Price": "$$$$",
   "Cuisine": "Modern French",
-  "Longitude": "-6.2529811",
-  "Latitude": "53.3384514",
+  "Longitude": "-6.2530071",
+  "Latitude": "53.3384135",
   "PhoneNumber": "+35316764192",
   "Url": "https://guide.michelin.com/en/dublin/dublin/restaurant/patrick-guilbaud",
   "WebsiteUrl": "https://restaurantpatrickguilbaud.ie/",
@@ -11959,7 +11931,7 @@
   "Name": "Tabaiba",
   "Address": "Portugal 79, Las Palmas de Gran Canaria, 35010, Spain",
   "Location": "Las Palmas de Gran Canaria, Spain",
-  "Price": "€€€",
+  "Price": "€€€€",
   "Cuisine": "Creative",
   "Longitude": "-15.4397592",
   "Latitude": "28.1353754",
@@ -11993,7 +11965,7 @@
   "Latitude": "38.7257132",
   "PhoneNumber": "+351212491683",
   "Url": "https://guide.michelin.com/en/lisboa-region/lisboa/restaurant/kabuki-lisboa",
-  "WebsiteUrl": "http://www.grupokabuki.com",
+  "WebsiteUrl": "http://www.grupokabuki.com/pt/kabuki-lisboa",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Counter dining,Credit card / Debit card accepted,Mastercard credit card,Notable sake list,Visa credit card"
 },
@@ -12023,7 +11995,7 @@
   "Url": "https://guide.michelin.com/en/canarias/adeje/restaurant/san-ho",
   "WebsiteUrl": "https://www.gastrocorales.com/es-es/san-ho/",
   "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
+  "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
 {
   "Name": "Miguel González",
@@ -13412,20 +13384,6 @@
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
 {
-  "Name": "Zuberoa",
-  "Address": "Plaza Bekosoro 1, Oiartzun, 20180, Spain",
-  "Location": "Oiartzun, Spain",
-  "Price": "€€€€",
-  "Cuisine": "Classic Cuisine",
-  "Longitude": "-1.8662787",
-  "Latitude": "43.2931162",
-  "PhoneNumber": "+34943491228",
-  "Url": "https://guide.michelin.com/en/pais-vasco/oiartzun/restaurant/zuberoa",
-  "WebsiteUrl": "http://www.zuberoa.com",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card"
-},
-{
   "Name": "LÚ Cocina y Alma",
   "Address": "Zaragoza 2, Jerez de la Frontera, 11402, Spain",
   "Location": "Jerez de la Frontera, Spain",
@@ -13592,20 +13550,6 @@
   "WebsiteUrl": "http://www.hotelvillarosario.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card"
-},
-{
-  "Name": "Largo do Paço",
-  "Address": "Largo do Paço 6, Amarante, 4600-017, Portugal",
-  "Location": "Amarante, Portugal",
-  "Price": "€€€€",
-  "Cuisine": "Modern Cuisine",
-  "Longitude": "-8.07742",
-  "Latitude": "41.26843",
-  "PhoneNumber": "+351255410830",
-  "Url": "https://guide.michelin.com/en/porto-region/amarante/restaurant/largo-do-paco",
-  "WebsiteUrl": "https://www.casadacalcada.com/restaurante/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
 {
   "Name": "Fogony",
@@ -14747,8 +14691,8 @@
   "Location": "Tokyo, Japan",
   "Price": "¥¥",
   "Cuisine": "Unagi / Freshwater Eel",
-  "Longitude": "139.743374",
-  "Latitude": "35.658116",
+  "Longitude": "139.7434145",
+  "Latitude": "35.6581342",
   "PhoneNumber": "+81335837852",
   "Url": "https://guide.michelin.com/en/tokyo-region/tokyo/restaurant/nodaiwa-1194124",
   "WebsiteUrl": "http://www.nodaiwa.co.jp/",
@@ -15529,7 +15473,7 @@
   "Name": "BVLGARI IL RISTORANTE LUCA FANTIN",
   "Address": "9F, 2-7-12 Ginza, Chuo-ku, Tokyo, 104-0061, Japan",
   "Location": "Tokyo, Japan",
-  "Price": "¥¥¥",
+  "Price": "¥¥¥¥",
   "Cuisine": "Italian",
   "Longitude": "139.7670858",
   "Latitude": "35.6728834",
@@ -19450,7 +19394,7 @@
   "Address": "via Meisules 43, Selva di Val Gardena, 39048, Italy",
   "Location": "Selva di Val Gardena, Italy",
   "Price": "€€€€",
-  "Cuisine": "Creative",
+  "Cuisine": "Creative, Contemporary",
   "Longitude": "11.7463421",
   "Latitude": "46.5588796",
   "PhoneNumber": "+390471795555",
@@ -22880,7 +22824,7 @@
   "Address": "Weinplatz 2, Zurich, 8001, Switzerland",
   "Location": "Zurich, Switzerland",
   "Price": "€€€",
-  "Cuisine": "Modern Cuisine, International",
+  "Cuisine": "International, Contemporary",
   "Longitude": "8.5418139",
   "Latitude": "47.3713118",
   "PhoneNumber": "+41442272727",
@@ -24291,7 +24235,7 @@
 },
 {
   "Name": "Yakitori Torisen",
-  "Address": "3F, TAMAYA Bldg, 1-4-26 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "3F, 1-4-26 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Yakitori",
@@ -24403,7 +24347,7 @@
 },
 {
   "Name": "Sushi Ohata",
-  "Address": "2F, Hiro Bldg, 1-4-8 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "2F, 1-4-8 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Sushi",
@@ -24431,7 +24375,7 @@
 },
 {
   "Name": "Sui",
-  "Address": "2F, Shinsaibashi Stagea, 1-16-20 Higashishinsaibashi, Chuo-ku, Osaka, 542-0083, Japan",
+  "Address": "2F, 1-16-20 Higashishinsaibashi, Chuo-ku, Osaka, 542-0083, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
@@ -24543,7 +24487,7 @@
 },
 {
   "Name": "Sushi Minazuki",
-  "Address": "1F, Mori Bldg, 1-5-7 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "1-5-7 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Sushi",
@@ -24571,7 +24515,7 @@
 },
 {
   "Name": "Iwaki",
-  "Address": "2F, Takara Bldg, 1-6-29 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "2F, 1-6-29 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
@@ -24585,7 +24529,7 @@
 },
 {
   "Name": "Man-u",
-  "Address": "5F, Saka Bldg, 1-2-33 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "5F, 1-2-33 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Oden",
@@ -24641,7 +24585,7 @@
 },
 {
   "Name": "Oryori Yamada",
-  "Address": "2F, Rich K. Bldg, 1-5-36 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "2F, 1-5-36 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
@@ -24851,12 +24795,12 @@
 },
 {
   "Name": "Ono",
-  "Address": "6F, Kita Linden Bldg, 1-2-22 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "6F, 1-2-22 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
-  "Longitude": "135.497797",
-  "Latitude": "34.69739",
+  "Longitude": "135.4949606",
+  "Latitude": "34.7006529",
   "PhoneNumber": "+81663418171",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/ono",
   "WebsiteUrl": "",
@@ -24879,7 +24823,7 @@
 },
 {
   "Name": "Kitashinchi Fukutatei",
-  "Address": "B1F, Kitashinchi Star Bldg, 1-11-19 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "B1F, 1-11-19 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Steakhouse",
@@ -24991,7 +24935,7 @@
 },
 {
   "Name": "Sushi Murakami Jiro",
-  "Address": "1F, Mori Bldg, 1-5-7 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "1-5-7 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Sushi",
@@ -25047,12 +24991,12 @@
 },
 {
   "Name": "IDÉAL bistro",
-  "Address": "2F, T165 Bldg, 1-6-5 Tanimachi, Chuo-ku, Osaka, 540-0012, Japan",
+  "Address": "2F, 1-6-5 Tanimachi, Chuo-ku, Osaka, 540-0012, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "French",
-  "Longitude": "135.5170936",
-  "Latitude": "34.6888616",
+  "Longitude": "135.5141593",
+  "Latitude": "34.6921644",
   "PhoneNumber": "+81663604315",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/ideal-bistro",
   "WebsiteUrl": "http://idealfoodflower.com/",
@@ -25201,12 +25145,12 @@
 },
 {
   "Name": "nent",
-  "Address": "B1F, Bingoya Bldg, 1-5-12 Shibata, Kita-ku, Osaka, 530-0012, Japan",
+  "Address": "B1F, 1-5-12 Shibata, Kita-ku, Osaka, 530-0012, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "French",
-  "Longitude": "135.4977397",
-  "Latitude": "34.7065456",
+  "Longitude": "135.4947404",
+  "Latitude": "34.7096917",
   "PhoneNumber": "+81661318240",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/nent",
   "WebsiteUrl": "https://www.nent-osaka.com/",
@@ -25285,7 +25229,7 @@
 },
 {
   "Name": "Iroha",
-  "Address": "5F, Kitashinchi Bldg, 1-3-19 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "5F, 1-3-19 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
@@ -25411,12 +25355,12 @@
 },
 {
   "Name": "capi",
-  "Address": "6F, Kitashinchi Place Bldg, 1-10-2 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "6F, 1-10-2 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Innovative",
-  "Longitude": "135.497901",
-  "Latitude": "34.697954",
+  "Longitude": "135.4951006",
+  "Latitude": "34.7012628",
   "PhoneNumber": "+81664768180",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/capi",
   "WebsiteUrl": "https://capi-osaka.com/",
@@ -25443,8 +25387,8 @@
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "French",
-  "Longitude": "135.4918006",
-  "Latitude": "34.7097416",
+  "Longitude": "135.494552",
+  "Latitude": "34.70645",
   "PhoneNumber": "+81663745700",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/pierre-1193242",
   "WebsiteUrl": "https://www.icosaka.com/",
@@ -25509,7 +25453,7 @@
 },
 {
   "Name": "Kyomachiryori Mitsuya",
-  "Address": "2F, 49art LAB, 1-12-3 Kyomachibori, Nishi-ku, Osaka, 550-0003, Japan",
+  "Address": "2F, 1-12-3 Kyomachibori, Nishi-ku, Osaka, 550-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
@@ -25621,12 +25565,12 @@
 },
 {
   "Name": "La casa TOM Curiosa",
-  "Address": "2F, Hamamura Sun Plaza Bldg, 1-2-15 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "2F, 1-2-15 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Italian",
-  "Longitude": "135.498698",
-  "Latitude": "34.696475",
+  "Longitude": "135.4959605",
+  "Latitude": "34.699763",
   "PhoneNumber": "+815031886885",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/la-casa-tom-curiosa",
   "WebsiteUrl": "http://www.tom-curiosa.com/",
@@ -25635,7 +25579,7 @@
 },
 {
   "Name": "Terada",
-  "Address": "2F, Tamatsukurisuehiro Bldg, 2-35 Tamatsukurimotomachi, Tennoji-ku, Osaka, 543-0014, Japan",
+  "Address": "2F, 2-35 Tamatsukurimotomachi, Tennoji-ku, Osaka, 543-0014, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
@@ -25761,12 +25705,12 @@
 },
 {
   "Name": "Zeshin",
-  "Address": "B1F, Nishitemma Lawyer Bldg, 2-9-3 Nishitemma, Kita-ku, Osaka, 530-0047, Japan",
+  "Address": "B1F, 2-9-3 Nishitemma, Kita-ku, Osaka, 530-0047, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
-  "Longitude": "135.5024471",
-  "Latitude": "34.696385",
+  "Longitude": "135.4996102",
+  "Latitude": "34.6996931",
   "PhoneNumber": "+81663640118",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/zeshin",
   "WebsiteUrl": "",
@@ -25845,7 +25789,7 @@
 },
 {
   "Name": "YUNiCO",
-  "Address": "4F, Thousand Bldg, 1-5-17 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "4F, 1-5-17 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Italian, Italian Contemporary",
@@ -25873,7 +25817,7 @@
 },
 {
   "Name": "Masuda",
-  "Address": "2F, Tagoto Plaza, 1-3-12 Shinsaibashisuji, Chuo-ku, Osaka, 542-0085, Japan",
+  "Address": "2F, 1-3-12 Shinsaibashisuji, Chuo-ku, Osaka, 542-0085, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Japanese",
@@ -26209,7 +26153,7 @@
 },
 {
   "Name": "Hiraishi",
-  "Address": "3F, Hishitomi Bldg, 1-9-6 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "3F, 1-9-6 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥¥",
   "Cuisine": "Tempura",
@@ -26771,7 +26715,7 @@
   "Name": "Hiša Linhart",
   "Address": "Linhartov trg 17, Radovljica, 4240, Slovenia",
   "Location": "Radovljica, Slovenia",
-  "Price": "",
+  "Price": "€€€",
   "Cuisine": "Contemporary",
   "Longitude": "14.1750205",
   "Latitude": "46.3408368",
@@ -26799,7 +26743,7 @@
   "Name": "COB",
   "Address": "Letoviška 1, Portorož, 6320, Slovenia",
   "Location": "Portorož, Slovenia",
-  "Price": "",
+  "Price": "€€€€",
   "Cuisine": "Creative",
   "Longitude": "13.5927606",
   "Latitude": "45.516425",
@@ -28726,20 +28670,6 @@
   "WebsiteUrl": "https://www.ekstedt.nu/",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Counter dining,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
-},
-{
-  "Name": "Agrikultur",
-  "Address": "Roslagsgatan 43, Stockholm, 113 54, Sweden",
-  "Location": "Stockholm, Sweden",
-  "Price": "€€€",
-  "Cuisine": "Modern Cuisine",
-  "Longitude": "18.0569193",
-  "Latitude": "59.3493655",
-  "PhoneNumber": "+468150202",
-  "Url": "https://guide.michelin.com/en/stockholm-region/stockholm/restaurant/agrikultur",
-  "WebsiteUrl": "https://www.agrikultur.se/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "American Express credit card,Counter dining,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Visa credit card"
 },
 {
   "Name": "Alouette",
@@ -31234,7 +31164,7 @@
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card"
 },
 {
-  "Name": "Altermezzo",
+  "Name": "Alter",
   "Address": "Bilzersteenweg 366, Tongeren, 3700, Belgium",
   "Location": "Tongeren, Belgium",
   "Price": "€€€€",
@@ -32415,8 +32345,8 @@
   "Location": "Nara, Japan",
   "Price": "¥¥¥",
   "Cuisine": "French",
-  "Longitude": "135.76067",
-  "Latitude": "34.698946",
+  "Longitude": "135.7605485",
+  "Latitude": "34.6988325",
   "PhoneNumber": "+81742400066",
   "Url": "https://guide.michelin.com/en/nara-region/nara/restaurant/la-terrasse-irisee",
   "WebsiteUrl": "https://laterrasse.jp/",
@@ -33021,7 +32951,7 @@
   "Latitude": "44.7314765",
   "PhoneNumber": "+33475626064",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/grane/restaurant/le-kleber-la-maison-bonnet",
-  "WebsiteUrl": "https://lamaisonbonnet.fr/lmb/lmb/",
+  "WebsiteUrl": "http://www.lamaisonbonnet.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -33135,7 +33065,7 @@
   "Url": "https://guide.michelin.com/en/normandie/tretat/restaurant/le-donjon-domaine-saint-clair",
   "WebsiteUrl": "https://www.hoteletretat.com/fr/",
   "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Car park,Credit cards not accepted,Garden or park,Great view,Particularly interesting wine list"
+  "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Garden or park,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
 {
   "Name": "L'Odas",
@@ -33147,7 +33077,7 @@
   "Latitude": "49.4410412",
   "PhoneNumber": "+33235738324",
   "Url": "https://guide.michelin.com/en/normandie/rouen/restaurant/l-odas",
-  "WebsiteUrl": "https://lodas.fr/",
+  "WebsiteUrl": "http://www.lodas.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -33175,7 +33105,7 @@
   "Latitude": "48.1083789",
   "PhoneNumber": "+33299792895",
   "Url": "https://guide.michelin.com/en/bretagne/rennes/restaurant/holen",
-  "WebsiteUrl": "https://restaurant-holen.fr",
+  "WebsiteUrl": "http://www.restaurant-holen.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Credit card / Debit card accepted,Visa credit card,Wheelchair access"
 },
@@ -33217,7 +33147,7 @@
   "Latitude": "48.7245609",
   "PhoneNumber": "+33298697078",
   "Url": "https://guide.michelin.com/en/bretagne/roscoff/restaurant/le-brittany",
-  "WebsiteUrl": "https://hotel-brittany.com/",
+  "WebsiteUrl": "http://www.hotel-brittany.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -33231,7 +33161,7 @@
   "Latitude": "48.8402902",
   "PhoneNumber": "+33988096352",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/solstice",
-  "WebsiteUrl": "https://solsticeparis.com/",
+  "WebsiteUrl": "http://www.solsticeparis.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
@@ -33301,7 +33231,7 @@
   "Latitude": "48.8613303",
   "PhoneNumber": "+33142604040",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/la-dame-de-pic369441",
-  "WebsiteUrl": "https://anne-sophie-pic.com/paris/#damedepic",
+  "WebsiteUrl": "http://www.anne-sophie-pic.com/paris/#damedepic",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Restaurant offering vegetarian menus,Visa credit card,Wheelchair access"
 },
@@ -33385,7 +33315,7 @@
   "Latitude": "48.8630387",
   "PhoneNumber": "+33183774440",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/don-juan-ii",
-  "WebsiteUrl": "https://donjuan2.yachtsdeparis.fr/",
+  "WebsiteUrl": "http://www.donjuan2.yachtsdeparis.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Great view,Visa credit card"
 },
@@ -33427,7 +33357,7 @@
   "Latitude": "48.8778387",
   "PhoneNumber": "+33981208169",
   "Url": "https://guide.michelin.com/en/ile-de-france/rueil-malmaison/restaurant/ochre",
-  "WebsiteUrl": "https://ochre.fr/",
+  "WebsiteUrl": "http://www.ochre.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -33441,7 +33371,7 @@
   "Latitude": "48.876059",
   "PhoneNumber": "+33148240413",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/neso",
-  "WebsiteUrl": "https://neso.paris/",
+  "WebsiteUrl": "http://www.neso.paris",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
 },
@@ -33455,7 +33385,7 @@
   "Latitude": "48.8588491",
   "PhoneNumber": "+33158621008",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/les-climats",
-  "WebsiteUrl": "http://lesclimats.fr",
+  "WebsiteUrl": "http://www.lesclimats.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card"
 },
@@ -33497,7 +33427,7 @@
   "Latitude": "48.8799546",
   "PhoneNumber": "+33145747474",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/frederic-simonin",
-  "WebsiteUrl": "https://fredericsimonin.com/",
+  "WebsiteUrl": "http://www.fredericsimonin.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
@@ -33525,7 +33455,7 @@
   "Latitude": "48.8687251",
   "PhoneNumber": "+33149527209",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/le-george",
-  "WebsiteUrl": "https://www.fourseasons.com/fr/paris/dining/restaurants/le_george/?seo=google_local_par3_emea",
+  "WebsiteUrl": "https://www.fourseasons.com/fr/paris/dining/restaurants/le_george",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -33679,7 +33609,7 @@
   "Latitude": "48.8497",
   "PhoneNumber": "+33142155570",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/comice",
-  "WebsiteUrl": "https://comice.paris/",
+  "WebsiteUrl": "http://www.comice.paris",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -33693,7 +33623,7 @@
   "Latitude": "48.8728404",
   "PhoneNumber": "+33147237575",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/l-atelier-de-joel-robuchon-etoile",
-  "WebsiteUrl": "http://m.atelier-robuchon-etoile.com/fr/",
+  "WebsiteUrl": "http://www.m.atelier-robuchon-etoile.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Valet parking,Visa credit card"
 },
@@ -33707,7 +33637,7 @@
   "Latitude": "48.85513",
   "PhoneNumber": "+33144320032",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/ze-kitchen-galerie",
-  "WebsiteUrl": "https://zekitchengalerie.fr/",
+  "WebsiteUrl": "http://www.zekitchengalerie.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Valet parking,Visa credit card"
 },
@@ -33721,7 +33651,7 @@
   "Latitude": "48.867715",
   "PhoneNumber": "+33140265287",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/sushi-b514232",
-  "WebsiteUrl": "https://sushi-b-fr.com",
+  "WebsiteUrl": "http://www.sushi-b-fr.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -33735,7 +33665,7 @@
   "Latitude": "48.8732722",
   "PhoneNumber": "+33142255598",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/l-arome174292",
-  "WebsiteUrl": "https://larome-paris.com/",
+  "WebsiteUrl": "http://www.larome-paris.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card"
 },
@@ -33749,7 +33679,7 @@
   "Latitude": "48.8714347",
   "PhoneNumber": "+33145017297",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/alan-geaam",
-  "WebsiteUrl": "https://restaurant.alangeaam.fr/",
+  "WebsiteUrl": "http://www.restaurant.alangeaam.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -33805,7 +33735,7 @@
   "Latitude": "48.8636156",
   "PhoneNumber": "+33142717778",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/auberge-nicolas-flamel",
-  "WebsiteUrl": "https://auberge.nicolas-flamel.fr",
+  "WebsiteUrl": "http://www.auberge.nicolas-flamel.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -33833,7 +33763,7 @@
   "Latitude": "48.8364014",
   "PhoneNumber": "+33143202139",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/mosuke",
-  "WebsiteUrl": "https://mosuke-restaurant.com",
+  "WebsiteUrl": "http://www.mosuke-restaurant.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Visa credit card"
 },
@@ -33847,7 +33777,7 @@
   "Latitude": "48.8501479",
   "PhoneNumber": "+33980680808",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/virtus",
-  "WebsiteUrl": "https://virtus-paris.com/",
+  "WebsiteUrl": "http://www.virtus-paris.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -34043,7 +33973,7 @@
   "Latitude": "48.2227026",
   "PhoneNumber": "+33325015169",
   "Url": "https://guide.michelin.com/en/grand-est/colombey-les-deux-glises/restaurant/hostellerie-la-montagne",
-  "WebsiteUrl": "https://hostellerielamontagne.com/",
+  "WebsiteUrl": "http://www.hostellerielamontagne.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -34057,7 +33987,7 @@
   "Latitude": "48.85681",
   "PhoneNumber": "+33142225656",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/l-atelier-de-joel-robuchon-st-germain",
-  "WebsiteUrl": "https://atelier-robuchon-saint-germain.com/",
+  "WebsiteUrl": "http://www.atelier-robuchon-saint-germain.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card"
 },
@@ -34127,7 +34057,7 @@
   "Latitude": "48.8546356",
   "PhoneNumber": "+33143267596",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/relais-louis-xiii",
-  "WebsiteUrl": "https://relaislouis13.fr/",
+  "WebsiteUrl": "http://www.relaislouis13.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Valet parking,Visa credit card"
 },
@@ -34136,7 +34066,7 @@
   "Address": "28 place des Vosges, Paris, 75003, France",
   "Location": "Paris, France",
   "Price": "€€€€",
-  "Cuisine": "Contemporary",
+  "Cuisine": "Modern Cuisine",
   "Longitude": "2.3659006",
   "Latitude": "48.8561771",
   "PhoneNumber": "+33140291919",
@@ -34155,7 +34085,7 @@
   "Latitude": "48.106684",
   "PhoneNumber": "+33223478274",
   "Url": "https://guide.michelin.com/en/bretagne/rennes/restaurant/ima",
-  "WebsiteUrl": "https://ima.restaurant/",
+  "WebsiteUrl": "http://www.ima.restaurant",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Counter dining,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -34295,7 +34225,7 @@
   "Latitude": "48.8750836",
   "PhoneNumber": "+33155078652",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/louis",
-  "WebsiteUrl": "https://stephanepitre.fr/",
+  "WebsiteUrl": "http://www.stephanepitre.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
 },
@@ -34351,7 +34281,7 @@
   "Latitude": "44.5635926",
   "PhoneNumber": "+33475947413",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/saint-germain/restaurant/auberge-de-montfleury",
-  "WebsiteUrl": "https://auberge-de-montfleury.fr/fr/",
+  "WebsiteUrl": "http://www.auberge-de-montfleury.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Terrace,Visa credit card,Wheelchair access"
 },
@@ -34501,11 +34431,11 @@
   "Location": "Caudebec-en-Caux, France",
   "Price": "€€€€",
   "Cuisine": "Modern Cuisine, Creative",
-  "Longitude": "0.7330455",
-  "Latitude": "49.5250364",
+  "Longitude": "0.7348884",
+  "Latitude": "49.5249389",
   "PhoneNumber": "+33650234363",
   "Url": "https://guide.michelin.com/en/normandie/caudebec-en-caux/restaurant/g-a-au-manoir-de-retival",
-  "WebsiteUrl": "https://restaurant-ga.fr/",
+  "WebsiteUrl": "http://www.restaurant-ga.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Diners Club credit card,Garden or park,Great view,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -34575,7 +34505,7 @@
   "Latitude": "43.7408177",
   "PhoneNumber": "+37793151313",
   "Url": "https://guide.michelin.com/en/monaco-region/monaco/restaurant/yoshi",
-  "WebsiteUrl": "https://metropole.com/fr/",
+  "WebsiteUrl": "http://www.metropole.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -34659,7 +34589,7 @@
   "Latitude": "45.598532",
   "PhoneNumber": "+33474281912",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/saint-alban-de-roche/restaurant/l-emulsion327218",
-  "WebsiteUrl": "https://lemulsion-restaurant.com",
+  "WebsiteUrl": "http://www.lemulsion-restaurant.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
@@ -34729,7 +34659,7 @@
   "Latitude": "45.7621837",
   "PhoneNumber": "+33472409147",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/lyon/restaurant/jeremy-galvan",
-  "WebsiteUrl": "https://jeremygalvanrestaurant.com/",
+  "WebsiteUrl": "http://www.jeremygalvanrestaurant.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Visa credit card"
 },
@@ -34757,7 +34687,7 @@
   "Latitude": "47.4956359",
   "PhoneNumber": "+33386340786",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/vault-de-lugny/restaurant/chateau-de-vault-de-lugny",
-  "WebsiteUrl": "https://lugny.fr/",
+  "WebsiteUrl": "http://www.lugny.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card"
 },
@@ -35037,7 +34967,7 @@
   "Latitude": "47.9056281",
   "PhoneNumber": "+33297220026",
   "Url": "https://guide.michelin.com/en/bretagne/guer/restaurant/maison-tiegezh",
-  "WebsiteUrl": "https://maisontiegezh.fr/fr/",
+  "WebsiteUrl": "http://www.maisontiegezh.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
 },
@@ -35051,7 +34981,7 @@
   "Latitude": "44.791468",
   "PhoneNumber": "+33553615000",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/monestier/restaurant/les-fresques",
-  "WebsiteUrl": "https://vigiers.com/index.php",
+  "WebsiteUrl": "http://www.vigiers.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -35065,7 +34995,7 @@
   "Latitude": "47.6249671",
   "PhoneNumber": "+33389885039",
   "Url": "https://guide.michelin.com/en/grand-est/altkirch/restaurant/l-orchidee",
-  "WebsiteUrl": "https://orchidee-altkirch.com/",
+  "WebsiteUrl": "http://www.orchidee-altkirch.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -35205,7 +35135,7 @@
   "Latitude": "49.3599505",
   "PhoneNumber": "+33231872211",
   "Url": "https://guide.michelin.com/en/normandie/deauville/restaurant/l-essentiel255041",
-  "WebsiteUrl": "https://lessentieldeauville.com/",
+  "WebsiteUrl": "http://www.lessentieldeauville.com/",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -35261,7 +35191,7 @@
   "Latitude": "46.9384965",
   "PhoneNumber": "+33380219494",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/chassagne-montrachet/restaurant/ed-em",
-  "WebsiteUrl": "https://restaurant-edem.com/fr/",
+  "WebsiteUrl": "http://www.restaurant-edem.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -35289,7 +35219,7 @@
   "Latitude": "46.3010727",
   "PhoneNumber": "+33450354655",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/douvaine/restaurant/o-flaveurs",
-  "WebsiteUrl": "https://oflaveurs.com/",
+  "WebsiteUrl": "http://www.oflaveurs.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card"
 },
@@ -35331,7 +35261,7 @@
   "Latitude": "49.3487591",
   "PhoneNumber": "+33344428409",
   "Url": "https://guide.michelin.com/en/hauts-de-france/saint-jean-aux-bois/restaurant/auberge-a-la-bonne-idee",
-  "WebsiteUrl": "https://sebastien-tantot.com/fr/",
+  "WebsiteUrl": "http://www.sebastien-tantot.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -35429,7 +35359,7 @@
   "Latitude": "44.8405363",
   "PhoneNumber": "+33557532806",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/bordeaux/restaurant/solena",
-  "WebsiteUrl": "https://solena-restaurant.com/",
+  "WebsiteUrl": "http://www.solena-restaurant.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -35541,7 +35471,7 @@
   "Latitude": "43.2986677",
   "PhoneNumber": "+33442322016",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/gmenos/restaurant/la-magdeleine-mathias-dandine",
-  "WebsiteUrl": "https://relais-magdeleine.com",
+  "WebsiteUrl": "http://www.relais-magdeleine.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Particularly interesting wine list,Terrace,Visa credit card"
 },
@@ -35597,7 +35527,7 @@
   "Latitude": "47.3758124",
   "PhoneNumber": "+33380353284",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/prenois/restaurant/auberge-de-la-charme",
-  "WebsiteUrl": "https://aubergedelacharme.com/fr/",
+  "WebsiteUrl": "http://www.aubergedelacharme.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Visa credit card,Wheelchair access"
 },
@@ -35877,7 +35807,7 @@
   "Latitude": "48.6940626",
   "PhoneNumber": "+33383190357",
   "Url": "https://guide.michelin.com/en/grand-est/nancy/restaurant/la-maison-dans-le-parc",
-  "WebsiteUrl": "https://lamaisondansleparc.com/",
+  "WebsiteUrl": "http://www.lamaisondansleparc.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -35905,7 +35835,7 @@
   "Latitude": "48.1534816",
   "PhoneNumber": "+33299687935",
   "Url": "https://guide.michelin.com/en/bretagne/saint-grgoire/restaurant/le-saison",
-  "WebsiteUrl": "https://le-saison.com/fr/",
+  "WebsiteUrl": "http://www.le-saison.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -36241,7 +36171,7 @@
   "Latitude": "43.60391",
   "PhoneNumber": "+33561230776",
   "Url": "https://guide.michelin.com/en/occitanie/toulouse/restaurant/stephane-tournie-les-jardins-de-l-opera",
-  "WebsiteUrl": "https://lesjardinsdelopera.fr/",
+  "WebsiteUrl": "http://www.lesjardinsdelopera.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -36283,7 +36213,7 @@
   "Latitude": "45.7681272",
   "PhoneNumber": "+33426022509",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/lyon/restaurant/les-apothicaires",
-  "WebsiteUrl": "https://lesapothicairesrestaurant.com/",
+  "WebsiteUrl": "http://www.lesapothicairesrestaurant.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
 },
@@ -36339,7 +36269,7 @@
   "Latitude": "43.8303211",
   "PhoneNumber": "+33492724186",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/manosque/restaurant/le-bistronomique",
-  "WebsiteUrl": "https://restaurantpierregrein.fr/",
+  "WebsiteUrl": "http://www.restaurantpierregrein.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card"
 },
@@ -36453,7 +36383,7 @@
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/dijon/restaurant/loiseau-des-ducs",
   "WebsiteUrl": "https://www.bernard-loiseau.com/",
   "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Air conditioning,Credit cards not accepted,Particularly interesting wine list,Wheelchair access"
+  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
 {
   "Name": "Le Charlemagne",
@@ -36535,7 +36465,7 @@
   "Latitude": "44.8780815",
   "PhoneNumber": "+33556061252",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/lormont/restaurant/le-prince-noir-vivien-durand",
-  "WebsiteUrl": "https://leprincenoir-restaurant.fr/",
+  "WebsiteUrl": "http://www.leprincenoir-restaurant.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -36577,7 +36507,7 @@
   "Latitude": "47.1975481",
   "PhoneNumber": "+33381689278",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/bonntage/restaurant/l-etang-du-moulin",
-  "WebsiteUrl": "http://www.etang-du-moulin.com/index.php/fr/",
+  "WebsiteUrl": "https://www.etang-du-moulin.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -36815,7 +36745,7 @@
   "Latitude": "48.6647434",
   "PhoneNumber": "+33388966344",
   "Url": "https://guide.michelin.com/en/grand-est/la-wantzenau/restaurant/le-jardin-secret",
-  "WebsiteUrl": "https://restaurant-jardinsecret.fr/",
+  "WebsiteUrl": "http://www.restaurant-jardinsecret.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -36885,7 +36815,7 @@
   "Latitude": "43.7404558",
   "PhoneNumber": "+37793307044",
   "Url": "https://guide.michelin.com/en/monaco-region/monaco/restaurant/la-table-d-antonio-salvatore-au-rampoldi",
-  "WebsiteUrl": "https://rampoldi.mc/la-table-dantonio-salvatore/",
+  "WebsiteUrl": "http://www.rampoldi.mc/la-table-dantonio-salvatore",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Valet parking,Visa credit card"
 },
@@ -36955,7 +36885,7 @@
   "Latitude": "46.1921358",
   "PhoneNumber": "+33474041077",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/fleurie/restaurant/auberge-du-cep",
-  "WebsiteUrl": "https://aubergeducep.com",
+  "WebsiteUrl": "http://www.aubergeducep.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
@@ -37081,7 +37011,7 @@
   "Latitude": "43.6100075",
   "PhoneNumber": "+33467663726",
   "Url": "https://guide.michelin.com/en/occitanie/montpellier/restaurant/pastis376152",
-  "WebsiteUrl": "https://pastis-restaurant.com",
+  "WebsiteUrl": "http://www.pastis-restaurant.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card,Wheelchair access"
 },
@@ -37109,7 +37039,7 @@
   "Latitude": "44.841366",
   "PhoneNumber": "+33556300080",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/bordeaux/restaurant/l-observatoire-du-gabriel",
-  "WebsiteUrl": "https://bordeaux-gabriel.fr/",
+  "WebsiteUrl": "http://www.bordeaux-gabriel.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -37179,7 +37109,7 @@
   "Latitude": "46.879939",
   "PhoneNumber": "+33255900285",
   "Url": "https://guide.michelin.com/en/pays-de-la-loire/montreverd/restaurant/la-chabotterie",
-  "WebsiteUrl": "https://lachabotterie.com/fr/",
+  "WebsiteUrl": "http://www.lachabotterie.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -37305,7 +37235,7 @@
   "Latitude": "46.4334903",
   "PhoneNumber": "+33385241132",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/charolles/restaurant/frederic-doucet",
-  "WebsiteUrl": "https://maison-doucet.com/fr/",
+  "WebsiteUrl": "http://www.maison-doucet.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -37347,7 +37277,7 @@
   "Latitude": "48.6005976",
   "PhoneNumber": "+33388835555",
   "Url": "https://guide.michelin.com/en/grand-est/schiltigheim/restaurant/les-plaisirs-gourmands",
-  "WebsiteUrl": "https://les-plaisirs-gourmands.com/",
+  "WebsiteUrl": "http://www.les-plaisirs-gourmands.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -37571,7 +37501,7 @@
   "Latitude": "43.6449042",
   "PhoneNumber": "+33534264344",
   "Url": "https://guide.michelin.com/en/occitanie/montrab/restaurant/l-aparte",
-  "WebsiteUrl": "https://restaurant-laparte.fr",
+  "WebsiteUrl": "http://www.restaurant-laparte.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -37585,7 +37515,7 @@
   "Latitude": "45.456917",
   "PhoneNumber": "+33474588152",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/chonas-l-amballan/restaurant/la-table-de-philippe-girardon",
-  "WebsiteUrl": "https://domaine-de-clairefontaine.fr/fr/",
+  "WebsiteUrl": "http://www.domaine-de-clairefontaine.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card"
 },
@@ -37613,7 +37543,7 @@
   "Latitude": "46.2987913",
   "PhoneNumber": "+33385310355",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/replonges/restaurant/la-huchette",
-  "WebsiteUrl": "https://la-huchette.com/fr/",
+  "WebsiteUrl": "http://www.la-huchette.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Garden or park,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -37655,7 +37585,7 @@
   "Latitude": "47.854745",
   "PhoneNumber": "+33298060022",
   "Url": "https://guide.michelin.com/en/bretagne/pont-aven/restaurant/moulin-de-rosmadec",
-  "WebsiteUrl": "https://rosmadec.com/",
+  "WebsiteUrl": "http://www.rosmadec.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Terrace,Visa credit card,Wheelchair access"
 },
@@ -37767,7 +37697,7 @@
   "Latitude": "49.0755925",
   "PhoneNumber": "+33232542635",
   "Url": "https://guide.michelin.com/en/normandie/giverny/restaurant/le-jardin-des-plumes",
-  "WebsiteUrl": "https://jardindesplumes.fr/fr/",
+  "WebsiteUrl": "http://www.jardindesplumes.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -37823,7 +37753,7 @@
   "Latitude": "43.2865397",
   "PhoneNumber": "+33951891838",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/marseille/restaurant/saisons",
-  "WebsiteUrl": "https://restaurant-saisons.com/",
+  "WebsiteUrl": "http://www.restaurant-saisons.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -37879,7 +37809,7 @@
   "Latitude": "47.2830529",
   "PhoneNumber": "+33247458300",
   "Url": "https://guide.michelin.com/en/centre-val-de-loire/azay-le-rideau/restaurant/auberge-pom-poire",
-  "WebsiteUrl": "https://aubergepompoire.fr/",
+  "WebsiteUrl": "http://www.aubergepompoire.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -38131,7 +38061,7 @@
   "Latitude": "43.3938151",
   "PhoneNumber": "+33498051414",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/la-celle/restaurant/hostellerie-de-l-abbaye-de-la-celle",
-  "WebsiteUrl": "https://www.abbaye-celle.com/",
+  "WebsiteUrl": "http://www.abbaye-celle.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Garden or park,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -38257,7 +38187,7 @@
   "Latitude": "44.1408186",
   "PhoneNumber": "+33553475955",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/moirax/restaurant/auberge-le-prieure",
-  "WebsiteUrl": "http://aubergeleprieure.fr/",
+  "WebsiteUrl": "http://www.aubergeleprieure.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Particularly interesting wine list,Terrace,Visa credit card"
 },
@@ -38271,7 +38201,7 @@
   "Latitude": "48.125491",
   "PhoneNumber": "+33389229823",
   "Url": "https://guide.michelin.com/en/grand-est/ammerschwihr/restaurant/julien-binz",
-  "WebsiteUrl": "https://restaurantjulienbinz.com/",
+  "WebsiteUrl": "http://www.restaurantjulienbinz.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -38313,7 +38243,7 @@
   "Latitude": "47.7458562",
   "PhoneNumber": "+33297787625",
   "Url": "https://guide.michelin.com/en/bretagne/lorient/restaurant/sources",
-  "WebsiteUrl": "https://restaurant-sources.com",
+  "WebsiteUrl": "http://www.restaurant-sources.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -38495,7 +38425,7 @@
   "Latitude": "48.8498353",
   "PhoneNumber": "+33143542331",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/tour-d-argent",
-  "WebsiteUrl": "https://tourdargent.com/",
+  "WebsiteUrl": "http://www.tourdargent.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Great view,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -38579,7 +38509,7 @@
   "Latitude": "43.64144",
   "PhoneNumber": "+33490562801",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/salon-de-provence/restaurant/villa-salone",
-  "WebsiteUrl": "https://villa-salone.com/",
+  "WebsiteUrl": "http://www.villa-salone.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -38691,7 +38621,7 @@
   "Latitude": "48.8857122",
   "PhoneNumber": "+33153814818",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/le-faham-by-kelly-rangama",
-  "WebsiteUrl": "https://lefaham.com",
+  "WebsiteUrl": "http://www.lefaham.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -38733,7 +38663,7 @@
   "Latitude": "44.853277",
   "PhoneNumber": "+33556815102",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/bordeaux/restaurant/le-pavillon-des-boulevards",
-  "WebsiteUrl": "https://lepavillondesboulevards.fr/",
+  "WebsiteUrl": "http://www.lepavillondesboulevards.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -38775,7 +38705,7 @@
   "Latitude": "43.6173",
   "PhoneNumber": "+33442671918",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/saint-cannat/restaurant/le-mas-bottero",
-  "WebsiteUrl": "http://lemasbottero.com/",
+  "WebsiteUrl": "http://www.lemasbottero.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -38831,7 +38761,7 @@
   "Latitude": "43.6998945",
   "PhoneNumber": "+33497193223",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/nice/restaurant/jan",
-  "WebsiteUrl": "https://janonline.com",
+  "WebsiteUrl": "http://www.janonline.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card,Wheelchair access"
 },
@@ -38915,7 +38845,7 @@
   "Latitude": "48.8590909",
   "PhoneNumber": "+33148074548",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/qui-plume-la-lune",
-  "WebsiteUrl": "http://quiplumelalune.fr/",
+  "WebsiteUrl": "http://www.quiplumelalune.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Restaurant offering vegetarian menus,Visa credit card"
 },
@@ -38985,7 +38915,7 @@
   "Latitude": "48.8582135",
   "PhoneNumber": "+33145551505",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/le-violon-d-ingres5989",
-  "WebsiteUrl": "https://leviolondingres.paris",
+  "WebsiteUrl": "http://www.leviolondingres.paris",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -39055,7 +38985,7 @@
   "Latitude": "45.7973696",
   "PhoneNumber": "+33473830036",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/pont-du-chteau/restaurant/auberge-du-pont37415",
-  "WebsiteUrl": "https://auberge-du-pont.com/",
+  "WebsiteUrl": "http://www.auberge-du-pont.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -39223,7 +39153,7 @@
   "Latitude": "43.6992157",
   "PhoneNumber": "+33493629824",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/nice/restaurant/l-aromate233368",
-  "WebsiteUrl": "https://laromate.fr/",
+  "WebsiteUrl": "http://www.laromate.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Visa credit card,Wheelchair access"
 },
@@ -39237,7 +39167,7 @@
   "Latitude": "48.5992778",
   "PhoneNumber": "+33256442842",
   "Url": "https://guide.michelin.com/en/bretagne/binic/restaurant/la-table-d-asten",
-  "WebsiteUrl": "https://asten.restaurant/",
+  "WebsiteUrl": "http://www.asten.restaurant",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Credit card / Debit card accepted,Great view,Mastercard credit card,Restaurant offering vegetarian menus,Visa credit card"
 },
@@ -39251,7 +39181,7 @@
   "Latitude": "43.5964008",
   "PhoneNumber": "+33582746055",
   "Url": "https://guide.michelin.com/en/occitanie/toulouse/restaurant/hedone1024405",
-  "WebsiteUrl": "https://hedone-restaurant.fr/",
+  "WebsiteUrl": "http://www.hedone-restaurant.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -39335,7 +39265,7 @@
   "Latitude": "43.98619",
   "PhoneNumber": "+33490952029",
   "Url": "https://guide.michelin.com/en/occitanie/pujaut/restaurant/entre-vigne-et-garrigue",
-  "WebsiteUrl": "https://vigne-et-garrigue.com",
+  "WebsiteUrl": "http://www.vigne-et-garrigue.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -39419,7 +39349,7 @@
   "Latitude": "44.9326634",
   "PhoneNumber": "+33475560840",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/valence/restaurant/flaveurs",
-  "WebsiteUrl": "https://baptistepoinot.com/",
+  "WebsiteUrl": "http://www.baptistepoinot.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -39447,7 +39377,7 @@
   "Latitude": "44.7169426",
   "PhoneNumber": "+33466428614",
   "Url": "https://guide.michelin.com/en/occitanie/aumont-aubrac/restaurant/cyril-attrazic",
-  "WebsiteUrl": "https://cyrilattrazic.fr/",
+  "WebsiteUrl": "http://www.cyrilattrazic.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -39531,7 +39461,7 @@
   "Latitude": "45.5014095",
   "PhoneNumber": "+33473717171",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/le-broc/restaurant/origines",
-  "WebsiteUrl": "https://restaurant-origines.fr/fr/",
+  "WebsiteUrl": "http://www.restaurant-origines.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -39573,7 +39503,7 @@
   "Latitude": "48.8610315",
   "PhoneNumber": "+33140136406",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/granite",
-  "WebsiteUrl": "https://granite.paris/",
+  "WebsiteUrl": "http://www.granite.paris",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Counter dining,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -39601,7 +39531,7 @@
   "Latitude": "43.4853664",
   "PhoneNumber": "+33492286030",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/thoule-sur-mer/restaurant/l-or-bleu",
-  "WebsiteUrl": "https://yaktsa.tiara-hotels.com/",
+  "WebsiteUrl": "http://www.yaktsa.tiara-hotels.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Garden or park,Great view,Mastercard credit card,Terrace,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -39643,7 +39573,7 @@
   "Latitude": "43.3426371",
   "PhoneNumber": "+33467499000",
   "Url": "https://guide.michelin.com/en/occitanie/bziers/restaurant/l-alter-native",
-  "WebsiteUrl": "https://lalternativegoujon.fr",
+  "WebsiteUrl": "http://www.lalternativegoujon.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -39671,7 +39601,7 @@
   "Latitude": "48.7766651",
   "PhoneNumber": "+33296150000",
   "Url": "https://guide.michelin.com/en/bretagne/trbeurden/restaurant/manoir-de-lan-kerellec",
-  "WebsiteUrl": "https://lankerellec.com/",
+  "WebsiteUrl": "http://www.lankerellec.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Great view,Mastercard credit card,Visa credit card"
 },
@@ -39741,7 +39671,7 @@
   "Latitude": "48.8565083",
   "PhoneNumber": "+33145447373",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/gaya-par-pierre-gagnaire",
-  "WebsiteUrl": "https://restaurantgaya.com/",
+  "WebsiteUrl": "http://www.restaurantgaya.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Valet parking,Visa credit card,Wheelchair access"
 },
@@ -39783,7 +39713,7 @@
   "Latitude": "47.8980213",
   "PhoneNumber": "+33238536614",
   "Url": "https://guide.michelin.com/en/centre-val-de-loire/orleans/restaurant/le-lievre-gourmand",
-  "WebsiteUrl": "https://lelievregourmand.fr",
+  "WebsiteUrl": "http://www.lelievregourmand.fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
 },
@@ -39797,7 +39727,7 @@
   "Latitude": "48.8476098",
   "PhoneNumber": "+33146815034",
   "Url": "https://guide.michelin.com/en/ile-de-france/vincennes/restaurant/l-ours",
-  "WebsiteUrl": "https://loursrestaurant.com/",
+  "WebsiteUrl": "http://www.loursrestaurant.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -39811,7 +39741,7 @@
   "Latitude": "45.6289392",
   "PhoneNumber": "+33545235175",
   "Url": "https://guide.michelin.com/en/nouvelle-aquitaine/angoulme/restaurant/les-sources-de-fontbelle",
-  "WebsiteUrl": "https://sourcesdefontbelle.com/",
+  "WebsiteUrl": "http://www.sourcesdefontbelle.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card,Wheelchair access"
 },
@@ -39825,7 +39755,7 @@
   "Latitude": "44.4963194",
   "PhoneNumber": "+33565200001",
   "Url": "https://guide.michelin.com/en/occitanie/mercus/restaurant/le-dueze",
-  "WebsiteUrl": "https://chateaudemercues.com/",
+  "WebsiteUrl": "http://www.chateaudemercues.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card"
 },
@@ -39853,7 +39783,7 @@
   "Latitude": "43.568911",
   "PhoneNumber": "+33484930930",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/aix-en-provence/restaurant/le-art",
-  "WebsiteUrl": "https://chateaudelagaude.com/fr/",
+  "WebsiteUrl": "http://www.chateaudelagaude.com/fr",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -39900,20 +39830,6 @@
   "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
 {
-  "Name": "Le Marcq",
-  "Address": "944 avenue de la République, Marcq-en-Barœul, 59700, France",
-  "Location": "Marcq-en-Barœul, France",
-  "Price": "€€€",
-  "Cuisine": "Modern Cuisine",
-  "Longitude": "3.0976061",
-  "Latitude": "50.6624168",
-  "PhoneNumber": "+33320008048",
-  "Url": "https://guide.michelin.com/en/hauts-de-france/marcq-en-barul/restaurant/le-marcq",
-  "WebsiteUrl": "https://www.lemarcq.fr/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
-},
-{
   "Name": "La Vieille Fontaine",
   "Address": "Hôtel d'Europe, 12 place Crillon, Avignon, 84000, France",
   "Location": "Avignon, France",
@@ -39951,7 +39867,7 @@
   "Latitude": "48.861118",
   "PhoneNumber": "+33180977680",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/ogata-1193570",
-  "WebsiteUrl": "https://ogata.com/paris/restaurant/",
+  "WebsiteUrl": "http://www.ogata.com/paris/restaurant",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Counter dining,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -39993,7 +39909,7 @@
   "Latitude": "48.8784538",
   "PhoneNumber": "+33153209490",
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/la-condesa541766",
-  "WebsiteUrl": "https://lacondesa-paris.com/",
+  "WebsiteUrl": "http://www.lacondesa-paris.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Visa credit card"
 },
@@ -40065,7 +39981,7 @@
   "Url": "https://guide.michelin.com/en/bretagne/lannion/restaurant/l-anthocyane",
   "WebsiteUrl": "https://www.lanthocyane.com/",
   "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Credit cards not accepted,Wheelchair access"
+  "FacilitiesAndServices": "Credit card / Debit card accepted,Wheelchair access"
 },
 {
   "Name": "Les Pêcheurs",
@@ -40119,7 +40035,7 @@
   "Latitude": "43.1965802",
   "PhoneNumber": "+33494901143",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/la-cadire-d-azur/restaurant/hostellerie-berard",
-  "WebsiteUrl": "https://hotel-berard.com/",
+  "WebsiteUrl": "http://www.hotel-berard.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Particularly interesting wine list,Visa credit card"
 },
@@ -40147,7 +40063,7 @@
   "Latitude": "47.21321",
   "PhoneNumber": "+33240540187",
   "Url": "https://guide.michelin.com/en/pays-de-la-loire/nantes/restaurant/roza",
-  "WebsiteUrl": "https://restaurantroza.com/",
+  "WebsiteUrl": "http://www.restaurantroza.com",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -40514,20 +40430,6 @@
   "WebsiteUrl": "https://www.zumsternhersfeld.de/",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Car park,Credit cards not accepted"
-},
-{
-  "Name": "Petit Amour",
-  "Address": "Spritzenplatz 11, Hamburg, 22765, Germany",
-  "Location": "Hamburg, Germany",
-  "Price": "€€€€",
-  "Cuisine": "Creative French, Classic Cuisine",
-  "Longitude": "9.930977",
-  "Latitude": "53.5513517",
-  "PhoneNumber": "+494030746556",
-  "Url": "https://guide.michelin.com/en/hamburg-region/hamburg/restaurant/petit-amour",
-  "WebsiteUrl": "https://petitamour-hh.com/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
 {
   "Name": "Gourmetrestaurant \"fine dining RS\"",
@@ -41213,7 +41115,7 @@
   "Url": "https://guide.michelin.com/en/bayern/mnchen/restaurant/mural",
   "WebsiteUrl": "https://muralrestaurant.de/",
   "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card"
+  "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Terrace,Visa credit card"
 },
 {
   "Name": "Frieda",
@@ -42420,20 +42322,6 @@
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Visa credit card"
 },
 {
-  "Name": "Frühsammers Restaurant",
-  "Address": "Flinsberger Platz 8, Berlin, 14193, Germany",
-  "Location": "Berlin, Germany",
-  "Price": "€€€€",
-  "Cuisine": "Classic Cuisine, French Contemporary",
-  "Longitude": "13.2900753",
-  "Latitude": "52.4836564",
-  "PhoneNumber": "+493089738628",
-  "Url": "https://guide.michelin.com/en/berlin-region/berlin/restaurant/fruhsammers-restaurant",
-  "WebsiteUrl": "https://www.fruehsammers.de/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card"
-},
-{
   "Name": "Ostseelounge",
   "Address": "Ernst-Moritz-Arndt-Straße 6, Dierhagen, 18347, Germany",
   "Location": "Dierhagen, Germany",
@@ -42527,7 +42415,7 @@
   "Latitude": "54.1792706",
   "PhoneNumber": "+4938150400",
   "Url": "https://guide.michelin.com/en/mecklenburg-vorpommern/rostock/restaurant/gourmet-restaurant-der-butt",
-  "WebsiteUrl": "https://www.hohe-duene.de/",
+  "WebsiteUrl": "https://www.hohe-duene.de/hotel-ostsee/restaurant/gourmetrestaurant-der-butt.html",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
 },
@@ -42798,20 +42686,6 @@
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Restaurant offering vegetarian menus,Terrace,Visa credit card"
 },
 {
-  "Name": "TIAN",
-  "Address": "Frauenstraße 4, Munich, 80331, Germany",
-  "Location": "Munich, Germany",
-  "Price": "€€€€",
-  "Cuisine": "Vegetarian",
-  "Longitude": "11.5757538",
-  "Latitude": "48.1345296",
-  "PhoneNumber": "+4989885656712",
-  "Url": "https://guide.michelin.com/en/bayern/mnchen/restaurant/tian450459",
-  "WebsiteUrl": "https://www.tian-restaurant.com/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card,Wheelchair access"
-},
-{
   "Name": "sein",
   "Address": "Scheffelstraße 57, Karlsruhe, 76135, Germany",
   "Location": "Karlsruhe, Germany",
@@ -42939,12 +42813,12 @@
 },
 {
   "Name": "[KOOK] 36",
-  "Address": "Thundorfer Straße 36, Moos bei Deggendorf, 94554, Germany",
+  "Address": "Oberer Stadtplatz 18, Moos bei Deggendorf, 94469, Germany",
   "Location": "Moos bei Deggendorf, Germany",
   "Price": "€€€",
   "Cuisine": "Creative, Modern Cuisine",
-  "Longitude": "12.9677711",
-  "Latitude": "48.7514993",
+  "Longitude": "12.9622225",
+  "Latitude": "48.8351925",
   "PhoneNumber": "+4999389196636",
   "Url": "https://guide.michelin.com/en/bayern/moos-bei-deggendorf/restaurant/kook-36",
   "WebsiteUrl": "https://kook36.de/",
@@ -42964,20 +42838,6 @@
   "WebsiteUrl": "https://www.restaurant-johanns.de/",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
-},
-{
-  "Name": "Ahlmanns",
-  "Address": "Niemannsweg 102, Kiel, 24105, Germany",
-  "Location": "Kiel, Germany",
-  "Price": "€€€€",
-  "Cuisine": "Creative",
-  "Longitude": "10.1513168",
-  "Latitude": "54.3387107",
-  "PhoneNumber": "+4943188110",
-  "Url": "https://guide.michelin.com/en/schleswig-holstein/kiel/restaurant/ahlmanns",
-  "WebsiteUrl": "https://www.kieler-kaufmann.de/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
 {
   "Name": "faelt",
@@ -43062,20 +42922,6 @@
   "WebsiteUrl": "http://www.zurtant.de/",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Great view,Mastercard credit card,Terrace,Visa credit card"
-},
-{
-  "Name": "Schwarzreiter",
-  "Address": "Maximilianstraße 17, Munich, 80539, Germany",
-  "Location": "Munich, Germany",
-  "Price": "€€€€",
-  "Cuisine": "Modern Cuisine, Country cooking",
-  "Longitude": "11.581792",
-  "Latitude": "48.1389131",
-  "PhoneNumber": "+498921252125",
-  "Url": "https://guide.michelin.com/en/bayern/mnchen/restaurant/schwarzreiter",
-  "WebsiteUrl": "https://www.schwarzreiter-muenchen.de/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Visa credit card"
 },
 {
   "Name": "halbedel's Gasthaus",
@@ -44854,20 +44700,6 @@
   "WebsiteUrl": "https://www.thewoodspeen.com/",
   "Award": "1 MICHELIN Star",
   "FacilitiesAndServices": "American Express credit card,Booking essential,Car park,Credit card / Debit card accepted,Diners Club credit card,Garden or park,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
-},
-{
-  "Name": "Peel's",
-  "Address": "Hampton Manor, Shadowbrook Lane, Hampton in Arden, B92 OEN, United Kingdom",
-  "Location": "Hampton in Arden, United Kingdom",
-  "Price": "££££",
-  "Cuisine": "Creative British",
-  "Longitude": "-1.7052592",
-  "Latitude": "52.4259196",
-  "PhoneNumber": "+441675446080",
-  "Url": "https://guide.michelin.com/en/west-midlands/hampton-in-arden/restaurant/peel-s",
-  "WebsiteUrl": "https://hamptonmanor.com/",
-  "Award": "1 MICHELIN Star",
-  "FacilitiesAndServices": "American Express credit card,Booking essential,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Restaurant offering vegetarian menus,Visa credit card,Wheelchair access"
 },
 {
   "Name": "The Barn",
@@ -48111,7 +47943,7 @@
   "Cuisine": "Malaysian",
   "Longitude": "101.6752549",
   "Latitude": "3.0955277",
-  "PhoneNumber": "+60379836827",
+  "PhoneNumber": "+60379727551",
   "Url": "https://guide.michelin.com/en/kuala-lumpur-region/kuala-lumpur/restaurant/nasi-ayam-hainan-chee-meng-jalan-kelang-lama",
   "WebsiteUrl": "https://cheemeng.com.my",
   "Award": "Bib Gourmand",
@@ -49124,20 +48956,6 @@
   "WebsiteUrl": "https://lola55.com/",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
-},
-{
-  "Name": "Caboco",
-  "Address": "1850 Industrial St., Los Angeles, 90021, USA",
-  "Location": "Los Angeles, USA",
-  "Price": "$$",
-  "Cuisine": "Brazilian, Regional Cuisine",
-  "Longitude": "-118.2326404",
-  "Latitude": "34.0359191",
-  "PhoneNumber": "+12134051434",
-  "Url": "https://guide.michelin.com/en/california/us-los-angeles/restaurant/caboco",
-  "WebsiteUrl": "https://www.cabocola.com/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Terrace,Valet parking,Wheelchair access"
 },
 {
   "Name": "Coni'Seafood",
@@ -50596,7 +50414,7 @@
   "FacilitiesAndServices": "Air conditioning,China UnionPay,Credit card / Debit card accepted,JCB,Mastercard credit card,Visa credit card"
 },
 {
-  "Name": "Krua Kampan",
+  "Name": "Krua Kampan Khao Yai",
   "Address": "Route no. 3052, Mu Si, Pak Chong, Nakhon Ratchasima, 30130, Thailand",
   "Location": "Nakhon Ratchasima, Thailand",
   "Price": "฿฿",
@@ -50750,8 +50568,8 @@
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Wheelchair access"
 },
 {
-  "Name": "Madam Pahtehh",
-  "Address": "103/8 Si Chomchuen Road, Mak Khaeng, Mueang Udon Thani, Udon Thani, 41000, Thailand",
+  "Name": "Madam Pahtehh (Tumruaj)",
+  "Address": "34/1-3 Tumruaj Road, Mak Khaeng, Mueang Udon Thani, Udon Thani, 41000, Thailand",
   "Location": "Udon Thani, Thailand",
   "Price": "฿",
   "Cuisine": "Vietnamese",
@@ -54912,12 +54730,12 @@
   "Address": "Andrés del Río 7, Santander, 39004, Spain",
   "Location": "Santander, Spain",
   "Price": "€",
-  "Cuisine": "Fusion, Traditional Cuisine",
+  "Cuisine": "Traditional Cuisine",
   "Longitude": "-3.7958258",
   "Latitude": "43.4647564",
   "PhoneNumber": "+34630341743",
   "Url": "https://guide.michelin.com/en/cantabria/santander/restaurant/querida-margarita",
-  "WebsiteUrl": "https://restaurantequeridamargarita.es",
+  "WebsiteUrl": "http://www.restaurantequeridamargarita.es",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
@@ -55046,20 +54864,6 @@
   "WebsiteUrl": "https://www.vicusrestaurant.com/",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
-},
-{
-  "Name": "El Almirez",
-  "Address": "Collado 19, Hervás, 10700, Spain",
-  "Location": "Hervás, Spain",
-  "Price": "€€",
-  "Cuisine": "Traditional Cuisine",
-  "Longitude": "-5.8593455",
-  "Latitude": "40.2743292",
-  "PhoneNumber": "+34927473459",
-  "Url": "https://guide.michelin.com/en/extremadura/hervas/restaurant/el-almirez",
-  "WebsiteUrl": "https://www.restauranteelalmirez.com/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
 },
 {
   "Name": "Terra Olea",
@@ -55276,10 +55080,10 @@
   "Address": "San Simón 2, Santander, 39003, Spain",
   "Location": "Santander, Spain",
   "Price": "€€",
-  "Cuisine": "Contemporary",
+  "Cuisine": "Contemporary, Traditional Cuisine",
   "Longitude": "-3.8025956",
   "Latitude": "43.464222",
-  "PhoneNumber": "+34942049387",
+  "PhoneNumber": "+34652648566",
   "Url": "https://guide.michelin.com/en/cantabria/santander/restaurant/agua-salada",
   "WebsiteUrl": "https://restauranteaguasalada.makro.rest",
   "Award": "Bib Gourmand",
@@ -55662,20 +55466,6 @@
   "WebsiteUrl": "https://restaurante-carvalho.com/",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Restaurant offering vegetarian menus,Visa credit card"
-},
-{
-  "Name": "Lena",
-  "Address": "Cervantes 2, Villaviciosa, 33300, Spain",
-  "Location": "Villaviciosa, Spain",
-  "Price": "€€",
-  "Cuisine": "Asturian",
-  "Longitude": "-5.432389",
-  "Latitude": "43.4824212",
-  "PhoneNumber": "+34984833197",
-  "Url": "https://guide.michelin.com/en/principado-de-asturias/villaviciosa/restaurant/lena",
-  "WebsiteUrl": "https://sidrerialena.com/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
 {
   "Name": "Atelier Casa de Comidas",
@@ -65800,20 +65590,6 @@
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card"
 },
 {
-  "Name": "Zollhaus",
-  "Address": "Bahnhofstrasse 4, Olten, 4600, Switzerland",
-  "Location": "Olten, Switzerland",
-  "Price": "€€",
-  "Cuisine": "Classic Cuisine, Market Cuisine",
-  "Longitude": "7.9062088",
-  "Latitude": "47.3489623",
-  "PhoneNumber": "+41622969696",
-  "Url": "https://guide.michelin.com/en/solothurn-region/olten/restaurant/zollhaus",
-  "WebsiteUrl": "https://www.zollhaus-olten.ch/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Maestro,Mastercard credit card,Terrace,Visa credit card"
-},
-{
   "Name": "Höhwald",
   "Address": "Monbielerstrasse 171, Klosters, 7250, Switzerland",
   "Location": "Klosters, Switzerland",
@@ -68345,7 +68121,7 @@
   "Url": "https://guide.michelin.com/en/new-york-state/new-york/restaurant/winner",
   "WebsiteUrl": "https://www.winner.nyc/",
   "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Restaurant offering vegetarian menus,Terrace,Wheelchair access"
+  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Restaurant offering vegetarian menus,Terrace"
 },
 {
   "Name": "Saint Julivert Fisherie",
@@ -68713,7 +68489,7 @@
 },
 {
   "Name": "Mendokoro Janomeya",
-  "Address": "2F, Harenohi Kayukoji, 565-23 Nakanocho, Nakagyo-ku, Kyoto, 604-8042, Japan",
+  "Address": "2F, 565-23 Nakanocho, Nakagyo-ku, Kyoto, 604-8042, Japan",
   "Location": "Kyoto, Japan",
   "Price": "¥",
   "Cuisine": "Ramen",
@@ -69091,7 +68867,7 @@
 },
 {
   "Name": "Fuyacho Uneno",
-  "Address": "1F, Daini Fuyacho Bldg, 225 Owaricho, Nakagyo-ku, Kyoto, 604-0934, Japan",
+  "Address": "225 Owaricho, Nakagyo-ku, Kyoto, 604-0934, Japan",
   "Location": "Kyoto, Japan",
   "Price": "¥¥",
   "Cuisine": "Oden",
@@ -69259,12 +69035,12 @@
 },
 {
   "Name": "Synergy",
-  "Address": "2F, Dojima Leisure Bldg, 1-5-35 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "2F, 1-5-35 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥",
   "Cuisine": "Curry",
-  "Longitude": "135.4969005",
-  "Latitude": "34.6963134",
+  "Longitude": "135.496901",
+  "Latitude": "34.696341",
   "PhoneNumber": "",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/synergy",
   "WebsiteUrl": "",
@@ -69357,12 +69133,12 @@
 },
 {
   "Name": "La pleine lune",
-  "Address": "2F, Nishimoto Bldg, 55-1 Matsuyacho, Nakagyo-ku, Kyoto, 604-0831, Japan",
+  "Address": "2F, 55-1 Matsuyacho, Nakagyo-ku, Kyoto, 604-0831, Japan",
   "Location": "Kyoto, Japan",
   "Price": "¥¥",
   "Cuisine": "French",
-  "Longitude": "135.762054",
-  "Latitude": "35.0136126",
+  "Longitude": "135.759263",
+  "Latitude": "35.0166544",
   "PhoneNumber": "+81752512570",
   "Url": "https://guide.michelin.com/en/kyoto-region/kyoto/restaurant/la-pleine-lune",
   "WebsiteUrl": "https://la-pleine-lune.com/",
@@ -69707,7 +69483,7 @@
 },
 {
   "Name": "Yoshitaka",
-  "Address": "2F, Nippo New Grand Bldg, 2-8-5 Higashishinsaibashi, Chuo-ku, Osaka, 542-0083, Japan",
+  "Address": "2F, 2-8-5 Higashishinsaibashi, Chuo-ku, Osaka, 542-0083, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Oden",
@@ -69777,7 +69553,7 @@
 },
 {
   "Name": "le 14e",
-  "Address": "2F, Pogan Bldg, 393-3 Iseyacho, Kamigyo-ku, Kyoto, 602-0873, Japan",
+  "Address": "2F, 393-3 Iseyacho, Kamigyo-ku, Kyoto, 602-0873, Japan",
   "Location": "Kyoto, Japan",
   "Price": "¥¥",
   "Cuisine": "French",
@@ -69945,7 +69721,7 @@
 },
 {
   "Name": "Watanabe Curry Honten",
-  "Address": "3F, Daisan Shinko Bldg, 2-2-5 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "3F, 2-2-5 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥",
   "Cuisine": "Curry",
@@ -70043,7 +69819,7 @@
 },
 {
   "Name": "Kasane",
-  "Address": "B1F, Ogawa Daisan Bldg, 1-2-14 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "B1F, 1-2-14 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Izakaya",
@@ -70071,7 +69847,7 @@
 },
 {
   "Name": "Osteria La Cicerchia",
-  "Address": "3F, Sun-Yamato Bldg, 2-3-4 Kyomachibori, Nishi-ku, Osaka, 550-0003, Japan",
+  "Address": "3F, 2-3-4 Kyomachibori, Nishi-ku, Osaka, 550-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Italian",
@@ -70281,12 +70057,12 @@
 },
 {
   "Name": "Kitashinchi Shien",
-  "Address": "2F, Espace Kitashinchi 21, 1-7-19 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "2F, 1-7-19 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Yakitori",
-  "Longitude": "135.499877",
-  "Latitude": "34.69739",
+  "Longitude": "135.4970804",
+  "Latitude": "34.7005929",
   "PhoneNumber": "+81663410611",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/kitashinchi-shien",
   "WebsiteUrl": "",
@@ -70435,7 +70211,7 @@
 },
 {
   "Name": "Aka to Shiro",
-  "Address": "3F, Tanaka Bldg, 1-1-41 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "3F, 1-1-41 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Sushi",
@@ -70771,7 +70547,7 @@
 },
 {
   "Name": "tanpopo",
-  "Address": "6F, Eiraku Bldg, 1-10-16 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "6F, 1-10-16 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Teppanyaki",
@@ -70813,7 +70589,7 @@
 },
 {
   "Name": "Kosai Fukumimi",
-  "Address": "2F, Astoria Nigokan Bldg, 1-1-8 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "2F, 1-1-8 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Chinese",
@@ -71079,7 +70855,7 @@
 },
 {
   "Name": "Yakitori Minami",
-  "Address": "4F, Daini Royal Bldg, 1-4-20 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "4F, 1-4-20 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Yakitori",
@@ -71121,7 +70897,7 @@
 },
 {
   "Name": "Shokudo Akari",
-  "Address": "2F, J･Pride Kitashinchi 3rd Bldg, 1-6-27 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
+  "Address": "2F, 1-6-27 Sonezakishinchi, Kita-ku, Osaka, 530-0002, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Izakaya",
@@ -71275,12 +71051,12 @@
 },
 {
   "Name": "Suigyo Murabayashi",
-  "Address": "B1F, Dainichi Bldg, 1-2-17 Dojima, Kita-ku, Osaka, 530-0003, Japan",
+  "Address": "B1F, 1-2-17 Dojima, Kita-ku, Osaka, 530-0003, Japan",
   "Location": "Osaka, Japan",
   "Price": "¥¥",
   "Cuisine": "Izakaya",
-  "Longitude": "135.4988274",
-  "Latitude": "34.6967971",
+  "Longitude": "135.4960105",
+  "Latitude": "34.699983",
   "PhoneNumber": "+81663443909",
   "Url": "https://guide.michelin.com/en/osaka-region/osaka/restaurant/suigyo-murabayashi",
   "WebsiteUrl": "",
@@ -71698,7 +71474,7 @@
   "Address": "58, Section 3, Yanping North Road, Datong District, Taipei, Taipei & Taichung",
   "Location": "Taipei, Taipei & Taichung",
   "Price": "$",
-  "Cuisine": "Street Food",
+  "Cuisine": "Small eats",
   "Longitude": "121.5637",
   "Latitude": "25.03841",
   "PhoneNumber": "+886225857655",
@@ -74803,7 +74579,7 @@
 },
 {
   "Name": "Kok Sen",
-  "Address": "2/4 Keong Saik Road, 089137, Singapore",
+  "Address": "2/4 Keong Saik Road, 089112, Singapore",
   "Location": "Singapore",
   "Price": "$",
   "Cuisine": "Singaporean",
@@ -75589,7 +75365,7 @@
   "Name": "Šug",
   "Address": "Tolstojeva 1a, Split, 21000, Croatia",
   "Location": "Split, Croatia",
-  "Price": "",
+  "Price": "€€",
   "Cuisine": "Regional Cuisine",
   "Longitude": "16.4432943",
   "Latitude": "43.5094919",
@@ -75869,7 +75645,7 @@
   "Name": "Michael's Genuine",
   "Address": "130 NE. 40th St., Miami, 33137, USA",
   "Location": "Miami, USA",
-  "Price": "$$",
+  "Price": "$$$",
   "Cuisine": "Contemporary, American",
   "Longitude": "-80.1927977",
   "Latitude": "25.8133573",
@@ -75909,14 +75685,14 @@
 },
 {
   "Name": "Swine & Sons",
-  "Address": "1282 N. Orange Ave., Orlando, 32789, USA",
-  "Location": "Orlando, USA",
+  "Address": "1280 N. Orange Ave., Winter Park, 32789, USA",
+  "Location": "Winter Park, USA",
   "Price": "$",
   "Cuisine": "American, Southern",
   "Longitude": "-81.3573538",
   "Latitude": "28.5926125",
   "PhoneNumber": "+14076367601",
-  "Url": "https://guide.michelin.com/en/florida/orlando/restaurant/swine-sons",
+  "Url": "https://guide.michelin.com/en/florida/winter-park/restaurant/swine-sons",
   "WebsiteUrl": "http://swineandsons.com",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,Car park,Credit card / Debit card accepted,Terrace,Wheelchair access"
@@ -76121,7 +75897,7 @@
   "Name": "Red Rooster Overtown",
   "Address": "920 NW. 2nd Ave., Miami, 33136, USA",
   "Location": "Miami, USA",
-  "Price": "$$",
+  "Price": "$$$",
   "Cuisine": "International, American",
   "Longitude": "-80.198026",
   "Latitude": "25.782892",
@@ -76219,7 +75995,7 @@
   "Name": "Krüs Kitchen",
   "Address": "3413 Main Hwy., Miami, 33133, USA",
   "Location": "Miami, USA",
-  "Price": "$$",
+  "Price": "$$$",
   "Cuisine": "Contemporary, Deli",
   "Longitude": "-80.2426489",
   "Latitude": "25.7276394",
@@ -76612,7 +76388,7 @@
   "Address": "Julianalaan 14, Kaag, 2159 LA, Netherlands",
   "Location": "Kaag, Netherlands",
   "Price": "€€€",
-  "Cuisine": "Modern Cuisine",
+  "Cuisine": "Modern Cuisine, Asian Contemporary",
   "Longitude": "4.5584448",
   "Latitude": "52.2172069",
   "PhoneNumber": "+31252544206",
@@ -77131,8 +76907,8 @@
   "Location": "Leidschendam, Netherlands",
   "Price": "€€",
   "Cuisine": "Modern French",
-  "Longitude": "4.3979978",
-  "Latitude": "52.0798043",
+  "Longitude": "4.3981005",
+  "Latitude": "52.0798754",
   "PhoneNumber": "+31703010451",
   "Url": "https://guide.michelin.com/en/zuid-holland/leidschendam/restaurant/bij-erik",
   "WebsiteUrl": "https://bijerik.nl",
@@ -80015,8 +79791,8 @@
   "Location": "Nara, Japan",
   "Price": "¥¥",
   "Cuisine": "Yakitori",
-  "Longitude": "135.735448",
-  "Latitude": "34.692767",
+  "Longitude": "135.7353958",
+  "Latitude": "34.6928392",
   "PhoneNumber": "+81742479889",
   "Url": "https://guide.michelin.com/en/nara-region/nara/restaurant/yakitori-fukuro",
   "WebsiteUrl": "",
@@ -80085,8 +79861,8 @@
   "Location": "Nara, Japan",
   "Price": "¥",
   "Cuisine": "Indian",
-  "Longitude": "135.828985",
-  "Latitude": "34.68571",
+  "Longitude": "135.8290402",
+  "Latitude": "34.6857108",
   "PhoneNumber": "+81742877014",
   "Url": "https://guide.michelin.com/en/nara-region/nara/restaurant/toi-inshokuten",
   "WebsiteUrl": "",
@@ -80237,7 +80013,7 @@
   "Name": "Nidaime Izumosoba Dandan",
   "Address": "2-2-34 Omiyacho, Nara, Nara, 630-8115, Japan",
   "Location": "Nara, Japan",
-  "Price": "¥",
+  "Price": "¥¥",
   "Cuisine": "Soba",
   "Longitude": "135.81673",
   "Latitude": "34.682442",
@@ -80920,20 +80696,6 @@
   "FacilitiesAndServices": "Air conditioning,Counter dining,Credit card / Debit card accepted,Terrace,Wheelchair access"
 },
 {
-  "Name": "GT Fish & Oyster",
-  "Address": "531 N. Wells St., Chicago, 60654, USA",
-  "Location": "Chicago, USA",
-  "Price": "$$",
-  "Cuisine": "Seafood",
-  "Longitude": "-87.63369",
-  "Latitude": "41.8918",
-  "PhoneNumber": "+13129293501",
-  "Url": "https://guide.michelin.com/en/illinois/chicago/restaurant/gt-fish-oyster",
-  "WebsiteUrl": "https://www.gtoyster.com/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,American Express credit card,Brunch,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Valet parking,Visa credit card,Wheelchair access"
-},
-{
   "Name": "Herb",
   "Address": "5424 N. Broadway, Chicago, 60640, USA",
   "Location": "Chicago, USA",
@@ -81226,20 +80988,6 @@
   "WebsiteUrl": "https://www.proxichicago.com/",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Counter dining,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Valet parking,Visa credit card,Wheelchair access"
-},
-{
-  "Name": "Soulé",
-  "Address": "1931 W. Chicago Ave., Chicago, 60622, USA",
-  "Location": "Chicago, USA",
-  "Price": "$$",
-  "Cuisine": "Southern, Creole",
-  "Longitude": "-87.6759332",
-  "Latitude": "41.8959028",
-  "PhoneNumber": "+13125263825",
-  "Url": "https://guide.michelin.com/en/illinois/chicago/restaurant/soule",
-  "WebsiteUrl": "https://www.soulechicago.com/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,Bring your own,Credit card / Debit card accepted"
 },
 {
   "Name": "Mango Pickle",
@@ -81953,7 +81701,7 @@
   "Url": "https://guide.michelin.com/en/ile-de-france/paris/restaurant/cucina",
   "WebsiteUrl": "https://www.cucina-mutualite.com/",
   "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,Credit cards not accepted,Wheelchair access"
+  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Visa credit card,Wheelchair access"
 },
 {
   "Name": "Zen",
@@ -82343,7 +82091,7 @@
   "Latitude": "45.1417508",
   "PhoneNumber": "+33458174830",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/uriage-les-bains/restaurant/cafe-a",
-  "WebsiteUrl": "https://maisonaribert.com/",
+  "WebsiteUrl": "http://www.maisonaribert.com",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -82427,7 +82175,7 @@
   "Latitude": "47.1975824",
   "PhoneNumber": "+33381689278",
   "Url": "https://guide.michelin.com/en/bourgogne-franche-comte/bonntage/restaurant/le-bistrot378013",
-  "WebsiteUrl": "http://www.etang-du-moulin.com/index.php/fr/",
+  "WebsiteUrl": "https://www.etang-du-moulin.com",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Particularly interesting wine list,Terrace,Visa credit card,Wheelchair access"
 },
@@ -83715,7 +83463,7 @@
   "Latitude": "45.459746",
   "PhoneNumber": "+33474588328",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/chonas-l-amballan/restaurant/le-cottage",
-  "WebsiteUrl": "https://domaine-de-clairefontaine.fr/fr/",
+  "WebsiteUrl": "http://www.domaine-de-clairefontaine.fr",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Garden or park,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -83743,7 +83491,7 @@
   "Latitude": "45.458736",
   "PhoneNumber": "+33473965566",
   "Url": "https://guide.michelin.com/en/auvergne-rhone-alpes/boudes/restaurant/le-boudes-la-vigne",
-  "WebsiteUrl": "http://www.leboudeslavigne.franceserv.com/",
+  "WebsiteUrl": "http://www.le-boudes-la-vigne.com",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Air conditioning,American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
@@ -84305,7 +84053,7 @@
   "Url": "https://guide.michelin.com/en/occitanie/als/restaurant/epices-et-tout",
   "WebsiteUrl": "https://www.epicesettout.fr/",
   "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Visa credit card,Wheelchair access"
+  "FacilitiesAndServices": "Air conditioning,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
 {
   "Name": "L'Angle Saint-Laurent",
@@ -85843,7 +85591,7 @@
   "Latitude": "48.4363567",
   "PhoneNumber": "+33388970242",
   "Url": "https://guide.michelin.com/en/grand-est/natzwiller/restaurant/auberge-metzger",
-  "WebsiteUrl": "http://www.hotel-aubergemetzger.com/uk/hotel-auberge-metzger-natzwiller-alsace-site-officiel.php",
+  "WebsiteUrl": "http://www.hotel-aubergemetzger.com",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Garden or park,Mastercard credit card,Restaurant offering vegetarian menus,Terrace,Visa credit card,Wheelchair access"
 },
@@ -86425,7 +86173,7 @@
   "Name": "Chez les Anges",
   "Address": "54 boulevard de la Tour-Maubourg, Paris, 75007, France",
   "Location": "Paris, France",
-  "Price": "€€€",
+  "Price": "€€",
   "Cuisine": "Classic Cuisine",
   "Longitude": "2.3100155",
   "Latitude": "48.8582703",
@@ -86809,7 +86557,7 @@
   "Latitude": "43.6992114",
   "PhoneNumber": "+33493879139",
   "Url": "https://guide.michelin.com/en/provence-alpes-cote-dazur/nice/restaurant/chez-davia",
-  "WebsiteUrl": "https://www.chezdavia.com/",
+  "WebsiteUrl": "http://www.chez-davia.fr",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -87607,7 +87355,7 @@
   "Latitude": "53.7183731",
   "PhoneNumber": "+494064419441",
   "Url": "https://guide.michelin.com/en/schleswig-holstein/tangstedt/restaurant/gutskuche",
-  "WebsiteUrl": "https://www.gutskueche.de/",
+  "WebsiteUrl": "http://www.gutskueche.de",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
@@ -88394,20 +88142,6 @@
   "WebsiteUrl": "https://www.landhotel-muehlenhof.de/",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Terrace,Visa credit card"
-},
-{
-  "Name": "La Corona",
-  "Address": "Johann-Sebastian-Bach-Platz 20, Ansbach, 91522, Germany",
-  "Location": "Ansbach, Germany",
-  "Price": "€€",
-  "Cuisine": "Market Cuisine, International",
-  "Longitude": "10.5744718",
-  "Latitude": "49.3022665",
-  "PhoneNumber": "+499819090130",
-  "Url": "https://guide.michelin.com/en/bayern/ansbach/restaurant/la-corona",
-  "WebsiteUrl": "https://www.lacorona.de/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Credit cards not accepted,Particularly interesting wine list,Terrace"
 },
 {
   "Name": "Landgasthof Hirschen",
@@ -89684,20 +89418,6 @@
   "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
 },
 {
-  "Name": "Oechsle",
-  "Address": "Karlstraße 16, Aschaffenburg, 63739, Germany",
-  "Location": "Aschaffenburg, Germany",
-  "Price": "€€",
-  "Cuisine": "Traditional Cuisine",
-  "Longitude": "9.1406373",
-  "Latitude": "49.9784249",
-  "PhoneNumber": "+49602123132",
-  "Url": "https://guide.michelin.com/en/bayern/aschaffenburg/restaurant/oechsle",
-  "WebsiteUrl": "https://zumgoldenenochsen.de/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "American Express credit card,Car park,Credit card / Debit card accepted,Mastercard credit card,Visa credit card"
-},
-{
   "Name": "Brasserie Colette Tim Raue",
   "Address": "Passauer Straße 5, Berlin, 10789, Germany",
   "Location": "Berlin, Germany",
@@ -90116,20 +89836,6 @@
   "WebsiteUrl": "https://www.restaurant-esskunst.de/",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Cash only,Mastercard credit card,Terrace,Visa credit card"
-},
-{
-  "Name": "Grüner Wald",
-  "Address": "Hauptstraße 2, Neuhausen, 75242, Germany",
-  "Location": "Neuhausen, Germany",
-  "Price": "€€",
-  "Cuisine": "Country cooking, International",
-  "Longitude": "8.7698771",
-  "Latitude": "48.8182571",
-  "PhoneNumber": "+4972349473899",
-  "Url": "https://guide.michelin.com/en/baden-wurttemberg/neuhausen/restaurant/gruner-wald567106",
-  "WebsiteUrl": "http://www.gruenerwald.de",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "American Express credit card,Credit card / Debit card accepted,Diners Club credit card,Mastercard credit card,Terrace,Visa credit card"
 },
 {
   "Name": "Knippschild",
@@ -90767,8 +90473,8 @@
   "Location": "Berlin, Germany",
   "Price": "€€",
   "Cuisine": "German, Modern Cuisine",
-  "Longitude": "13.4324759",
-  "Latitude": "52.4800369",
+  "Longitude": "13.4324457",
+  "Latitude": "52.4801673",
   "PhoneNumber": "+4930398200000",
   "Url": "https://guide.michelin.com/en/berlin-region/berlin/restaurant/tisk",
   "WebsiteUrl": "https://www.tisk-speisekneipe.de/",
@@ -91112,20 +90818,6 @@
   "FacilitiesAndServices": "Car park,Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card,Wheelchair access"
 },
 {
-  "Name": "Grundschlag",
-  "Address": "Flinsberger Platz 8, Berlin, 14193, Germany",
-  "Location": "Berlin, Germany",
-  "Price": "€€",
-  "Cuisine": "Market Cuisine, International",
-  "Longitude": "13.2901022",
-  "Latitude": "52.4838006",
-  "PhoneNumber": "+493089738628",
-  "Url": "https://guide.michelin.com/en/berlin-region/berlin/restaurant/grundschlag",
-  "WebsiteUrl": "https://www.fruehsammers.de/",
-  "Award": "Bib Gourmand",
-  "FacilitiesAndServices": "Credit card / Debit card accepted,Mastercard credit card,Terrace,Visa credit card"
-},
-{
   "Name": "Landhaus Hadrys",
   "Address": "An der Halberstädter Chaussee 1, Magdeburg, 39116, Germany",
   "Location": "Magdeburg, Germany",
@@ -91149,7 +90841,7 @@
   "Latitude": "51.4382036",
   "PhoneNumber": "+4928457908210",
   "Url": "https://guide.michelin.com/en/nordrhein-westfalen/neukirchen-vluyn/restaurant/little-john-s",
-  "WebsiteUrl": "https://little-johns.de/",
+  "WebsiteUrl": "https://www.little-johns.de/",
   "Award": "Bib Gourmand",
   "FacilitiesAndServices": "Credit cards not accepted,Terrace"
 },
@@ -91745,7 +91437,7 @@
   "Name": "Thyme",
   "Address": "Custume Place, Strand Street, Athlone, Ireland",
   "Location": "Athlone, Ireland",
-  "Price": "$$$",
+  "Price": "$$",
   "Cuisine": "Modern Cuisine",
   "Longitude": "-7.9403616",
   "Latitude": "53.4236062",
