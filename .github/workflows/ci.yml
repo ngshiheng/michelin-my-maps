@@ -1,5 +1,4 @@
 name: Continuos Integration
-
 on:
     push:
         branches:

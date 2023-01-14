@@ -1,10 +1,8 @@
 name: Semantic Release
-
 on:
     push:
         branches:
             - main
-
 jobs:
     test:
         uses: ./.github/workflows/ci.yml
