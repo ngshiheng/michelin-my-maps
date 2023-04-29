@@ -5,13 +5,15 @@ import {
     formatNanoseconds,
 } from "https://unpkg.com/@lyrasearch/lyra@0.3.1/dist/esm/src/lyra.js";
 
-import data from "./data.json" assert { type: "json" };
-
 let restaurantDB;
 const summary = document.getElementById("search-summary");
 const table = document.getElementById("search-results");
 
 async function createLyraInstance(event) {
+    const endpoint = "data.json";
+    const response = await fetch(endpoint);
+    const data = await response.json();
+
     restaurantDB = create({
         schema: {
             Name: "string",
@@ -74,7 +76,7 @@ function jsonToHtmlTable(json) {
                     const websiteUrl = element.document["WebsiteUrl"];
                     if (!websiteUrl) {
                         const text = document.createTextNode(
-                            element.document[key]
+                            element.document[key],
                         );
                         cell.appendChild(text);
                         break;
@@ -91,7 +93,7 @@ function jsonToHtmlTable(json) {
                         const link = document.createElement("a");
                         link.setAttribute(
                             "href",
-                            `https://maps.google.com/?q=${address}`
+                            `https://maps.google.com/?q=${address}`,
                         );
                         link.setAttribute("target", "_blank");
                         link.innerText = address;
@@ -103,7 +105,7 @@ function jsonToHtmlTable(json) {
                     const phoneNumber = element.document["PhoneNumber"];
                     if (phoneNumber) {
                         let text = document.createTextNode(
-                            element.document[key]
+                            element.document[key],
                         );
                         cell.appendChild(text);
                     }
