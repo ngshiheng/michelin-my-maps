@@ -16,6 +16,14 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	allowedDomain = "guide.michelin.com"
+	cachePath     = "cache"
+	delay         = 2 * time.Second
+	parallelism   = 5
+	randomDelay   = 2 * time.Second
+)
+
 // App contains the necessary components for the crawler.
 type App struct {
 	collector    *colly.Collector
@@ -155,18 +163,18 @@ func (a *App) Crawl() {
 		facilitiesAndServices := strings.Join(facilitiesAndServicesSlice, ",")
 
 		restaurant := michelin.Restaurant{
-			Name:                  name,
 			Address:               address,
-			Location:              e.Request.Ctx.Get("location"),
-			Price:                 price,
 			Cuisine:               cuisine,
-			Longitude:             e.Request.Ctx.Get("longitude"),
+			Distinction:           e.Request.Ctx.Get("distinction"),
+			FacilitiesAndServices: facilitiesAndServices,
 			Latitude:              e.Request.Ctx.Get("latitude"),
+			Location:              e.Request.Ctx.Get("location"),
+			Longitude:             e.Request.Ctx.Get("longitude"),
+			Name:                  name,
 			PhoneNumber:           formattedPhoneNumber,
+			Price:                 price,
 			URL:                   url,
 			WebsiteURL:            websiteUrl,
-			Award:                 e.Request.Ctx.Get("distinction"),
-			FacilitiesAndServices: facilitiesAndServices,
 		}
 
 		log.Debug(restaurant)

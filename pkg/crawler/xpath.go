@@ -1,17 +1,5 @@
 package crawler
 
-import "time"
-
-// Crawler app settings
-const (
-	allowedDomain = "guide.michelin.com"
-	cachePath     = "cache"
-	delay         = 2 * time.Second
-	randomDelay   = 2 * time.Second
-	parallelism   = 5
-)
-
-// XPath
 const (
 	// All restaurants page
 	// E.g.: https://guide.michelin.com/en/restaurants/3-stars-michelin/
