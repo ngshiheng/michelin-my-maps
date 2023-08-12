@@ -1,5 +1,6 @@
 package michelin
 
+// GuideURL represents a Michelin guide distinction and its corresponding URL.
 type GuideURL struct {
 	Distinction string
 	URL         string

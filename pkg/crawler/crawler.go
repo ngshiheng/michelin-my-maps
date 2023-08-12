@@ -16,20 +16,23 @@ import (
 	"gorm.io/gorm"
 )
 
+// App contains the necessary components for the crawler.
 type App struct {
 	collector    *colly.Collector
 	database     *gorm.DB
 	michelinURLs []michelin.GuideURL
 }
 
+// Default creates an App instance with default settings.
 func Default() *App {
 	a := &App{}
-	a.initDefaultStartUrls()
+	a.initDefaultURLs()
 	a.initDefaultCollector()
 	a.initDefaultDatabase()
 	return a
 }
 
+// New creates an App instance with custom distinction and database.
 func New(distinction string, db *gorm.DB) *App {
 	url := michelin.GuideURL{
 		Distinction: distinction,
@@ -44,7 +47,8 @@ func New(distinction string, db *gorm.DB) *App {
 	return a
 }
 
-func (a *App) initDefaultStartUrls() {
+// Initialize default start URLs.
+func (a *App) initDefaultURLs() {
 	allAwards := []string{michelin.ThreeStars, michelin.TwoStars, michelin.OneStar, michelin.BibGourmand, michelin.GreenStar}
 
 	for _, distinction := range allAwards {
@@ -56,6 +60,7 @@ func (a *App) initDefaultStartUrls() {
 	}
 }
 
+// Initialize the default collector.
 func (a *App) initDefaultCollector() {
 	cacheDir := filepath.Join(cachePath)
 
@@ -76,6 +81,7 @@ func (a *App) initDefaultCollector() {
 	a.collector = c
 }
 
+// Initialize the default database.
 func (a *App) initDefaultDatabase() {
 	db, err := gorm.Open(sqlite.Open("michelin.db"), &gorm.Config{})
 	if err != nil {
@@ -157,8 +163,8 @@ func (a *App) Crawl() {
 			Longitude:             e.Request.Ctx.Get("longitude"),
 			Latitude:              e.Request.Ctx.Get("latitude"),
 			PhoneNumber:           formattedPhoneNumber,
-			Url:                   url,
-			WebsiteUrl:            websiteUrl,
+			URL:                   url,
+			WebsiteURL:            websiteUrl,
 			Award:                 e.Request.Ctx.Get("distinction"),
 			FacilitiesAndServices: facilitiesAndServices,
 		}
@@ -174,7 +180,6 @@ func (a *App) Crawl() {
 		a.collector.Request(http.MethodGet, url.URL, nil, ctx, nil)
 	}
 
-	// Wait until threads are finished
 	a.collector.Wait()
 	dc.Wait()
 }
