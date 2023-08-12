@@ -1,49 +1,62 @@
 package crawler
 
 import (
-	"encoding/csv"
 	"net/http"
-	"strings"
-
-	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/ngshiheng/michelin-my-maps/pkg/logger"
+	"github.com/ngshiheng/michelin-my-maps/pkg/michelin"
 	"github.com/ngshiheng/michelin-my-maps/pkg/parser"
-
 	log "github.com/sirupsen/logrus"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type App struct {
-	collector       *colly.Collector
-	detailCollector *colly.Collector
-	writer          *csv.Writer
-	file            *os.File
-	startUrls       []startUrl
+	collector    *colly.Collector
+	database     *gorm.DB
+	michelinURLs []michelin.GuideURL
 }
 
-// New constructs a new crawler application
-func New() *App {
-	// Initialize csv file and writer
-	file, err := os.Create(filepath.Join(outputPath, outputFileName))
-	if err != nil {
-		log.WithFields(log.Fields{"file": file}).Fatal("cannot create file")
+func Default() *App {
+	a := &App{}
+	a.initDefaultStartUrls()
+	a.initDefaultCollector()
+	a.initDefaultDatabase()
+	return a
+}
+
+func New(distinction string, db *gorm.DB) *App {
+	url := michelin.GuideURL{
+		Distinction: distinction,
+		URL:         michelin.DistinctionURL[distinction],
 	}
 
-	writer := csv.NewWriter(file)
-
-	csvHeader := GenerateFieldNameSlice(Restaurant{})
-	if err := writer.Write(csvHeader); err != nil {
-		log.WithFields(log.Fields{
-			"file":      file,
-			"csvHeader": csvHeader,
-		}).Fatal("cannot write header to file")
+	a := &App{
+		database:     db,
+		michelinURLs: []michelin.GuideURL{url},
 	}
+	a.initDefaultCollector()
+	return a
+}
 
-	// Initialize colly collectors
+func (a *App) initDefaultStartUrls() {
+	allAwards := []string{michelin.ThreeStars, michelin.TwoStars, michelin.OneStar, michelin.BibGourmand, michelin.GreenStar}
+
+	for _, distinction := range allAwards {
+		michelinURL := michelin.GuideURL{
+			Distinction: distinction,
+			URL:         michelin.DistinctionURL[distinction],
+		}
+		a.michelinURLs = append(a.michelinURLs, michelinURL)
+	}
+}
+
+func (a *App) initDefaultCollector() {
 	cacheDir := filepath.Join(cachePath)
 
 	c := colly.NewCollector(
@@ -60,34 +73,35 @@ func New() *App {
 	extensions.RandomUserAgent(c)
 	extensions.Referer(c)
 
-	dc := c.Clone()
-
-	return &App{
-		c,
-		dc,
-		writer,
-		file,
-		urls,
-	}
+	a.collector = c
 }
 
-// Crawl crawls Michelin Guide Restaurants information from app.startUrls
-func (app *App) Crawl() {
-	defer logger.TimeTrack(time.Now(), "crawl")
-	defer app.file.Close()
-	defer app.writer.Flush()
+func (a *App) initDefaultDatabase() {
+	db, err := gorm.Open(sqlite.Open("michelin.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect to database")
+	}
+	db.AutoMigrate(&michelin.Restaurant{})
+	a.database = db
+}
 
-	app.collector.OnResponse(func(r *colly.Response) {
+// Crawl crawls Michelin Guide Restaurants information from a.startUrls
+func (a *App) Crawl() {
+	defer logger.TimeTrack(time.Now(), "crawl")
+
+	dc := a.collector.Clone()
+
+	a.collector.OnResponse(func(r *colly.Response) {
 		log.Info("visited ", r.Request.URL)
 		r.Request.Visit(r.Ctx.Get("url"))
 	})
 
-	app.collector.OnScraped(func(r *colly.Response) {
+	a.collector.OnScraped(func(r *colly.Response) {
 		log.Info("finished ", r.Request.URL)
 	})
 
 	// Extract url of each restaurant from the main page and visit them
-	app.collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
+	a.collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
 		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
 
 		location := e.ChildText(restaurantLocationXPath)
@@ -98,16 +112,16 @@ func (app *App) Crawl() {
 		e.Request.Ctx.Put("longitude", longitude)
 		e.Request.Ctx.Put("latitude", latitude)
 
-		app.detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
+		dc.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
 
 	// Extract and visit next page links
-	app.collector.OnXML(nextPageArrowButtonXPath, func(e *colly.XMLElement) {
+	a.collector.OnXML(nextPageArrowButtonXPath, func(e *colly.XMLElement) {
 		e.Request.Visit(e.Attr("href"))
 	})
 
 	// Extract details of each restaurant and write to csv file
-	app.detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
+	dc.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
 		url := e.Request.URL.String()
 		websiteUrl := e.ChildAttr(restaurantWebsiteUrlXPath, "href")
 
@@ -134,7 +148,7 @@ func (app *App) Crawl() {
 		facilitiesAndServicesSlice := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
 		facilitiesAndServices := strings.Join(facilitiesAndServicesSlice, ",")
 
-		restaurant := Restaurant{
+		restaurant := michelin.Restaurant{
 			Name:                  name,
 			Address:               address,
 			Location:              e.Request.Ctx.Get("location"),
@@ -145,25 +159,22 @@ func (app *App) Crawl() {
 			PhoneNumber:           formattedPhoneNumber,
 			Url:                   url,
 			WebsiteUrl:            websiteUrl,
-			Award:                 e.Request.Ctx.Get("award"),
+			Award:                 e.Request.Ctx.Get("distinction"),
 			FacilitiesAndServices: facilitiesAndServices,
 		}
 
 		log.Debug(restaurant)
-
-		if err := app.writer.Write(GenerateFieldValueSlice(restaurant)); err != nil {
-			log.Fatalf("cannot write data %q: %s\n", restaurant, err)
-		}
+		a.database.Create(restaurant)
 	})
 
 	// Start scraping
-	for _, url := range app.startUrls {
+	for _, url := range a.michelinURLs {
 		ctx := colly.NewContext()
-		ctx.Put("award", url.Award)
-		app.collector.Request(http.MethodGet, url.Url, nil, ctx, nil)
+		ctx.Put("distinction", url.Distinction)
+		a.collector.Request(http.MethodGet, url.URL, nil, ctx, nil)
 	}
 
 	// Wait until threads are finished
-	app.collector.Wait()
-	app.detailCollector.Wait()
+	a.collector.Wait()
+	dc.Wait()
 }

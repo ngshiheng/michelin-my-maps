@@ -2,28 +2,13 @@ package crawler
 
 import "time"
 
-type startUrl struct {
-	Award string
-	Url   string
-}
-
-// Start URLs
-var urls = []startUrl{
-	{"3 MICHELIN Stars", "https://guide.michelin.com/en/restaurants/3-stars-michelin/"},
-	{"2 MICHELIN Stars", "https://guide.michelin.com/en/restaurants/2-stars-michelin/"},
-	{"1 MICHELIN Star", "https://guide.michelin.com/en/restaurants/1-star-michelin/"},
-	{"Bib Gourmand", "https://guide.michelin.com/en/restaurants/bib-gourmand"},
-}
-
 // Crawler app settings
 const (
-	allowedDomain  = "guide.michelin.com"
-	outputFileName = "michelin_my_maps.csv"
-	outputPath     = "data"
-	cachePath      = "cache"
-	delay          = 2 * time.Second
-	randomDelay    = 2 * time.Second
-	parallelism    = 5
+	allowedDomain = "guide.michelin.com"
+	cachePath     = "cache"
+	delay         = 2 * time.Second
+	randomDelay   = 2 * time.Second
+	parallelism   = 5
 )
 
 // XPath

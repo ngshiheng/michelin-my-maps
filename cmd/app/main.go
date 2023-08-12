@@ -14,6 +14,6 @@ func init() {
 }
 
 func main() {
-	c := crawler.New()
+	c := crawler.Default()
 	c.Crawl()
 }
