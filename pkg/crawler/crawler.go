@@ -100,7 +100,7 @@ func (a *App) initDefaultDatabase() {
 	a.database = db
 }
 
-// Crawl crawls Michelin Guide Restaurants information from a.startUrls
+// Crawl crawls Michelin Guide Restaurants information from a.michelinURLs.
 func (a *App) Crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 
