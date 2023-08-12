@@ -33,6 +33,7 @@ serve:	## serve page using simple HTTP server.
 ##@ Usage
 .PHONY: crawl
 crawl:	## crawl data and save it into /data directory.
+	@rm -rf data/michelin.db
 	@go run cmd/app/main.go
 
 .PHONY: csvtojson

@@ -22,6 +22,7 @@ const (
 	delay         = 2 * time.Second
 	parallelism   = 5
 	randomDelay   = 2 * time.Second
+	sqlitePath    = "data/michelin.db"
 )
 
 // App contains the necessary components for the crawler.
@@ -91,7 +92,7 @@ func (a *App) initDefaultCollector() {
 
 // Initialize the default database.
 func (a *App) initDefaultDatabase() {
-	db, err := gorm.Open(sqlite.Open("michelin.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(sqlitePath), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect to database")
 	}
@@ -106,12 +107,12 @@ func (a *App) Crawl() {
 	dc := a.collector.Clone()
 
 	a.collector.OnResponse(func(r *colly.Response) {
-		log.Info("visited ", r.Request.URL)
+		log.Info("visited: ", r.Request.URL)
 		r.Request.Visit(r.Ctx.Get("url"))
 	})
 
 	a.collector.OnScraped(func(r *colly.Response) {
-		log.Info("finished ", r.Request.URL)
+		log.Debug("finished: ", r.Request.URL)
 	})
 
 	// Extract url of each restaurant from the main page and visit them
@@ -144,6 +145,8 @@ func (a *App) Crawl() {
 		address := e.ChildText(restaurantAddressXPath)
 		address = strings.Replace(address, "\n", " ", -1)
 
+		description := e.ChildText(restaurantDescriptionXPath)
+
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
 		price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
 
@@ -165,6 +168,7 @@ func (a *App) Crawl() {
 		restaurant := michelin.Restaurant{
 			Address:               address,
 			Cuisine:               cuisine,
+			Description:           description,
 			Distinction:           e.Request.Ctx.Get("distinction"),
 			FacilitiesAndServices: facilitiesAndServices,
 			Latitude:              e.Request.Ctx.Get("latitude"),

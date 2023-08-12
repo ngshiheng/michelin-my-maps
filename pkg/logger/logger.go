@@ -12,5 +12,5 @@ func TimeTrack(start time.Time, name string) {
 	log.WithFields(log.Fields{
 		"name":    name,
 		"elapsed": elapsed,
-	}).Infof("Function %s took %s", name, elapsed)
+	}).Infof("function %s took %s", name, elapsed)
 }

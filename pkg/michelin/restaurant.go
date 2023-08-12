@@ -4,6 +4,7 @@ package michelin
 type Restaurant struct {
 	Address               string
 	Cuisine               string
+	Description           string
 	Distinction           string
 	FacilitiesAndServices string
 	Latitude              string
