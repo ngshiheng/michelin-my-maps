@@ -1,7 +1,8 @@
 NAME := michelin-my-maps
 DOCKER := $(shell command -v docker 2> /dev/null)
-PYTHON := $(shell command -v python3 2> /dev/null)
 MILLER := $(shell command -v mlr 2> /dev/null)
+PYTHON := $(shell command -v python3 2> /dev/null)
+SQLITE := $(shell command -v sqlite3 2> /dev/null)
 
 .DEFAULT_GOAL := help
 .PHONY: help
@@ -35,6 +36,11 @@ serve:	## serve page using simple HTTP server.
 crawl:	## crawl data and save it into /data directory.
 	@rm -rf data/michelin.db
 	@go run cmd/app/main.go
+
+.PHONY: sqlitetocsv
+sqlitetocsv:	## convert data from sqlite3 to csv.
+	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
+	sqlite3 -header -csv data/michelin.db "select * from restaurants;" > data/michelin_my_maps.csv
 
 .PHONY: csvtojson
 csvtojson:	## convert data from csv to json.
