@@ -66,7 +66,7 @@ func TestParseCoordinates(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
+		t.Run("test ParseCoordinates", func(t *testing.T) {
 			longitude, latitude := ParseCoordinates(tt.Got)
 			assert.Equal(t, tt.Longitude, longitude)
 			assert.Equal(t, tt.Latitude, latitude)
@@ -89,7 +89,7 @@ func TestParsePrice(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
+		t.Run("test ParsePrice", func(t *testing.T) {
 			minPrice, maxPrice, currency := ParsePrice(tt.Got)
 			assert.Equal(t, tt.MinPrice, minPrice)
 			assert.Equal(t, tt.MaxPrice, maxPrice)
@@ -111,7 +111,7 @@ func TestParsePhoneNumber(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		t.Run("test TrimWhiteSpaces", func(t *testing.T) {
+		t.Run("test ParsePhoneNumber", func(t *testing.T) {
 			got := ParsePhoneNumber(tt.Got)
 			assert.Equal(t, tt.Expected, got)
 		})

@@ -22,7 +22,7 @@ const (
 	delay         = 2 * time.Second
 	parallelism   = 5
 	randomDelay   = 2 * time.Second
-	sqlitePath    = "data/michelin.db"
+	sqlitePath    = "data/michelin_my_maps.db"
 )
 
 // App contains the necessary components for the crawler.
@@ -168,7 +168,7 @@ func (a *App) Crawl() {
 		restaurant := michelin.Restaurant{
 			Address:               address,
 			Cuisine:               cuisine,
-			Description:           description,
+			Description:           parser.TrimWhiteSpaces(description),
 			Distinction:           e.Request.Ctx.Get("distinction"),
 			FacilitiesAndServices: facilitiesAndServices,
 			Latitude:              e.Request.Ctx.Get("latitude"),

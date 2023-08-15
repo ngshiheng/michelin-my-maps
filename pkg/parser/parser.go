@@ -34,8 +34,8 @@ func TrimWhiteSpaces(str string) string {
 	return trimWhiteSpace.Replace(str)
 }
 
-/* DEPRECATED
-ParseCoordinates extracts and parses longitude and latitude from a Google Maps URL
+/*
+ParseCoordinates extracts and parses longitude and latitude from a Google Maps URL.
 
 Example inputUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"
 */
@@ -67,7 +67,7 @@ func IsValidCoordinates(coordinates string) bool {
 	return re.MatchString(coordinates)
 }
 
-/* DEPRECATED
+/*
 ParsePrice extracts and parses minPrice, maxPrice, and currency from a raw price string
 
 Example inputPrice: "148-248 USD", "1,000-1,280 CNY"
