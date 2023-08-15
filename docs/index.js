@@ -1,9 +1,8 @@
 import {
   create,
+  insertMultiple,
   search,
-  insertBatch,
-  formatNanoseconds,
-} from "https://unpkg.com/@lyrasearch/lyra@0.3.1/dist/esm/src/lyra.js";
+} from "https://unpkg.com/@orama/orama@1.2.1/dist/index.js";
 
 let restaurantDB;
 const summary = document.getElementById("search-summary");
@@ -14,7 +13,7 @@ async function createLyraInstance(event) {
   const response = await fetch(endpoint);
   const data = await response.json();
 
-  restaurantDB = create({
+  restaurantDB = await create({
     schema: {
       Name: "string",
       Address: "string",
@@ -31,7 +30,8 @@ async function createLyraInstance(event) {
       Description: "string",
     },
   });
-  await insertBatch(restaurantDB, data, { batchSize: 100 });
+
+  await insertMultiple(restaurantDB, data, 100);
 }
 
 function jsonToHtmlTable(json) {
@@ -125,7 +125,7 @@ function jsonToHtmlTable(json) {
   }
 }
 
-function handleSearch(event) {
+async function handleSearch(event) {
   const searchTerm = document.getElementById("search-term").value;
   if (!searchTerm || !restaurantDB) {
     summary.innerText = "";
@@ -133,16 +133,14 @@ function handleSearch(event) {
     return;
   }
 
-  const searchResult = search(restaurantDB, {
+  const searchResult = await search(restaurantDB, {
     term: searchTerm,
     properties: ["Name", "Address", "Location", "Cuisine"],
     tolerance: 3,
     limit: 20,
   });
 
-  summary.innerText = `Found ${
-    searchResult.count
-  } results. Search took ${formatNanoseconds(searchResult.elapsed)}.`;
+  summary.innerText = `Found ${searchResult.count} results. Search took ${searchResult.elapsed.formatted}.`;
   jsonToHtmlTable(searchResult.hits);
 }
 
