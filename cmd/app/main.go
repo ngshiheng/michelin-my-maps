@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/ngshiheng/michelin-my-maps/pkg/crawler"
+	"github.com/ngshiheng/michelin-my-maps/v2/pkg/crawler"
 	log "github.com/sirupsen/logrus"
 )
 

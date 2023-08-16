@@ -8,9 +8,9 @@ import (
 
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
-	"github.com/ngshiheng/michelin-my-maps/pkg/logger"
-	"github.com/ngshiheng/michelin-my-maps/pkg/michelin"
-	"github.com/ngshiheng/michelin-my-maps/pkg/parser"
+	"github.com/ngshiheng/michelin-my-maps/v2/pkg/logger"
+	"github.com/ngshiheng/michelin-my-maps/v2/pkg/michelin"
+	"github.com/ngshiheng/michelin-my-maps/v2/pkg/parser"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

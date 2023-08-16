@@ -1,4 +1,4 @@
-module github.com/ngshiheng/michelin-my-maps
+module github.com/ngshiheng/michelin-my-maps/v2
 
 go 1.20
 
