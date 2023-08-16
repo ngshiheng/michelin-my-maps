@@ -22,7 +22,7 @@ const (
 	delay         = 2 * time.Second
 	parallelism   = 5
 	randomDelay   = 2 * time.Second
-	sqlitePath    = "data/michelin_my_maps.db"
+	sqlitePath    = "michelin_my_maps.db"
 )
 
 // App contains the necessary components for the crawler.

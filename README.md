@@ -55,10 +55,8 @@ Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd
 To crawl, run:
 
 ```sh
-make crawl # go run cmd/app/main.go
+make crawl # go run cmd/mym/mym.go
 ```
-
-The output of this command is the [csv file](./data/michelin_my_maps.csv) created/updated inside [`data/`](./data/) folder.
 
 ## Development
 
