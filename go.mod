@@ -1,12 +1,14 @@
-module github.com/ngshiheng/michelin-my-maps
+module github.com/ngshiheng/michelin-my-maps/v2
 
-go 1.19
+go 1.20
 
 require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/nyaruka/phonenumbers v1.1.8
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
+	gorm.io/driver/sqlite v1.5.2
+	gorm.io/gorm v1.25.3
 )
 
 require (
@@ -19,7 +21,10 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
+	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect

@@ -1,9 +1,0 @@
-# michelin.jerrynsh.com
-
-Run the `python3 -m http.server` in the this directory to start simple HTTP server.
-
-## Built with
-
--   https://go-colly.org/
--   https://lyrasearch.io/
--   https://simplecss.org/

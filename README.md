@@ -32,10 +32,11 @@ This software is only used for research purposes, users must abide by the releva
 
 The dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. the 'Award' column) of the restaurants included are:
 
--   3 Stars
--   2 Stars
--   1 Star
--   Bib Gourmand
+- 3 Stars
+- 2 Stars
+- 1 Star
+- Bib Gourmand
+- Green Star
 
 | Content | Link                                                                       | Description                    |
 | :------ | :------------------------------------------------------------------------- | :----------------------------- |
@@ -49,15 +50,13 @@ Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd
 ## Usage
 
 > **NOTE**
-> Check out the [Makefile](./Makefile).
+> Check out the [Makefile](./Makefile) or run `make help`.
 
 To crawl, run:
 
 ```sh
-make crawl # go run cmd/app/main.go
+make crawl # go run cmd/mym/mym.go
 ```
-
-The output of this command is the [csv file](./data/michelin_my_maps.csv) created/updated inside [`data/`](./data/) folder.
 
 ## Development
 
@@ -75,7 +74,7 @@ make test # go test ./... -v -count=1
 
 ### Caching
 
-Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~1.3GB) will be created. Your subsequent runs should be cached, they should take less than a minute to finish scraping the entire site.
+Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~2GB) will be created. Your subsequent runs should be cached, they should take less than a minute to finish scraping the entire site.
 
 To clear the cache, simply delete the [`cache/`](./cache/) folder.
 

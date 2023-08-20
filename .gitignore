@@ -16,3 +16,6 @@
 
 # Go Colly cache
 *cache*/
+
+# SQLite
+*.db

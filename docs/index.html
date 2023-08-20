@@ -1,56 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Michelin My Maps</title>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" type="image/x-icon" href="favicon.ico" />
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/holiday.css"
+  <head>
+    <title>Michelin My Maps</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/holiday.css" />
+    <script
+      async
+      defer
+      data-website-id="6402fc70-1584-478e-9c29-1af18a63299e"
+      src="https://umami.jerrynsh.com/umami.js"
+    ></script>
+  </head>
+  <body>
+    <script src="index.js" type="module"></script>
+    <div>
+      <h1>Michelin My Maps</h1>
+      <p>
+        Search for
+        <a href="https://guide.michelin.com/">MICHELIN Guide</a>
+        restaurants in <b>microseconds</b>.
+      </p>
+      <p>
+        Try to search for any restaurant <i>name</i>, <i>address</i>,
+        <i>location</i>, or <i>cuisine</i>.
+      </p>
+      <div>
+        <input
+          id="search-term"
+          autofocus
+          type="search"
+          placeholder="Begin typing to search..."
         />
-        <script
-            async
-            defer
-            data-website-id="6402fc70-1584-478e-9c29-1af18a63299e"
-            src="https://umami.jerrynsh.com/umami.js"
-        ></script>
-    </head>
-    <body>
-        <script src="index.js" type="module"></script>
-        <div>
-            <h1>Michelin My Maps</h1>
-            <p>
-                Search for
-                <a href="https://guide.michelin.com/">MICHELIN Guide</a>
-                restaurants in <b>microseconds</b>.
-            </p>
-            <p>
-                Try to search for any restaurant <i>name</i>, <i>address</i>,
-                <i>location</i>, or <i>cuisine</i>.
-            </p>
-            <p>
-                For a more feature-rich search, check out
-                <a href="https://s.jerrynsh.com/michelin"
-                    >s.jerrynsh.com/michelin</a
-                >.
-            </p>
-
-            <div>
-                <input
-                    id="search-term"
-                    autofocus
-                    type="search"
-                    placeholder="Begin typing to search..."
-                />
-            </div>
-            <br />
-            <i id="search-summary"></i>
-            <table id="search-results"></table>
-        </div>
-    </body>
-    <footer>
-        © Made by <a href="https://jerrynsh.com/">Jerry Ng</a>. Source on
-        <a href="https://github.com/ngshiheng/michelin-my-maps/">GitHub</a>.
-    </footer>
+      </div>
+      <br />
+      <i id="search-summary"></i>
+      <table id="search-results"></table>
+    </div>
+  </body>
+  <footer>
+    © Made by <a href="https://jerrynsh.com/">Jerry Ng</a>. Source on
+    <a href="https://github.com/ngshiheng/michelin-my-maps/">GitHub</a>.
+  </footer>
 </html>
