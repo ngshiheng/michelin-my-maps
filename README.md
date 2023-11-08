@@ -33,11 +33,11 @@ This software is only used for research purposes, users must abide by the releva
 
 The dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. the 'Award' column) of the restaurants included are:
 
-- 3 Stars
-- 2 Stars
-- 1 Star
-- Bib Gourmand
-- Green Star
+-   3 Stars
+-   2 Stars
+-   1 Star
+-   Bib Gourmand
+-   Green Star
 
 | Content | Link                                                                       | Description                    |
 | :------ | :------------------------------------------------------------------------- | :----------------------------- |
@@ -70,6 +70,8 @@ mym -log debug
 ## Development
 
 ### Selector
+
+As websites use JavaScript to dynamically generate content, the content may not be present in the initial HTML response. [Disabling JavaScript](https://developer.chrome.com/docs/devtools/javascript/disable/) can help you see the underlying HTML structure of the page and make it easier to identify the elements you want to scrape.
 
 To extract relevant information from the site's HTML, we use XPath as our choice of selector language. You can make use of this [XPath cheat sheet](https://devhints.io/xpath).
 
