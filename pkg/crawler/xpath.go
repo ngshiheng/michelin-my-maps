@@ -5,7 +5,7 @@ const (
 	// E.g.: https://guide.michelin.com/en/restaurants/3-stars-michelin/
 	nextPageArrowButtonXPath = "//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']"
 	restaurantXPath          = "//div[@class='card__menu box-placeholder js-restaurant__list_item js-match-height js-map ']"
-	restaurantDetailUrlXPath = "//a[@class='link with-love']"
+	restaurantDetailUrlXPath = "//a[@class='link']"
 	restaurantLocationXPath  = "//div[@class='card__menu-footer--location flex-fill pl-text']"
 
 	// Individual restaurant detail page.
