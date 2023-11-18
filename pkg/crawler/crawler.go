@@ -152,7 +152,7 @@ func (a *App) Crawl() {
 		for _, d := range distinctionSlice {
 			distinction := parser.ParseDistinction(d)
 			if distinction == "" {
-				log.WithFields(log.Fields{"url": url}).Warn("invalid distinction")
+				log.WithFields(log.Fields{"url": url, "distinction": d}).Warn("invalid distinction")
 			} else {
 				distinctions = append(distinctions, distinction)
 			}
@@ -169,7 +169,7 @@ func (a *App) Crawl() {
 					"url":         url,
 					"phoneNumber": phoneNumber,
 				},
-			).Warn("phone number is not available")
+			).Warn("invalid phone number")
 		}
 
 		facilitiesAndServicesSlice := e.ChildTexts(restaurantFacilitiesAndServicesXPath)

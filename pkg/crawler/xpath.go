@@ -10,10 +10,11 @@ const (
 
 	// Individual restaurant detail page.
 	// E.g.: https://guide.michelin.com/en/singapore-region/singapore/restaurant/les-amis
+	restaurantDetailXPath = "//*[@class='restaurant-details']"
+
 	restaurantAddressXPath               = "//*[@class='restaurant-details__heading--address']"
 	restaurantDescriptionXPath           = "//*[@class='restaurant-details__description--text ']"
-	restaurantDetailXPath                = "//*[@class='restaurant-details']"
-	restaurantDistinctionXPath           = "//*[@class='restaurant-details__classification--list']//*[contains(@class, 'classification-item')]//*[contains(@class, 'classfication-content') and not(descendant::img)]"
+	restaurantDistinctionXPath           = "//*[@class='restaurant-details__classification--list']//*[contains(@class, 'classification-item')]//*[contains(@class, 'classfication-content') and not(descendant::img) and not(descendant::span)]"
 	restaurantFacilitiesAndServicesXPath = "//*[@class='restaurant-details__services']//li"
 	restaurantGoogleMapsXPath            = "//*[@class='google-map__static']/iframe"
 	restaurantNameXPath                  = "//*[@class='restaurant-details__heading--title']"
