@@ -5,8 +5,8 @@ type Restaurant struct {
 	Address               string
 	Cuisine               string
 	Description           string
-	Distinction           string
-	FacilitiesAndServices string
+	Distinction           string // Comma-separated string
+	FacilitiesAndServices string // Comma-separated string
 	Latitude              string
 	Location              string
 	Longitude             string

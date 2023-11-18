@@ -147,14 +147,14 @@ func (a *App) Crawl() {
 
 		description := e.ChildText(restaurantDescriptionXPath)
 
-		distinctions := []string{}
-		distinctionSlice := e.ChildTexts(restaurantDistinctionXPath)
-		for _, d := range distinctionSlice {
+		distinctionsSlice := []string{}
+		distinctions := e.ChildTexts(restaurantDistinctionXPath)
+		for _, d := range distinctions {
 			distinction := parser.ParseDistinction(d)
 			if distinction == "" {
 				log.WithFields(log.Fields{"url": url, "distinction": d}).Warn("invalid distinction")
 			} else {
-				distinctions = append(distinctions, distinction)
+				distinctionsSlice = append(distinctionsSlice, distinction)
 			}
 		}
 
@@ -172,14 +172,14 @@ func (a *App) Crawl() {
 			).Warn("invalid phone number")
 		}
 
-		facilitiesAndServicesSlice := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
+		facilitiesAndServices := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
 
 		restaurant := michelin.Restaurant{
 			Address:               address,
 			Cuisine:               cuisine,
 			Description:           parser.TrimWhiteSpaces(description),
-			Distinction:           strings.Join(distinctions, ","),
-			FacilitiesAndServices: strings.Join(facilitiesAndServicesSlice, ","),
+			Distinction:           strings.Join(distinctionsSlice, ","),
+			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
 			Latitude:              e.Request.Ctx.Get("latitude"),
 			Location:              e.Request.Ctx.Get("location"),
 			Longitude:             e.Request.Ctx.Get("longitude"),
