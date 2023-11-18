@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/ngshiheng/michelin-my-maps/v2/pkg/michelin"
 	"github.com/nyaruka/phonenumbers"
 	log "github.com/sirupsen/logrus"
 )
@@ -32,6 +33,25 @@ func SplitUnpack(str string, separator string) (string, string) {
 func TrimWhiteSpaces(str string) string {
 	trimWhiteSpace := strings.NewReplacer("\n", "", "  ", "")
 	return trimWhiteSpace.Replace(str)
+}
+
+// ParseDistinction parses the Michelin distinction based on the input string.
+func ParseDistinction(distinction string) string {
+	switch strings.ToLower(distinction) {
+	case "three stars: exceptional cuisine":
+		return michelin.ThreeStars
+	case "two stars: excellent cooking":
+		return michelin.TwoStars
+	case "one star: high quality cooking":
+		return michelin.OneStar
+	case "bib gourmand: good quality, good value cooking":
+		return michelin.BibGourmand
+	case "michelin green star":
+		return michelin.GreenStar
+	default:
+		log.WithFields(log.Fields{"distinction": distinction}).Warn("invalid distinction")
+		return ""
+	}
 }
 
 /*
