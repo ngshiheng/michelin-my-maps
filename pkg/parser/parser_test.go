@@ -25,7 +25,7 @@ func TestSplitUnpack(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		t.Run("test split SplitUnpack", func(t *testing.T) {
+		t.Run("test SplitUnpack", func(t *testing.T) {
 			price, cuisine := SplitUnpack(tt.Got, tt.Separator)
 			assert.Equal(t, tt.Price, price)
 			assert.Equal(t, tt.Cuisine, cuisine)
@@ -57,11 +57,11 @@ func TestParseDistinction(t *testing.T) {
 		Got      string
 		Expected string
 	}{
-		{"Two Stars: Excellent cooking", "2 Stars MICHELIN"},
-		{"One Star: High quality cooking", "1 Star MICHELIN"},
-		{"Three Stars: Exceptional cuisine", "3 Stars MICHELIN"},
+		{"Two Stars: Excellent cooking", "2 Stars"},
+		{"One Star: High quality cooking", "1 Star"},
+		{"Three Stars: Exceptional cuisine", "3 Stars"},
 		{"Bib Gourmand: good quality, good value cooking", "Bib Gourmand"},
-		{"MICHELIN Green Star", "MICHELIN Green Star"},
+		{"MICHELIN Green Star", "Green Star"},
 		{"Unknown Distinction", ""},
 		{"Invalid Input", ""},
 	}

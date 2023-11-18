@@ -1,9 +1,9 @@
 package michelin
 
 const (
-	ThreeStars  = "3 Stars MICHELIN"
-	TwoStars    = "2 Stars MICHELIN"
-	OneStar     = "1 Star MICHELIN"
+	ThreeStars  = "3 Stars"
+	TwoStars    = "2 Stars"
+	OneStar     = "1 Star"
 	BibGourmand = "Bib Gourmand"
-	GreenStar   = "MICHELIN Green Star"
+	GreenStar   = "Green Star"
 )
