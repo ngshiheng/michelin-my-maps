@@ -10,13 +10,14 @@ const (
 
 	// Individual restaurant detail page.
 	// E.g.: https://guide.michelin.com/en/singapore-region/singapore/restaurant/les-amis
-	restaurantDetailXPath                = "//div[@class='restaurant-details']"
-	restaurantNameXPath                  = "//*[@class='restaurant-details__heading--title']"
 	restaurantAddressXPath               = "//*[@class='restaurant-details__heading--address']"
-	restaurantPriceAndCuisineXPath       = "//*[@class='restaurant-details__heading-price']"
-	restaurantFacilitiesAndServicesXPath = "//div[@class='restaurant-details__services']//li"
-	restaurantDescriptionXPath           = "//div[@class='restaurant-details__description--text ']"
-	restaurantGoogleMapsXPath            = "//div[@class='google-map__static']/iframe"
+	restaurantDescriptionXPath           = "//*[@class='restaurant-details__description--text ']"
+	restaurantDetailXPath                = "//*[@class='restaurant-details']"
+	restaurantDistinctionXPath           = "//*[@class='restaurant-details__classification--list']//*[contains(@class, 'classification-item')]//*[contains(@class, 'classfication-content') and not(descendant::img)]"
+	restaurantFacilitiesAndServicesXPath = "//*[@class='restaurant-details__services']//li"
+	restaurantGoogleMapsXPath            = "//*[@class='google-map__static']/iframe"
+	restaurantNameXPath                  = "//*[@class='restaurant-details__heading--title']"
 	restaurantPhoneNumberXPath           = "//a[@data-event='CTA_tel']"
+	restaurantPriceAndCuisineXPath       = "//*[@class='restaurant-details__heading-price']"
 	restaurantWebsiteUrlXPath            = "//a[@data-event='CTA_website']"
 )

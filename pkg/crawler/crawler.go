@@ -147,6 +147,15 @@ func (a *App) Crawl() {
 
 		description := e.ChildText(restaurantDescriptionXPath)
 
+		distinctions := []string{}
+		distinctionSlice := e.ChildTexts(restaurantDistinctionXPath)
+		for _, d := range distinctionSlice {
+			distinction := parser.ParseDistinction(d)
+			if distinction != "" {
+				distinctions = append(distinctions, distinction)
+			}
+		}
+
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
 		price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
 
@@ -163,14 +172,13 @@ func (a *App) Crawl() {
 		}
 
 		facilitiesAndServicesSlice := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
-		facilitiesAndServices := strings.Join(facilitiesAndServicesSlice, ",")
 
 		restaurant := michelin.Restaurant{
 			Address:               address,
 			Cuisine:               cuisine,
 			Description:           parser.TrimWhiteSpaces(description),
-			Distinction:           e.Request.Ctx.Get("distinction"),
-			FacilitiesAndServices: facilitiesAndServices,
+			Distinction:           strings.Join(distinctions, ","),
+			FacilitiesAndServices: strings.Join(facilitiesAndServicesSlice, ","),
 			Latitude:              e.Request.Ctx.Get("latitude"),
 			Location:              e.Request.Ctx.Get("location"),
 			Longitude:             e.Request.Ctx.Get("longitude"),
@@ -188,7 +196,6 @@ func (a *App) Crawl() {
 	// Start scraping
 	for _, url := range a.michelinURLs {
 		ctx := colly.NewContext()
-		ctx.Put("distinction", url.Distinction)
 		a.collector.Request(http.MethodGet, url.URL, nil, ctx, nil)
 	}
 
