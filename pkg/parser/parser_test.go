@@ -52,6 +52,28 @@ func TestTrimWhiteSpaces(t *testing.T) {
 	}
 }
 
+func TestParseDistinction(t *testing.T) {
+	cases := []struct {
+		Got      string
+		Expected string
+	}{
+		{"Two Stars: Excellent cooking", "2 Stars MICHELIN"},
+		{"One Star: High quality cooking", "1 Star MICHELIN"},
+		{"Three Stars: Exceptional cuisine", "3 Stars MICHELIN"},
+		{"Bib Gourmand: good quality, good value cooking", "Bib Gourmand"},
+		{"MICHELIN Green Star", "MICHELIN Green Star"},
+		{"Unknown Distinction", ""},
+		{"Invalid Input", ""},
+	}
+
+	for _, tt := range cases {
+		t.Run("test ParseDistinction", func(t *testing.T) {
+			got := ParseDistinction(tt.Got)
+			assert.Equal(t, tt.Expected, got)
+		})
+	}
+}
+
 func TestParseCoordinates(t *testing.T) {
 	cases := []struct {
 		Got       string
