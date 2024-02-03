@@ -12,5 +12,4 @@ var DistinctionURL = map[string]string{
 	TwoStars:    "https://guide.michelin.com/en/restaurants/2-stars-michelin",
 	OneStar:     "https://guide.michelin.com/en/restaurants/1-star-michelin",
 	BibGourmand: "https://guide.michelin.com/en/restaurants/bib-gourmand",
-	GreenStar:   "https://guide.michelin.com/en/restaurants/sustainable_gastronomy",
 }

@@ -28,26 +28,20 @@ build:	## build go binary.
 ##@ Usage
 .PHONY: crawl
 crawl:	## crawl data and save it into /data directory.
-	@rm -rf michelin_my_maps.db
+	@rm -rf michelin.db
 	@go run cmd/mym/mym.go
 
 .PHONY: sqlitetocsv
 sqlitetocsv:	## convert data from sqlite3 to csv.
 	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 -header -csv michelin_my_maps.db "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" > data/michelin_my_maps.csv
+	sqlite3 -header -csv michelin.db "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" > data/michelin_my_maps.csv
 
 .PHONY: sqlitetojson
 sqlitetojson:	## convert data from sqlite3 to json.
 	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 michelin_my_maps.db '.mode json' '.once docs/data.json' 'SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;'
+	sqlite3 michelin.db '.mode json' '.once docs/data.json' 'SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;'
 
 .PHONY: csvtojson
 csvtojson:	## convert data from csv to json.
 	@if [ -z $(MILLER) ]; then echo "Miller could not be found. See https://github.com/johnkerl/miller"; exit 2; fi
 	mlr --c2j --jlistwrap then put 'for (k, v in $$*) { $$[k] = string(v) }' then cat data/michelin_my_maps.csv > docs/data.json
-
-.PHONY: serve
-serve:	## serve page using simple HTTP server.
-	@if [ -z $(PYTHON) ]; then echo "Python3 could not be found. See https://www.python.org/downloads/"; exit 2; fi
-	@python3 -m http.server -d docs
-

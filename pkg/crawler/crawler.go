@@ -22,7 +22,7 @@ const (
 	delay         = 2 * time.Second
 	parallelism   = 5
 	randomDelay   = 2 * time.Second
-	sqlitePath    = "michelin_my_maps.db"
+	sqlitePath    = "michelin.db"
 )
 
 // App contains the necessary components for the crawler.
@@ -147,17 +147,11 @@ func (a *App) Crawl() {
 
 		description := e.ChildText(restaurantDescriptionXPath)
 
-		distinctionsSlice := []string{}
 		distinctions := e.ChildTexts(restaurantDistinctionXPath)
-		for _, d := range distinctions {
-			distinction := parser.ParseDistinction(d)
-			if distinction == "" {
-				log.WithFields(log.Fields{"url": url, "distinction": d}).Warn("invalid distinction")
-			} else {
-				distinctionsSlice = append(distinctionsSlice, distinction)
-			}
+		distinction := parser.ParseDistinction(distinctions[0]) // NOTE: [Three Stars: Exceptional cuisine MICHELIN Green Star]
+		if distinction == "" {
+			log.WithFields(log.Fields{"url": url, "distinctions": distinctions}).Warn("invalid distinctions")
 		}
-
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
 		price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
 
@@ -178,7 +172,7 @@ func (a *App) Crawl() {
 			Address:               address,
 			Cuisine:               cuisine,
 			Description:           parser.TrimWhiteSpaces(description),
-			Distinction:           strings.Join(distinctionsSlice, ","),
+			Distinction:           distinction,
 			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
 			Latitude:              e.Request.Ctx.Get("latitude"),
 			Location:              e.Request.Ctx.Get("location"),
