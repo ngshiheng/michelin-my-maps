@@ -62,7 +62,7 @@ Alternatively, you can install this directly via `go install`:
 
 ```sh
 go install github.com/ngshiheng/michelin-my-maps/v2/cmd/mym
-rm michelin_my_maps.db
+rm michelin.db
 mym -log debug
 ```
 

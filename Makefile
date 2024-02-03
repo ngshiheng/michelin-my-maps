@@ -31,6 +31,17 @@ crawl:	## crawl data and save it into /data directory.
 	@rm -rf michelin.db
 	@go run cmd/mym/mym.go
 
+.PHONY: docker-build
+docker-build:	## build docker image.
+	$(DOCKER) build -t $(NAME) . -f docker/Dockerfile
+
+.PHONY: docker-run
+docker-run:	## run local development server in docker.
+	@$(DOCKER) stop $(NAME) || true && $(DOCKER) rm $(NAME) || true
+	$(DOCKER) run -e VERCEL_TOKEN=$(VERCEL_TOKEN) --name $(NAME) $(NAME)
+
+
+##@ Utility
 .PHONY: sqlitetocsv
 sqlitetocsv:	## convert data from sqlite3 to csv.
 	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
