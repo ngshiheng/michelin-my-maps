@@ -13,5 +13,5 @@ COPY --from=go-builder /bin/mym /bin/mym
 ARG VERCEL_TOKEN
 ENV VERCEL_TOKEN=${VERCEL_TOKEN}
 RUN apt-get update -yq && apt-get -yq install curl gnupg ca-certificates && curl -L https://deb.nodesource.com/setup_18.x | bash && apt-get install -yq nodejs && npm i -g vercel
-COPY . .
-CMD ["./docker/docker-entrypoint.sh"]
+COPY ./docker/docker-entrypoint.sh .
+CMD ["./docker-entrypoint.sh"]
