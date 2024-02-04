@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env/sh
 
 set -e
 
@@ -8,22 +8,23 @@ main() {
     publish_to_vercel
 }
 
+check_cli_installed() {
+    command -v "$1" >/dev/null 2>&1 || {
+        echo >&2 "Error: $1 is not installed."
+        return 1
+    }
+}
+
 check() {
-    echo "Checking..."
     if [ -z "$VERCEL_TOKEN" ]; then
         echo "Error: VERCEL_TOKEN is not set. Please set it before running this script."
         exit 1
     fi
 
-    if ! command -v vercel &>/dev/null; then
-        echo "Error: vercel is not installed. Please install it before running this script."
-        exit 1
-    fi
-
-    if ! command -v datasette &>/dev/null; then
-        echo "Error: datasette is not installed. Please install it before running this script."
-        exit 1
-    fi
+    check_cli_installed mym
+    check_cli_installed vercel
+    check_cli_installed datasette
+    echo "All checks passed."
 }
 
 run_mym() {

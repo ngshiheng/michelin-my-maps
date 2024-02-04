@@ -7,12 +7,18 @@ RUN go mod download
 COPY . .
 RUN go build -ldflags='-s -w -extldflags "-static"' -o /bin/mym ./cmd/mym
 
-FROM datasetteproject/datasette
+FROM node:18-alpine AS node-builder
+RUN npm i --silent -g vercel
+
+FROM python:3.9-alpine
+RUN apk update && apk add --no-cache gcc musl-dev libffi-dev
+RUN pip install datasette
 RUN datasette install datasette-publish-vercel
 COPY --from=go-builder /bin/mym /bin/mym
+COPY --from=node-builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-builder /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/vercel/dist/index.js /usr/local/bin/vercel
 ARG VERCEL_TOKEN
 ENV VERCEL_TOKEN=${VERCEL_TOKEN}
-RUN apt-get update -yq && apt-get -yq install curl gnupg ca-certificates && curl -L https://deb.nodesource.com/setup_18.x | bash && apt-get install -yq nodejs && npm i --silent -g vercel && apt clean && rm -rf /var/lib/apt && rm -rf /var/lib/dpkg/info/*
-
 COPY ./docker/docker-entrypoint.sh .
-CMD ["./docker-entrypoint.sh"]
+CMD ["sh","/docker-entrypoint.sh"]
