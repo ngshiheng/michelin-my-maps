@@ -21,4 +21,5 @@ RUN ln -s /usr/local/lib/node_modules/vercel/dist/index.js /usr/local/bin/vercel
 ARG VERCEL_TOKEN
 ENV VERCEL_TOKEN=${VERCEL_TOKEN}
 COPY ./docker/docker-entrypoint.sh .
+COPY ./docker/metadata.json .
 CMD ["sh","/docker-entrypoint.sh"]
