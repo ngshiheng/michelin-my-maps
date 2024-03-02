@@ -6,7 +6,7 @@ require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/nyaruka/phonenumbers v1.3.2
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.7
 )
