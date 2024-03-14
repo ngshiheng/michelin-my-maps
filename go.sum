@@ -62,8 +62,8 @@ github.com/kennygrant/sanitize v1.2.4 h1:gN25/otpP5vAsO2djbMhF/LQX6R7+O1TB4yv8Nz
 github.com/kennygrant/sanitize v1.2.4/go.mod h1:LGsjYYtgxbetdg5owWB2mpgUL6e2nfw2eObZ0u0qvak=
 github.com/mattn/go-sqlite3 v1.14.19 h1:fhGleo2h1p8tVChob4I9HpmVFIAkKGpiukdrgQbWfGI=
 github.com/mattn/go-sqlite3 v1.14.19/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S2DGjv9HUNg=
-github.com/nyaruka/phonenumbers v1.3.3 h1:20xjcqyG/ocEjuS6ry9XKyXdy8scWzjCiLW9aDyx8ks=
-github.com/nyaruka/phonenumbers v1.3.3/go.mod h1:Ut+eFwikULbmCenH6InMKL9csUNLyxHuBLyfkpum11s=
+github.com/nyaruka/phonenumbers v1.3.4 h1:bF1Wdh++fxw09s3surhVeBhXEcUKG07pHeP8HQXqjn8=
+github.com/nyaruka/phonenumbers v1.3.4/go.mod h1:Ut+eFwikULbmCenH6InMKL9csUNLyxHuBLyfkpum11s=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
