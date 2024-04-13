@@ -9,6 +9,7 @@ type Restaurant struct {
 	Description           string
 	Distinction           string // Comma-separated string
 	FacilitiesAndServices string // Comma-separated string
+	GreenStar             bool
 	Latitude              string
 	Location              string
 	Longitude             string

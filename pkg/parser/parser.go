@@ -49,6 +49,7 @@ func ParseDistinction(distinction string) string {
 	case "michelin green star":
 		return michelin.GreenStar
 	default:
+		log.WithFields(log.Fields{"distinctions": distinction}).Warn("invalid distinctions")
 		return ""
 	}
 }

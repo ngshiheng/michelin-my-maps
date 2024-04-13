@@ -148,10 +148,12 @@ func (a *App) Crawl() {
 		description := e.ChildText(restaurantDescriptionXPath)
 
 		distinctions := e.ChildTexts(restaurantDistinctionXPath)
-		distinction := parser.ParseDistinction(distinctions[0]) // NOTE: [Three Stars: Exceptional cuisine MICHELIN Green Star]
-		if distinction == "" {
-			log.WithFields(log.Fields{"url": url, "distinctions": distinctions}).Warn("invalid distinctions")
+		distinction := parser.ParseDistinction(distinctions[0])
+		greenStar := false
+		if len(distinctions) > 1 {
+			greenStar = parser.ParseDistinction(distinctions[len(distinctions)-1]) == michelin.GreenStar
 		}
+
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
 		price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
 
@@ -174,6 +176,7 @@ func (a *App) Crawl() {
 			Description:           parser.TrimWhiteSpaces(description),
 			Distinction:           distinction,
 			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
+			GreenStar:             greenStar,
 			Latitude:              e.Request.Ctx.Get("latitude"),
 			Location:              e.Request.Ctx.Get("location"),
 			Longitude:             e.Request.Ctx.Get("longitude"),
