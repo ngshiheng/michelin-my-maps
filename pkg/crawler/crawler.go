@@ -182,6 +182,7 @@ func (a *App) Crawl() {
 			Price:                 price,
 			URL:                   url,
 			WebsiteURL:            websiteUrl,
+			UpdatedOn:             time.Now(),
 		}
 
 		log.Debug(restaurant)
