@@ -4,9 +4,9 @@ const (
 	// All restaurants page.
 	// E.g.: https://guide.michelin.com/en/restaurants/3-stars-michelin/
 	nextPageArrowButtonXPath = "//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']"
-	restaurantXPath          = "//div[@class='card__menu box-placeholder js-restaurant__list_item js-match-height js-map ']"
+	restaurantXPath          = "//div[contains(@class, 'js-restaurant__list_item')]"
 	restaurantDetailUrlXPath = "//a[@class='link']"
-	restaurantLocationXPath  = "//div[@class='card__menu-footer--location flex-fill pl-text']"
+	restaurantLocationXPath  = "//div[@class='card__menu-footer--score pl-text']"
 
 	// Individual restaurant detail page.
 	// E.g.: https://guide.michelin.com/en/singapore-region/singapore/restaurant/les-amis
