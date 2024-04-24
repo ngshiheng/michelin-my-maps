@@ -1,40 +1,42 @@
 {
-  "title": "MICHELIN Guide Restaurants Database",
-  "description_html": "Explore MICHELIN Guide restaurants in this curated database. Made by <a href='https://jerrynsh.com'>jerrynsh.com</a>.",
-  "source": "Original Data Source",
-  "source_url": "https://guide.michelin.com/",
-  "about": "michelin-my-maps",
-  "about_url": "https://github.com/ngshiheng/michelin-my-maps",
-  "databases": {
-    "michelin": {
-      "queries": {
-        "MICHELIN Guide Restaurants Map": {
-          "sql": "SELECT name AS Name, distinction AS Distinction, cuisine || ' (' || price || ')' AS 'Cuisine (Price)', address AS Address, description AS Description, facilities_and_services AS 'Facilities and Services', phone_number AS 'Phone Number', url AS 'MICHELIN Guide URL', website_url AS 'Website URL', latitude AS Latitude, longitude AS Longitude FROM restaurants"
+    "title": "MICHELIN Guide Restaurants Database",
+    "description_html": "Explore MICHELIN Guide restaurants in this curated database. Made by <a href='https://jerrynsh.com'>jerrynsh.com</a>.",
+    "source": "Original Data Source",
+    "source_url": "https://guide.michelin.com/",
+    "about": "michelin-my-maps",
+    "about_url": "https://github.com/ngshiheng/michelin-my-maps",
+    "databases": {
+        "michelin": {
+            "queries": {
+                "MICHELIN Guide Restaurants Map": {
+                    "sql": "SELECT name AS Name, distinction AS Distinction, cuisine || ' (' || price || ')' AS 'Cuisine (Price)', address AS Address, description AS Description, facilities_and_services AS 'Facilities and Services', green_star AS 'Green Star', phone_number AS 'Phone Number', url AS 'MICHELIN Guide URL', website_url AS 'Website URL', latitude AS Latitude, longitude AS Longitude, updated_on AS 'Updated On' FROM restaurants"
+                }
+            },
+            "tables": {
+                "restaurants": {
+                    "plugins": {
+                        "datasette-cluster-map": {}
+                    },
+                    "description_html": "A dataset of MICHELIN Guide Restaurants.",
+                    "columns": {
+                        "address": "Address of the restaurant",
+                        "cuisine": "Type of cuisines served at the restaurant",
+                        "description": "MICHELIN Guide description of the restaurant",
+                        "distinction": "Type of MICHELIN distinction (e.g., 3 Stars, 2 Stars, 1 Star, Bib Gourmand)",
+                        "facilities_and_services": "Facilities and services offered at the restaurant",
+                        "green_star": "Indicates whether the restaurant has been awarded a MICHELIN Green Star for sustainable gastronomy practices",
+                        "location": "Location of the restaurant",
+                        "latitude": "Latitude coordinates of the restaurant",
+                        "longitude": "Longitude coordinates of the restaurant",
+                        "name": "Name of the restaurant",
+                        "phone_number": "Contact phone number of the restaurant",
+                        "price": "Price range of the restaurant (e.g., $, $$, $$$)",
+                        "url": "MICHELIN Guide URL of the restaurant's listing",
+                        "website_url": "URL of the restaurant's official website",
+                        "updated_on": "Date when the restaurant information was last updated in the dataset"
+                    }
+                }
+            }
         }
-      },
-      "tables": {
-        "restaurants": {
-          "plugins": {
-            "datasette-cluster-map": {}
-          },
-          "description_html": "A dataset of MICHELIN Guide Restaurants.",
-          "columns": {
-            "address": "Address of the restaurant",
-            "cuisine": "Type of cuisines served at the restaurant",
-            "description": "MICHELIN Guide description of the restaurant",
-            "distinction": "Type of MICHELIN distinction (e.g., 3 Stars, 2 Stars, 1 Star, Bib Gourmand)",
-            "facilities_and_services": "Facilities and services offered at the restaurant",
-            "location": "Location of the restaurant",
-            "latitude": "Latitude coordinates of the restaurant",
-            "longitude": "Longitude coordinates of the restaurant",
-            "name": "Name of the restaurant",
-            "phone_number": "Contact phone number of the restaurant",
-            "price": "Price range of the restaurant (e.g., $, $$, $$$)",
-            "url": "MICHELIN Guide URL of the restaurant's listing",
-            "website_url": "URL of the restaurant's official website"
-          }
-        }
-      }
     }
-  }
 }
