@@ -120,8 +120,8 @@ func (a *App) Crawl() {
 		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
 
 		location := e.ChildText(restaurantLocationXPath)
-		longitude := e.ChildAttr(restaurantXPath, "data-lng")
-		latitude := e.ChildAttr(restaurantXPath, "data-lat")
+		longitude := e.ChildAttrs(restaurantXPath, "data-lng")[0]
+		latitude := e.ChildAttrs(restaurantXPath, "data-lat")[0]
 
 		e.Request.Ctx.Put("location", location)
 		e.Request.Ctx.Put("longitude", longitude)
