@@ -38,8 +38,7 @@ run_mym() {
 
 publish_to_vercel() {
     echo "Publishing datasette to Vercel..."
-    ONE_MONTH=2592000
-    datasette publish vercel michelin.db --project=michelin-my-maps --install=datasette-cluster-map --token="$VERCEL_TOKEN" --metadata metadata.json --setting allow_download off --setting default_cache_ttl $ONE_MONTH
+    datasette publish vercel michelin.db --project=michelin-my-maps --install=datasette-cluster-map --install=datasette-hashed-urls --token="$VERCEL_TOKEN" --metadata metadata.json --setting allow_download off
 }
 
 main "$@"

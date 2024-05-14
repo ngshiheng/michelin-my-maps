@@ -15,7 +15,8 @@
             "tables": {
                 "restaurants": {
                     "plugins": {
-                        "datasette-cluster-map": {}
+                        "datasette-cluster-map": {},
+                        "datasette-hashed-urls": {}
                     },
                     "description_html": "A dataset of MICHELIN Guide Restaurants.",
                     "columns": {
