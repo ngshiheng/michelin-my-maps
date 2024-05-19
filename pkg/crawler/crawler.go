@@ -58,17 +58,24 @@ func New(distinction string, db *gorm.DB) *App {
 
 // Initialize default start URLs.
 func (a *App) initDefaultURLs() {
-	allAwards := []string{michelin.ThreeStars,
+	allAwards := []string{
+		michelin.ThreeStars,
 		michelin.TwoStars,
 		michelin.OneStar,
 		michelin.BibGourmand,
 		michelin.GreenStar,
+		michelin.SelectedRestaurants,
 	}
 
 	for _, distinction := range allAwards {
+		url, ok := michelin.DistinctionURL[distinction]
+		if !ok {
+			continue
+		}
+
 		michelinURL := michelin.GuideURL{
 			Distinction: distinction,
-			URL:         michelin.DistinctionURL[distinction],
+			URL:         url,
 		}
 		a.michelinURLs = append(a.michelinURLs, michelinURL)
 	}
@@ -187,7 +194,11 @@ func (a *App) Crawl() {
 		description := e.ChildText(restaurantDescriptionXPath)
 
 		distinctions := e.ChildTexts(restaurantDistinctionXPath)
-		distinction := parser.ParseDistinction(distinctions[0])
+		distinction := michelin.SelectedRestaurants
+		if len(distinctions) > 0 {
+			distinction = parser.ParseDistinction(distinctions[0])
+		}
+
 		greenStar := false
 		if len(distinctions) > 1 {
 			greenStar = parser.ParseDistinction(distinctions[len(distinctions)-1]) == michelin.GreenStar
