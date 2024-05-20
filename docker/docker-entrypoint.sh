@@ -6,6 +6,7 @@ main() {
     check
     run_mym
     publish_to_vercel
+    publish_to_github
 }
 
 check_cli_installed() {
@@ -21,9 +22,16 @@ check() {
         exit 1
     fi
 
-    check_cli_installed mym
-    check_cli_installed vercel
+    if [ -z "$GITHUB_TOKEN" ]; then
+        echo "Error: GITHUB_TOKEN is not set. Please set it before running this script."
+        exit 1
+    fi
+
     check_cli_installed datasette
+    check_cli_installed git
+    check_cli_installed mym
+    check_cli_installed sqlite3
+    check_cli_installed vercel
     echo "All checks passed."
 }
 
@@ -34,6 +42,31 @@ run_mym() {
         echo "Error: michelin.db does not exist. Exiting..."
         exit 1
     fi
+}
+
+sqlitetocsv() {
+    echo "Converting SQLite data to CSV..."
+    if [ ! -f michelin.db ]; then
+        echo "Error: michelin.db does not exist. Cannot convert to CSV. Exiting..."
+        exit 1
+    fi
+    mkdir -p data
+    sqlite3 -header -csv michelin.db "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" >data/michelin_my_maps.csv
+}
+
+publish_to_github() {
+    if git diff --exit-code --quiet -- data/michelin_my_maps.csv; then
+        echo "No changes detected in data/michelin_my_maps.csv. Exiting..."
+        return
+    fi
+
+    echo "Committing and pushing changes to GitHub..."
+    git config --global user.email "43508840+ngshiheng@users.noreply.github.com"
+    git config --global user.name "michelin-my-maps[bot]"
+    git add data/michelin_my_maps.csv
+    git commit -m "chore(data): update generated csv"
+    git remote set-url origin https://"$GITHUB_TOKEN"@github.com/ngshiheng/michelin-my-maps.git
+    git push origin main
 }
 
 publish_to_vercel() {

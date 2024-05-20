@@ -20,6 +20,8 @@ COPY --from=node-builder /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN ln -s /usr/local/lib/node_modules/vercel/dist/index.js /usr/local/bin/vercel
 ARG VERCEL_TOKEN
 ENV VERCEL_TOKEN=${VERCEL_TOKEN}
+ARG GITHUB_TOKEN
+ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 COPY ./docker/docker-entrypoint.sh .
 COPY ./docker/metadata.json .
 CMD ["sh","/docker-entrypoint.sh"]

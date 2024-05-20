@@ -58,12 +58,24 @@ func New(distinction string, db *gorm.DB) *App {
 
 // Initialize default start URLs.
 func (a *App) initDefaultURLs() {
-	allAwards := []string{michelin.ThreeStars, michelin.TwoStars, michelin.OneStar, michelin.BibGourmand, michelin.GreenStar}
+	allAwards := []string{
+		michelin.ThreeStars,
+		michelin.TwoStars,
+		michelin.OneStar,
+		michelin.BibGourmand,
+		michelin.GreenStar,
+		michelin.SelectedRestaurants,
+	}
 
 	for _, distinction := range allAwards {
+		url, ok := michelin.DistinctionURL[distinction]
+		if !ok {
+			continue
+		}
+
 		michelinURL := michelin.GuideURL{
 			Distinction: distinction,
-			URL:         michelin.DistinctionURL[distinction],
+			URL:         url,
 		}
 		a.michelinURLs = append(a.michelinURLs, michelinURL)
 	}
@@ -92,11 +104,45 @@ func (a *App) initDefaultCollector() {
 
 // Initialize the default database.
 func (a *App) initDefaultDatabase() {
-	db, err := gorm.Open(sqlite.Open(sqlitePath), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("michelin.db"), &gorm.Config{
+		PrepareStmt: true,
+	})
+
 	if err != nil {
-		panic("failed to connect to database")
+		log.Fatal("failed to connect to database")
 	}
+
+	// Get the generic database object sql.DB to use its functions
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal("failed to get database object")
+	}
+
+	// Set PRAGMA statements
+	_, err = sqlDB.Exec("PRAGMA journal_mode = WAL;")
+	if err != nil {
+		log.Fatal("failed to set journal_mode:", err)
+	}
+
+	_, err = sqlDB.Exec("PRAGMA synchronous = NORMAL;")
+	if err != nil {
+		log.Fatal("failed to set synchronous:", err)
+	}
+
+	_, err = sqlDB.Exec("PRAGMA cache_size = 10000;")
+	if err != nil {
+		log.Fatal("failed to set cache_size:", err)
+	}
+
+	_, err = sqlDB.Exec("PRAGMA temp_store = MEMORY;")
+	if err != nil {
+		log.Fatal("failed to set temp_store:", err)
+	}
+
+	// Automigrate the Restaurant model to ensure tables and indexes are created
 	db.AutoMigrate(&michelin.Restaurant{})
+
+	// Assign the database to the App struct
 	a.database = db
 }
 
@@ -135,7 +181,7 @@ func (a *App) Crawl() {
 		e.Request.Visit(e.Attr("href"))
 	})
 
-	// Extract details of each restaurant and write to csv file
+	// Extract details of each restaurant and write to sqlite database
 	dc.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
 		url := e.Request.URL.String()
 		websiteUrl := e.ChildAttr(restaurantWebsiteUrlXPath, "href")
@@ -148,7 +194,11 @@ func (a *App) Crawl() {
 		description := e.ChildText(restaurantDescriptionXPath)
 
 		distinctions := e.ChildTexts(restaurantDistinctionXPath)
-		distinction := parser.ParseDistinction(distinctions[0])
+		distinction := michelin.SelectedRestaurants
+		if len(distinctions) > 0 {
+			distinction = parser.ParseDistinction(distinctions[0])
+		}
+
 		greenStar := false
 		if len(distinctions) > 1 {
 			greenStar = parser.ParseDistinction(distinctions[len(distinctions)-1]) == michelin.GreenStar
@@ -189,7 +239,7 @@ func (a *App) Crawl() {
 		}
 
 		log.Debug(restaurant)
-		a.database.Create(restaurant)
+		a.database.Create(&restaurant)
 	})
 
 	// Start scraping

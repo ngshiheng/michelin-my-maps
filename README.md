@@ -33,10 +33,11 @@ This software is only used for research purposes, users must abide by the releva
 
 The dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. the 'Award' column) of the restaurants included are:
 
-- 3 Stars
-- 2 Stars
-- 1 Star
-- Bib Gourmand
+-   3 Stars
+-   2 Stars
+-   1 Star
+-   Bib Gourmand
+-   Selected Restaurants
 
 | Content | Link                                                                       | Description                    |
 | :------ | :------------------------------------------------------------------------- | :----------------------------- |
@@ -84,7 +85,7 @@ make test # go test ./... -v -count=1
 
 ### Caching
 
-Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~2GB) will be created. Your subsequent runs should be cached, they should take less than a minute to finish scraping the entire site.
+Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~6GB) will be created. Your subsequent runs should be cached, they should take less than a minute to finish scraping the entire site.
 
 To clear the cache, simply delete the [`cache/`](./cache/) folder.
 
