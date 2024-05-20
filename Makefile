@@ -38,7 +38,7 @@ docker-build:	## build docker image.
 .PHONY: docker-run
 docker-run:	## run local development server in docker.
 	@$(DOCKER) stop $(NAME) || true && $(DOCKER) rm $(NAME) || true
-	$(DOCKER) run -e VERCEL_TOKEN=$(VERCEL_TOKEN) --name $(NAME) $(NAME)
+	$(DOCKER) run -e VERCEL_TOKEN=$(VERCEL_TOKEN) -e GITHUB_TOKEN=$(GITHUB_TOKEN) --name $(NAME) $(NAME)
 
 
 ##@ Utility
