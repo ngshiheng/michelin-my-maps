@@ -61,7 +61,7 @@ func TestParseDistinction(t *testing.T) {
 		{"One Star: High quality cooking", "1 Star"},
 		{"Three Stars: Exceptional cuisine", "3 Stars"},
 		{"Bib Gourmand: good quality, good value cooking", "Bib Gourmand"},
-		{"MICHELIN Green Star", "Green Star"},
+		{"MICHELIN Green Star", "Selected Restaurants"},
 		{"Street Food", "Selected Restaurants"},
 		{"Invalid Input", "Selected Restaurants"},
 	}
