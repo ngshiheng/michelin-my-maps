@@ -62,8 +62,8 @@ func TestParseDistinction(t *testing.T) {
 		{"Three Stars: Exceptional cuisine", "3 Stars"},
 		{"Bib Gourmand: good quality, good value cooking", "Bib Gourmand"},
 		{"MICHELIN Green Star", "Green Star"},
-		{"Unknown Distinction", ""},
-		{"Invalid Input", ""},
+		{"Street Food", "Selected Restaurants"},
+		{"Invalid Input", "Selected Restaurants"},
 	}
 
 	for _, tt := range cases {

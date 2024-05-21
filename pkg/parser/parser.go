@@ -50,7 +50,7 @@ func ParseDistinction(distinction string) string {
 		return michelin.GreenStar
 	default:
 		log.WithFields(log.Fields{"distinctions": distinction}).Warn("invalid distinctions")
-		return ""
+		return michelin.SelectedRestaurants
 	}
 }
 
