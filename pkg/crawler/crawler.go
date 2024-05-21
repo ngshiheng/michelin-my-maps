@@ -201,7 +201,7 @@ func (a *App) Crawl() {
 
 		greenStar := false
 		if len(distinctions) > 1 {
-			greenStar = parser.ParseDistinction(distinctions[len(distinctions)-1]) == michelin.GreenStar
+			greenStar = parser.ParseGreenStar(distinctions[len(distinctions)-1])
 		}
 
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)

@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// SplitUnpack performs SplitN and unpacks a string
+// SplitUnpack performs SplitN and unpacks a string.
 func SplitUnpack(str string, separator string) (string, string) {
 	if len(str) == 0 {
 		return str, str
@@ -29,7 +29,7 @@ func SplitUnpack(str string, separator string) (string, string) {
 	return parsedStr[0], parsedStr[1]
 }
 
-// TrimWhiteSpaces trims whitespace character such as line breaks or double spaces
+// TrimWhiteSpaces trims whitespace character such as line breaks or double spaces.
 func TrimWhiteSpaces(str string) string {
 	trimWhiteSpace := strings.NewReplacer("\n", "", "  ", "")
 	return trimWhiteSpace.Replace(str)
@@ -46,12 +46,15 @@ func ParseDistinction(distinction string) string {
 		return michelin.OneStar
 	case "bib gourmand: good quality, good value cooking":
 		return michelin.BibGourmand
-	case "michelin green star":
-		return michelin.GreenStar
 	default:
 		log.WithFields(log.Fields{"distinctions": distinction}).Warn("invalid distinctions")
 		return michelin.SelectedRestaurants
 	}
+}
+
+// ParseGreenStar parses the Michelin Green Star based on the input string.
+func ParseGreenStar(distinction string) bool {
+	return strings.ToLower(distinction) == "michelin green star"
 }
 
 /*
@@ -77,7 +80,7 @@ func ParseCoordinates(inputUrl string) (string, string) {
 }
 
 /*
-IsValidCoordinates checks if a string contains a valid longitude or latitude
+IsValidCoordinates checks if a string contains a valid longitude or latitude.
 
 Reference: https://stackoverflow.com/a/18690202/10067850
 */
@@ -88,7 +91,7 @@ func IsValidCoordinates(coordinates string) bool {
 }
 
 /*
-ParsePrice extracts and parses minPrice, maxPrice, and currency from a raw price string
+ParsePrice extracts and parses minPrice, maxPrice, and currency from a raw price string.
 
 Example inputPrice: "148-248 USD", "1,000-1,280 CNY"
 */
@@ -114,7 +117,7 @@ func ParsePrice(inputPrice string) (string, string, string) {
 }
 
 /*
-ParsePhoneNumber extracts and parses phone number from a raw string
+ParsePhoneNumber extracts and parses phone number from a raw string.
 
 Example inputPhoneNumber: "+81 3-3874-1552"
 */
