@@ -11,7 +11,7 @@ FROM node:18-alpine AS node-builder
 RUN npm i --silent -g vercel
 
 FROM python:3.12-alpine
-RUN apk update && apk add --no-cache gcc musl-dev libffi-dev curl sqlite
+RUN apk update && apk add --no-cache gcc musl-dev libffi-dev curl sqlite jq
 RUN pip install datasette
 RUN datasette install datasette-publish-vercel
 COPY --from=go-builder /bin/mym /bin/mym

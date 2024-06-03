@@ -5,6 +5,7 @@ set -e
 main() {
     check
     run_mym
+    sqlitetocsv
     publish_to_vercel
     publish_to_github
 }
@@ -29,6 +30,7 @@ check() {
 
     check_cli_installed curl
     check_cli_installed datasette
+    check_cli_installed jq
     check_cli_installed mym
     check_cli_installed sqlite3
     check_cli_installed vercel
