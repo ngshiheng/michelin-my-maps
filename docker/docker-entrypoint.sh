@@ -27,8 +27,8 @@ check() {
         exit 1
     fi
 
+    check_cli_installed curl
     check_cli_installed datasette
-    check_cli_installed git
     check_cli_installed mym
     check_cli_installed sqlite3
     check_cli_installed vercel
@@ -55,18 +55,17 @@ sqlitetocsv() {
 }
 
 publish_to_github() {
-    if git diff --exit-code --quiet -- data/michelin_my_maps.csv; then
-        echo "No changes detected in data/michelin_my_maps.csv. Exiting..."
-        return
-    fi
+    echo "Publishing new CSV to GitHub..."
+    ENCODED_CSV_CONTENT=$(cat data/michelin_my_maps.csv | base64)
 
-    echo "Committing and pushing changes to GitHub..."
-    git config --global user.email "43508840+ngshiheng@users.noreply.github.com"
-    git config --global user.name "michelin-my-maps[bot]"
-    git add data/michelin_my_maps.csv
-    git commit -m "chore(data): update generated csv"
-    git remote set-url origin https://"$GITHUB_TOKEN"@github.com/ngshiheng/michelin-my-maps.git
-    git push origin main
+    CURRENT_SHA=$(curl -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token $GITHUB_TOKEN" \
+        https://api.github.com/repos/ngshiheng/michelin-my-maps/contents/data/michelin_my_maps.csv | jq -r '.sha')
+
+    echo '{"message":"chore(data): update generated csv", "content":"'"$ENCODED_CSV_CONTENT"'", "sha":"'"$CURRENT_SHA"'"}' |
+        curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
+            -d @- \
+            https://api.github.com/repos/ngshiheng/michelin-my-maps/contents/data/michelin_my_maps.csv
 }
 
 publish_to_vercel() {
