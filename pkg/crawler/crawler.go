@@ -20,8 +20,8 @@ const (
 	// Colly collector settings
 	allowedDomain         = "guide.michelin.com"
 	cachePath             = "cache"
-	delay                 = 1 * time.Second
-	additionalRandomDelay = 4 * time.Second
+	delay                 = 2 * time.Second
+	additionalRandomDelay = 5 * time.Second
 
 	// Colly queue settings
 	threadCount = 2
