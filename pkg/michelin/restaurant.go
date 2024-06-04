@@ -10,9 +10,9 @@ type Restaurant struct {
 	Distinction           string `gorm:"index:idx_distinction"`
 	FacilitiesAndServices string // Comma-separated string
 	GreenStar             bool
+	Location              string `gorm:"index:idx_location"`
 	Latitude              string
-	Location              string
-	Longitude             string `gorm:"index:idx_location"`
+	Longitude             string
 	Name                  string `gorm:"not null;index:idx_name"`
 	PhoneNumber           string
 	Price                 string
