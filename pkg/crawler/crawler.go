@@ -18,14 +18,14 @@ import (
 
 const (
 	// Colly collector settings
-	allowedDomain = "guide.michelin.com"
-	cachePath     = "cache"
-	delay         = 1 * time.Second
-	randomDelay   = 4 * time.Second
-	parallelism   = 2
+	allowedDomain         = "guide.michelin.com"
+	cachePath             = "cache"
+	delay                 = 1 * time.Second
+	additionalRandomDelay = 4 * time.Second
+	parallelismLimit      = 5
 
 	// Colly queue settings
-	threadCount = 5
+	threadCount = 2
 	urlCount    = 20_000 // There are currently ~17k restaurants on Michelin Guide as of Jun 2024
 
 	// SQLite database settings
@@ -102,8 +102,8 @@ func (a *App) initDefaultCollector() {
 
 	c.Limit(&colly.LimitRule{
 		Delay:       delay,
-		RandomDelay: randomDelay,
-		Parallelism: parallelism,
+		RandomDelay: additionalRandomDelay,
+		Parallelism: parallelismLimit,
 	})
 
 	extensions.RandomUserAgent(c)
