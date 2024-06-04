@@ -1,13 +1,13 @@
 package crawler
 
 import (
-	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
+	"github.com/gocolly/colly/v2/queue"
 	"github.com/ngshiheng/michelin-my-maps/v2/pkg/logger"
 	"github.com/ngshiheng/michelin-my-maps/v2/pkg/michelin"
 	"github.com/ngshiheng/michelin-my-maps/v2/pkg/parser"
@@ -17,18 +17,26 @@ import (
 )
 
 const (
+	// Colly collector settings
 	allowedDomain = "guide.michelin.com"
 	cachePath     = "cache"
-	delay         = 2 * time.Second
-	parallelism   = 5
-	randomDelay   = 2 * time.Second
-	sqlitePath    = "michelin.db"
+	delay         = 1 * time.Second
+	randomDelay   = 4 * time.Second
+	parallelism   = 2
+
+	// Colly queue settings
+	threadCount = 5
+	urlCount    = 20_000 // There are currently ~17k restaurants on Michelin Guide as of Jun 2024
+
+	// SQLite database settings
+	sqlitePath = "michelin.db"
 )
 
 // App contains the necessary components for the crawler.
 type App struct {
 	collector    *colly.Collector
 	database     *gorm.DB
+	queue        *queue.Queue
 	michelinURLs []michelin.GuideURL
 }
 
@@ -38,6 +46,7 @@ func Default() *App {
 	a.initDefaultURLs()
 	a.initDefaultCollector()
 	a.initDefaultDatabase()
+	a.initDefaultQueue()
 	return a
 }
 
@@ -53,6 +62,7 @@ func New(distinction string, db *gorm.DB) *App {
 		michelinURLs: []michelin.GuideURL{url},
 	}
 	a.initDefaultCollector()
+	a.initDefaultQueue()
 	return a
 }
 
@@ -91,9 +101,9 @@ func (a *App) initDefaultCollector() {
 	)
 
 	c.Limit(&colly.LimitRule{
-		Parallelism: parallelism,
 		Delay:       delay,
 		RandomDelay: randomDelay,
+		Parallelism: parallelism,
 	})
 
 	extensions.RandomUserAgent(c)
@@ -146,6 +156,18 @@ func (a *App) initDefaultDatabase() {
 	a.database = db
 }
 
+// Initialize the default queue.
+func (a *App) initDefaultQueue() {
+	q, err := queue.New(
+		threadCount,
+		&queue.InMemoryQueueStorage{MaxSize: urlCount},
+	)
+	if err != nil {
+		log.Fatal("failed to create queue:", err)
+	}
+	a.queue = q
+}
+
 // Crawl crawls Michelin Guide Restaurants information from a.michelinURLs.
 func (a *App) Crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
@@ -159,6 +181,16 @@ func (a *App) Crawl() {
 
 	a.collector.OnScraped(func(r *colly.Response) {
 		log.Debug("finished: ", r.Request.URL)
+	})
+
+	a.collector.OnRequest(func(r *colly.Request) {
+		log.Debug("visiting: ", r.URL)
+		a.queue.AddRequest(r)
+	})
+
+	dc.OnRequest(func(r *colly.Request) {
+		log.Debug("visiting: ", r.URL)
+		a.queue.AddRequest(r)
 	})
 
 	// Extract url of each restaurant from the main page and visit them
@@ -242,12 +274,10 @@ func (a *App) Crawl() {
 		a.database.Create(&restaurant)
 	})
 
-	// Start scraping
 	for _, url := range a.michelinURLs {
-		ctx := colly.NewContext()
-		a.collector.Request(http.MethodGet, url.URL, nil, ctx, nil)
+		a.queue.AddURL(url.URL)
 	}
 
-	a.collector.Wait()
-	dc.Wait()
+	// Start scraping
+	a.queue.Run(a.collector)
 }
