@@ -34,6 +34,8 @@ check() {
     check_cli_installed mym
     check_cli_installed sqlite3
     check_cli_installed vercel
+
+    curl https://api.incolumitas.com/ | jq
     echo "All checks passed."
 }
 
