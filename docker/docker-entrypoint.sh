@@ -39,7 +39,7 @@ check() {
 
 run_mym() {
     echo "Running mym..."
-    mym -log error
+    mym
     if [ ! -f michelin.db ]; then
         echo "Error: michelin.db does not exist. Exiting..."
         exit 1
