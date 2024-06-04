@@ -186,9 +186,17 @@ func (a *App) Crawl() {
 		a.queue.AddRequest(r)
 	})
 
+	a.collector.OnError(func(r *colly.Response, err error) {
+		log.Error("error: ", err)
+	})
+
 	dc.OnRequest(func(r *colly.Request) {
 		log.Debug("visiting: ", r.URL)
 		a.queue.AddRequest(r)
+	})
+
+	dc.OnError(func(r *colly.Response, err error) {
+		log.Error("error: ", err)
 	})
 
 	// Extract url of each restaurant from the main page and visit them
