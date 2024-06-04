@@ -22,7 +22,6 @@ const (
 	cachePath             = "cache"
 	delay                 = 1 * time.Second
 	additionalRandomDelay = 4 * time.Second
-	parallelismLimit      = 5
 
 	// Colly queue settings
 	threadCount = 2
@@ -103,7 +102,6 @@ func (a *App) initDefaultCollector() {
 	c.Limit(&colly.LimitRule{
 		Delay:       delay,
 		RandomDelay: additionalRandomDelay,
-		Parallelism: parallelismLimit,
 	})
 
 	extensions.RandomUserAgent(c)
