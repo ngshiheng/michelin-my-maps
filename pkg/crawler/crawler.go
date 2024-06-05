@@ -20,7 +20,7 @@ const (
 	// Colly collector settings
 	allowedDomain         = "guide.michelin.com"
 	cachePath             = "cache"
-	delay                 = 2 * time.Second
+	delay                 = 5 * time.Second
 	additionalRandomDelay = 5 * time.Second
 
 	// Colly queue settings
@@ -123,7 +123,7 @@ func (a *App) initDefaultDatabase() {
 	// Get the generic database object sql.DB to use its functions
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Fatal("failed to get database object")
+		log.Fatal("failed to get database object:", err)
 	}
 
 	// Set PRAGMA statements
@@ -172,8 +172,13 @@ func (a *App) Crawl() {
 
 	dc := a.collector.Clone()
 
+	a.collector.OnRequest(func(r *colly.Request) {
+		log.Debug("visiting: ", r.URL)
+		a.queue.AddRequest(r)
+	})
+
 	a.collector.OnResponse(func(r *colly.Response) {
-		log.Info("visited: ", r.Request.URL)
+		log.Infof("visited (%d): %s", r.StatusCode, r.Request.URL)
 		r.Request.Visit(r.Ctx.Get("url"))
 	})
 
@@ -181,13 +186,8 @@ func (a *App) Crawl() {
 		log.Debug("finished: ", r.Request.URL)
 	})
 
-	a.collector.OnRequest(func(r *colly.Request) {
-		log.Debug("visiting: ", r.URL)
-		a.queue.AddRequest(r)
-	})
-
 	a.collector.OnError(func(r *colly.Response, err error) {
-		log.Error("error: ", err)
+		log.Errorf("error (%d): %s", r.StatusCode, r.Request.URL)
 	})
 
 	dc.OnRequest(func(r *colly.Request) {
@@ -196,7 +196,7 @@ func (a *App) Crawl() {
 	})
 
 	dc.OnError(func(r *colly.Response, err error) {
-		log.Error("error: ", err)
+		log.Errorf("error (%d): %s", r.StatusCode, r.Request.URL)
 	})
 
 	// Extract url of each restaurant from the main page and visit them
