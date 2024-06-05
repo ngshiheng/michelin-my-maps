@@ -171,6 +171,8 @@ func (a *App) Crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 
 	dc := a.collector.Clone()
+	extensions.RandomUserAgent(dc)
+	extensions.Referer(dc)
 
 	a.collector.OnRequest(func(r *colly.Request) {
 		log.Debug("visiting: ", r.URL)
