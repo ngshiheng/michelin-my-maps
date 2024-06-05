@@ -24,8 +24,8 @@ const (
 	additionalRandomDelay = 5 * time.Second
 
 	// Colly queue settings
-	threadCount = 2
-	urlCount    = 20_000 // There are currently ~17k restaurants on Michelin Guide as of Jun 2024
+	threadCount = 1
+	urlCount    = 30_000 // There are currently ~17k restaurants on Michelin Guide as of Jun 2024
 
 	// SQLite database settings
 	sqlitePath = "michelin.db"
@@ -175,21 +175,33 @@ func (a *App) Crawl() {
 	extensions.Referer(dc)
 
 	a.collector.OnRequest(func(r *colly.Request) {
-		log.Debug("visiting: ", r.URL)
+		log.WithField("url", r.URL).Debug("visiting")
 		a.queue.AddRequest(r)
 	})
 
 	a.collector.OnResponse(func(r *colly.Response) {
-		log.Infof("visited (%d): %s", r.StatusCode, r.Request.URL)
+		log.WithFields(
+			log.Fields{
+				"status_code": r.StatusCode,
+				"url":         r.Request.URL,
+			},
+		).Info("visited")
 		r.Request.Visit(r.Ctx.Get("url"))
 	})
 
 	a.collector.OnScraped(func(r *colly.Response) {
-		log.Debug("finished: ", r.Request.URL)
+		log.WithField("url", r.Request.URL).Debug("finished")
 	})
 
 	a.collector.OnError(func(r *colly.Response, err error) {
-		log.Errorf("error (%d): %s", r.StatusCode, r.Request.URL)
+		log.WithFields(
+			log.Fields{
+				"error":       err,
+				"headers":     r.Request.Headers,
+				"status_code": r.StatusCode,
+				"url":         r.Request.URL,
+			},
+		).Error("error")
 	})
 
 	dc.OnRequest(func(r *colly.Request) {
@@ -198,7 +210,14 @@ func (a *App) Crawl() {
 	})
 
 	dc.OnError(func(r *colly.Response, err error) {
-		log.Errorf("error (%d): %s", r.StatusCode, r.Request.URL)
+		log.WithFields(
+			log.Fields{
+				"error":       err,
+				"headers":     r.Request.Headers,
+				"status_code": r.StatusCode,
+				"url":         r.Request.URL,
+			},
+		).Error("error")
 	})
 
 	// Extract url of each restaurant from the main page and visit them
@@ -252,8 +271,8 @@ func (a *App) Crawl() {
 		if formattedPhoneNumber == "" {
 			log.WithFields(
 				log.Fields{
-					"url":         url,
-					"phoneNumber": phoneNumber,
+					"url":          url,
+					"phone_number": phoneNumber,
 				},
 			).Warn("invalid phone number")
 		}
