@@ -20,12 +20,12 @@ const (
 	// Colly collector settings
 	allowedDomain         = "guide.michelin.com"
 	cachePath             = "cache"
-	delay                 = 2 * time.Second
+	delay                 = 5 * time.Second
 	additionalRandomDelay = 5 * time.Second
 
 	// Colly queue settings
-	threadCount = 2
-	urlCount    = 20_000 // There are currently ~17k restaurants on Michelin Guide as of Jun 2024
+	threadCount = 1
+	urlCount    = 30_000 // There are currently ~17k restaurants on Michelin Guide as of Jun 2024
 
 	// SQLite database settings
 	sqlitePath = "michelin.db"
@@ -72,7 +72,6 @@ func (a *App) initDefaultURLs() {
 		michelin.TwoStars,
 		michelin.OneStar,
 		michelin.BibGourmand,
-		michelin.GreenStar,
 		michelin.SelectedRestaurants,
 	}
 
@@ -123,7 +122,7 @@ func (a *App) initDefaultDatabase() {
 	// Get the generic database object sql.DB to use its functions
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Fatal("failed to get database object")
+		log.Fatal("failed to get database object:", err)
 	}
 
 	// Set PRAGMA statements
@@ -171,23 +170,37 @@ func (a *App) Crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
 
 	dc := a.collector.Clone()
+	extensions.RandomUserAgent(dc)
+	extensions.Referer(dc)
+
+	a.collector.OnRequest(func(r *colly.Request) {
+		log.WithField("url", r.URL).Debug("visiting")
+		a.queue.AddRequest(r)
+	})
 
 	a.collector.OnResponse(func(r *colly.Response) {
-		log.Info("visited: ", r.Request.URL)
+		log.WithFields(
+			log.Fields{
+				"status_code": r.StatusCode,
+				"url":         r.Request.URL,
+			},
+		).Info("visited")
 		r.Request.Visit(r.Ctx.Get("url"))
 	})
 
 	a.collector.OnScraped(func(r *colly.Response) {
-		log.Debug("finished: ", r.Request.URL)
-	})
-
-	a.collector.OnRequest(func(r *colly.Request) {
-		log.Debug("visiting: ", r.URL)
-		a.queue.AddRequest(r)
+		log.WithField("url", r.Request.URL).Debug("finished")
 	})
 
 	a.collector.OnError(func(r *colly.Response, err error) {
-		log.Error("error: ", err)
+		log.WithFields(
+			log.Fields{
+				"error":       err,
+				"headers":     r.Request.Headers,
+				"status_code": r.StatusCode,
+				"url":         r.Request.URL,
+			},
+		).Error("error")
 	})
 
 	dc.OnRequest(func(r *colly.Request) {
@@ -196,7 +209,14 @@ func (a *App) Crawl() {
 	})
 
 	dc.OnError(func(r *colly.Response, err error) {
-		log.Error("error: ", err)
+		log.WithFields(
+			log.Fields{
+				"error":       err,
+				"headers":     r.Request.Headers,
+				"status_code": r.StatusCode,
+				"url":         r.Request.URL,
+			},
+		).Error("error")
 	})
 
 	// Extract url of each restaurant from the main page and visit them
@@ -250,10 +270,10 @@ func (a *App) Crawl() {
 		if formattedPhoneNumber == "" {
 			log.WithFields(
 				log.Fields{
-					"url":         url,
-					"phoneNumber": phoneNumber,
+					"url":          url,
+					"phone_number": phoneNumber,
 				},
-			).Warn("invalid phone number")
+			).Debug("invalid phone number")
 		}
 
 		facilitiesAndServices := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
@@ -265,8 +285,8 @@ func (a *App) Crawl() {
 			Distinction:           distinction,
 			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
 			GreenStar:             greenStar,
-			Latitude:              e.Request.Ctx.Get("latitude"),
 			Location:              e.Request.Ctx.Get("location"),
+			Latitude:              e.Request.Ctx.Get("latitude"),
 			Longitude:             e.Request.Ctx.Get("longitude"),
 			Name:                  name,
 			PhoneNumber:           formattedPhoneNumber,
