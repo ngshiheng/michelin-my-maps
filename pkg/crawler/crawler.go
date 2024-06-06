@@ -72,7 +72,6 @@ func (a *App) initDefaultURLs() {
 		michelin.TwoStars,
 		michelin.OneStar,
 		michelin.BibGourmand,
-		michelin.GreenStar,
 		michelin.SelectedRestaurants,
 	}
 
@@ -286,8 +285,8 @@ func (a *App) Crawl() {
 			Distinction:           distinction,
 			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
 			GreenStar:             greenStar,
-			Latitude:              e.Request.Ctx.Get("latitude"),
 			Location:              e.Request.Ctx.Get("location"),
+			Latitude:              e.Request.Ctx.Get("latitude"),
 			Longitude:             e.Request.Ctx.Get("longitude"),
 			Name:                  name,
 			PhoneNumber:           formattedPhoneNumber,

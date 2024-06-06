@@ -51,7 +51,7 @@ func ParseDistinction(distinction string) string {
 	}
 }
 
-// ParseGreenStar parses the Michelin Green Star based on the input string.
+// ParseGreenStar parses the MICHELIN Green Star based on the input string.
 func ParseGreenStar(distinction string) bool {
 	return strings.ToLower(distinction) == "michelin green star"
 }
