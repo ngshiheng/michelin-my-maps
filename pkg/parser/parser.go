@@ -47,7 +47,6 @@ func ParseDistinction(distinction string) string {
 	case "bib gourmand: good quality, good value cooking":
 		return michelin.BibGourmand
 	default:
-		log.WithFields(log.Fields{"distinctions": distinction}).Warn("invalid distinctions")
 		return michelin.SelectedRestaurants
 	}
 }
