@@ -273,7 +273,7 @@ func (a *App) Crawl() {
 					"url":          url,
 					"phone_number": phoneNumber,
 				},
-			).Warn("invalid phone number")
+			).Debug("invalid phone number")
 		}
 
 		facilitiesAndServices := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
