@@ -238,7 +238,7 @@ func (a *App) Crawl() {
 					"status_code": r.StatusCode,
 					"url":         r.Request.URL,
 				},
-			).Warnf("delay for %v before next request", delay)
+			).Warnf("retrying request in %v", delay)
 			r.Ctx.Put("attempt", attempt+1)
 			time.Sleep(delay)
 			r.Request.Retry()
@@ -277,7 +277,7 @@ func (a *App) Crawl() {
 					"status_code": r.StatusCode,
 					"url":         r.Request.URL,
 				},
-			).Warnf("delay for %v before next request", delay)
+			).Warnf("retrying request in %v", delay)
 			r.Ctx.Put("attempt", attempt+1)
 			time.Sleep(delay)
 			r.Request.Retry()
