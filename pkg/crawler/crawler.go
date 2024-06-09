@@ -1,6 +1,10 @@
 package crawler
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -22,6 +26,7 @@ const (
 	cachePath             = "cache"
 	delay                 = 5 * time.Second
 	additionalRandomDelay = 5 * time.Second
+	maxRetry              = 3
 
 	// Colly queue settings
 	threadCount = 1
@@ -36,12 +41,13 @@ type App struct {
 	collector    *colly.Collector
 	database     *gorm.DB
 	queue        *queue.Queue
+	maxRetry     int
 	michelinURLs []michelin.GuideURL
 }
 
 // Default creates an App instance with default settings.
 func Default() *App {
-	a := &App{}
+	a := &App{maxRetry: maxRetry}
 	a.initDefaultURLs()
 	a.initDefaultCollector()
 	a.initDefaultDatabase()
@@ -58,6 +64,7 @@ func New(distinction string, db *gorm.DB) *App {
 
 	a := &App{
 		database:     db,
+		maxRetry:     maxRetry,
 		michelinURLs: []michelin.GuideURL{url},
 	}
 	a.initDefaultCollector()
@@ -165,6 +172,27 @@ func (a *App) initDefaultQueue() {
 	a.queue = q
 }
 
+// clearCache removes the cache file for a given colly.Request.
+// by default Colly cache responses that are not 200 OK, including those with error status codes.
+func (a *App) clearCache(r *colly.Request) {
+	url := r.URL.String()
+	sum := sha1.Sum([]byte(url))
+	hash := hex.EncodeToString(sum[:])
+
+	cacheDir := path.Join(cachePath, hash[:2])
+	filename := path.Join(cacheDir, hash)
+
+	if err := os.Remove(filename); err != nil {
+		log.WithFields(
+			log.Fields{
+				"error":    err,
+				"cacheDir": cacheDir,
+				"filename": filename,
+			},
+		).Fatal("failed to remove cache file")
+	}
+}
+
 // Crawl crawls Michelin Guide Restaurants information from a.michelinURLs.
 func (a *App) Crawl() {
 	defer logger.TimeTrack(time.Now(), "crawl")
@@ -174,6 +202,11 @@ func (a *App) Crawl() {
 	extensions.Referer(dc)
 
 	a.collector.OnRequest(func(r *colly.Request) {
+		attempt := r.Ctx.GetAny("attempt")
+		if attempt == nil {
+			r.Ctx.Put("attempt", 1)
+		}
+
 		log.WithField("url", r.URL).Debug("visiting")
 		a.queue.AddRequest(r)
 	})
@@ -193,30 +226,67 @@ func (a *App) Crawl() {
 	})
 
 	a.collector.OnError(func(r *colly.Response, err error) {
-		log.WithFields(
-			log.Fields{
-				"error":       err,
-				"headers":     r.Request.Headers,
-				"status_code": r.StatusCode,
-				"url":         r.Request.URL,
-			},
-		).Error("error")
+		attempt := r.Ctx.GetAny("attempt").(int)
+
+		shouldRetry := r.StatusCode >= 300 && attempt <= a.maxRetry
+		if shouldRetry {
+			a.clearCache(r.Request)
+			log.WithFields(
+				log.Fields{
+					"attempt": attempt,
+					"url":     r.Request.URL,
+				},
+			).Warnf("delay for %d seconds before next request", delay)
+			r.Ctx.Put("attempt", attempt+1)
+			time.Sleep(delay)
+			r.Request.Retry()
+		} else {
+			log.WithFields(
+				log.Fields{
+					"error":       err,
+					"headers":     r.Request.Headers,
+					"status_code": r.StatusCode,
+					"url":         r.Request.URL,
+				},
+			).Error("error")
+		}
 	})
 
 	dc.OnRequest(func(r *colly.Request) {
-		log.Debug("visiting: ", r.URL)
+		attempt := r.Ctx.GetAny("attempt")
+		if attempt == nil {
+			r.Ctx.Put("attempt", 1)
+		}
+
+		log.WithField("url", r.URL).Debug("visiting")
 		a.queue.AddRequest(r)
 	})
 
 	dc.OnError(func(r *colly.Response, err error) {
-		log.WithFields(
-			log.Fields{
-				"error":       err,
-				"headers":     r.Request.Headers,
-				"status_code": r.StatusCode,
-				"url":         r.Request.URL,
-			},
-		).Error("error")
+		attempt := r.Ctx.GetAny("attempt").(int)
+
+		shouldRetry := r.StatusCode >= 300 && attempt <= a.maxRetry
+		if shouldRetry {
+			a.clearCache(r.Request)
+			log.WithFields(
+				log.Fields{
+					"attempt": attempt,
+					"url":     r.Request.URL,
+				},
+			).Warnf("delay for %d seconds before next request", delay)
+			r.Ctx.Put("attempt", attempt+1)
+			time.Sleep(delay)
+			r.Request.Retry()
+		} else {
+			log.WithFields(
+				log.Fields{
+					"error":       err,
+					"headers":     r.Request.Headers,
+					"status_code": r.StatusCode,
+					"url":         r.Request.URL,
+				},
+			).Error("error")
+		}
 	})
 
 	// Extract url of each restaurant from the main page and visit them
