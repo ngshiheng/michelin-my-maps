@@ -233,10 +233,12 @@ func (a *App) Crawl() {
 			a.clearCache(r.Request)
 			log.WithFields(
 				log.Fields{
-					"attempt": attempt,
-					"url":     r.Request.URL,
+					"attempt":     attempt,
+					"error":       err,
+					"status_code": r.StatusCode,
+					"url":         r.Request.URL,
 				},
-			).Warnf("delay for %d seconds before next request", delay)
+			).Warnf("delay for %v before next request", delay)
 			r.Ctx.Put("attempt", attempt+1)
 			time.Sleep(delay)
 			r.Request.Retry()
@@ -270,10 +272,12 @@ func (a *App) Crawl() {
 			a.clearCache(r.Request)
 			log.WithFields(
 				log.Fields{
-					"attempt": attempt,
-					"url":     r.Request.URL,
+					"attempt":     attempt,
+					"error":       err,
+					"status_code": r.StatusCode,
+					"url":         r.Request.URL,
 				},
-			).Warnf("delay for %d seconds before next request", delay)
+			).Warnf("delay for %v before next request", delay)
 			r.Ctx.Put("attempt", attempt+1)
 			time.Sleep(delay)
 			r.Request.Retry()
