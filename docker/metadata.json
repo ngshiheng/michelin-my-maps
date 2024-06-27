@@ -7,9 +7,50 @@
     "about_url": "https://github.com/ngshiheng/michelin-my-maps",
     "databases": {
         "michelin": {
+            "restaurants_map": {
+                "sql": "SELECT name, location, latitude, longitude, distinction, cuisine FROM restaurants WHERE latitude IS NOT NULL AND longitude IS NOT NULL",
+                "title": "Restaurant Map",
+                "description": "Geographical view of all restaurants with coordinates",
+                "plugins": {
+                    "datasette-cluster-map": {
+                        "latitude_column": "latitude",
+                        "longitude_column": "longitude",
+                        "popup_html": "<b>{name}</b><br>Location: {location}<br>Distinction: {distinction}<br>Cuisine: {cuisine}"
+                    }
+                }
+            },
             "queries": {
-                "MICHELIN Guide Restaurants Map": {
-                    "sql": "SELECT name AS Name, distinction AS Distinction, cuisine || ' (' || price || ')' AS 'Cuisine (Price)', address AS Address, description AS Description, facilities_and_services AS 'Facilities and Services', green_star AS 'Green Star', phone_number AS 'Phone Number', url AS 'MICHELIN Guide URL', website_url AS 'Website URL', latitude AS Latitude, longitude AS Longitude, updated_on AS 'Updated On' FROM restaurants"
+                "restaurants_map": {
+                    "sql": "SELECT name, location, latitude, longitude, distinction, cuisine FROM restaurants WHERE latitude IS NOT NULL AND longitude IS NOT NULL",
+                    "title": "Restaurant Map",
+                    "description": "Geographical view of all restaurants with coordinates",
+                    "plugins": {
+                        "datasette-cluster-map": {
+                            "latitude_column": "latitude",
+                            "longitude_column": "longitude",
+                            "popup_html": "<b>{name}</b><br>Location: {location}<br>Distinction: {distinction}<br>Cuisine: {cuisine}"
+                        }
+                    }
+                },
+                "restaurants_by_cuisine": {
+                    "sql": "SELECT cuisine, COUNT(*) as count, GROUP_CONCAT(DISTINCT location) as locations FROM restaurants GROUP BY cuisine ORDER BY count DESC",
+                    "title": "Restaurants by Cuisine Type",
+                    "description": "Summarizes the number of restaurants for each cuisine type and their locations"
+                },
+                "distinction_by_location": {
+                    "sql": "SELECT location, SUM(CASE WHEN distinction = '3 Stars' THEN 1 ELSE 0 END) as three_star, SUM(CASE WHEN distinction = '2 Stars' THEN 1 ELSE 0 END) as two_star, SUM(CASE WHEN distinction = '1 Star' THEN 1 ELSE 0 END) as one_star, SUM(CASE WHEN distinction = 'Bib Gourmand' THEN 1 ELSE 0 END) as bib_gourmand, SUM(CASE WHEN green_star = 1 THEN 1 ELSE 0 END) as green_star FROM restaurants GROUP BY location ORDER BY three_star DESC, two_star DESC, one_star DESC, green_star DESC",
+                    "title": "Michelin Distinction Distribution by Location",
+                    "description": "Shows the number of restaurants with each Michelin distinction for each location"
+                },
+                "popular_facilities": {
+                    "sql": "WITH split(restaurant, facility, str) AS (SELECT name, '', facilities_and_services||',' FROM restaurants UNION ALL SELECT restaurant, substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str != '') SELECT facility, COUNT(*) as count FROM split WHERE facility != '' GROUP BY facility ORDER BY count DESC LIMIT 10",
+                    "title": "Most Common Facilities and Services",
+                    "description": "Lists the top 10 most common facilities and services offered by the restaurants"
+                },
+                "price_range_distribution": {
+                    "sql": "SELECT price, COUNT(*) as count, GROUP_CONCAT(DISTINCT location) as locations FROM restaurants WHERE price IS NOT NULL GROUP BY price ORDER BY count DESC",
+                    "title": "Price Range Distribution",
+                    "description": "Shows the distribution of restaurants across different price ranges and the locations where each price range is found"
                 }
             },
             "tables": {
