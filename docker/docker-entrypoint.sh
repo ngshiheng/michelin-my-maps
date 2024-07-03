@@ -75,7 +75,7 @@ publish_to_github() {
 
 publish_to_vercel() {
     echo "Publishing datasette to Vercel..."
-    datasette publish vercel michelin.db --project=michelin-my-maps --install=datasette-cluster-map --install=datasette-hashed-urls --token="$VERCEL_TOKEN" --metadata metadata.json --setting allow_download off --setting allow_csv_stream off --setting max_csv_mb 0 --extra-options "-i"
+    datasette publish vercel michelin.db --project=michelin-my-maps --install=datasette-cluster-map --install=datasette-hashed-urls --token="$VERCEL_TOKEN" --metadata metadata.json --setting allow_download off --setting allow_csv_stream off --extra-options "-i"
 }
 
 main "$@"
