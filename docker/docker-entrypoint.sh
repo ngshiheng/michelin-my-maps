@@ -6,7 +6,7 @@ main() {
     check
     run_mym
     sqlitetocsv
-    publish_to_vercel
+    # publish_to_vercel
     publish_to_github
 }
 
