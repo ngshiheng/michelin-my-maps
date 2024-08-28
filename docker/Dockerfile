@@ -7,7 +7,7 @@ RUN go mod download
 COPY . .
 RUN go build -ldflags='-s -w -extldflags "-static"' -o /bin/mym ./cmd/mym
 
-FROM node:18-alpine AS node-builder
+FROM node:20-alpine AS node-builder
 RUN npm i --silent -g vercel
 
 FROM python:3.12-alpine
