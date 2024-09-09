@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS go-builder
+FROM golang:1.23-alpine AS go-builder
 ENV CGO_ENABLED=1
 RUN apk add -q --no-cache gcc musl-dev
 WORKDIR $GOPATH/src/github.com/ngshiheng/michelin-my-maps
