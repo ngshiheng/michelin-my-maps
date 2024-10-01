@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-set -euo pipefail
+set -eu
 
 # Configuration
 CSV_FILE="data/michelin_my_maps.csv"
@@ -9,7 +9,7 @@ MIN_CSV_LINES=15000
 GITHUB_REPO="ngshiheng/michelin-my-maps"
 VERCEL_PROJECT="michelin-my-maps"
 
-REQUIRED_TOOLS=(curl datasette jq mym sqlite3 vercel)
+REQUIRED_TOOLS="curl datasette jq mym sqlite3 vercel"
 
 # Main function
 main() {
@@ -28,7 +28,7 @@ check_environment() {
 }
 
 check_dependencies() {
-    for tool in "${REQUIRED_TOOLS[@]}"; do
+    for tool in $REQUIRED_TOOLS; do
         check_cli_installed "$tool"
     done
     curl https://api.incolumitas.com/ | jq
@@ -36,7 +36,7 @@ check_dependencies() {
 }
 
 check_env_var() {
-    if [[ -z "${!1}" ]]; then
+    if [ -z "$(eval echo \$$1)" ]; then
         echo "Error: $1 is not set. Please set it before running this script."
         exit 1
     fi
@@ -54,7 +54,7 @@ run_mym() {
     echo "Running mym..."
     rm -rf cache/ "$DB_FILE"
     mym -log error
-    if [[ ! -f "$DB_FILE" ]]; then
+    if [ ! -f "$DB_FILE" ]; then
         echo "Error: $DB_FILE does not exist. Exiting..."
         exit 1
     fi
@@ -62,7 +62,7 @@ run_mym() {
 
 convert_sqlite_to_csv() {
     echo "Converting SQLite data to CSV..."
-    if [[ ! -f "$DB_FILE" ]]; then
+    if [ ! -f "$DB_FILE" ]; then
         echo "Error: $DB_FILE does not exist. Cannot convert to CSV. Exiting..."
         exit 1
     fi
@@ -79,20 +79,13 @@ publish_to_github() {
     fi
 
     echo "Publishing new CSV to GitHub..."
-    local encoded_content
     encoded_content=$(base64 <"$CSV_FILE")
 
-    local current_sha
     current_sha=$(curl -H "Accept: application/vnd.github.v3+json" \
         -H "Authorization: token $GITHUB_TOKEN" \
         "https://api.github.com/repos/$GITHUB_REPO/contents/$CSV_FILE" | jq -r '.sha')
 
-    local json_payload
-    json_payload=$(jq -n \
-        --arg message "chore(data): update generated csv" \
-        --arg content "$encoded_content" \
-        --arg sha "$current_sha" \
-        '{message: $message, content: $content, sha: $sha}')
+    json_payload=$(printf '{"message": "chore(data): update generated csv", "content": "%s", "sha": "%s"}' "$encoded_content" "$current_sha")
 
     curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
         -H "Content-Type: application/json" \
@@ -117,15 +110,14 @@ publish_to_vercel() {
 check_csv_lines() {
     echo "Checking CSV file line count..."
 
-    if [[ ! -f "$CSV_FILE" ]]; then
+    if [ ! -f "$CSV_FILE" ]; then
         echo "Error: $CSV_FILE does not exist. Cannot check line count."
         return 1
     fi
 
-    local line_count
     line_count=$(wc -l <"$CSV_FILE")
 
-    if ((line_count < MIN_CSV_LINES)); then
+    if [ "$line_count" -lt "$MIN_CSV_LINES" ]; then
         echo "Error: $CSV_FILE has only $line_count lines. Minimum required is $MIN_CSV_LINES."
         return 1
     else
