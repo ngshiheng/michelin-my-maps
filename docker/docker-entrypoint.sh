@@ -83,14 +83,12 @@ publish_to_github() {
 
     current_sha=$(curl -H "Accept: application/vnd.github.v3+json" \
         -H "Authorization: token $GITHUB_TOKEN" \
-        "https://api.github.com/repos/$GITHUB_REPO/contents/$CSV_FILE" | jq -r '.sha')
+        https://api.github.com/repos/ngshiheng/michelin-my-maps/contents/data/michelin_my_maps.csv | jq -r '.sha')
 
-    json_payload=$(printf '{"message": "chore(data): update generated csv", "content": "%s", "sha": "%s"}' "$encoded_content" "$current_sha")
-
-    curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d "$json_payload" \
-        "https://api.github.com/repos/$GITHUB_REPO/contents/$CSV_FILE"
+    echo '{"message":"chore(data): update generated csv", "content":"'"$encoded_content"'", "sha":"'"$current_sha"'"}' |
+        curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
+            -d @- \
+            https://api.github.com/repos/ngshiheng/michelin-my-maps/contents/data/michelin_my_maps.csv
 }
 
 publish_to_vercel() {

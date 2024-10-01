@@ -2,7 +2,6 @@
 
 [![Continuos Integration](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/ci.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/ci.yml)
 [![Semantic Release](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/release.yml/badge.svg)](https://github.com/ngshiheng/michelin-my-maps/actions/workflows/release.yml)
-[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/kaod.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 
 - [Context](#context)
 - [Disclaimer](#disclaimer)
