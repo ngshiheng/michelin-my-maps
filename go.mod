@@ -3,6 +3,7 @@ module github.com/ngshiheng/michelin-my-maps/v2
 go 1.21
 
 require (
+	github.com/carlmjohnson/versioninfo v0.22.5
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/nyaruka/phonenumbers v1.4.0
 	github.com/sirupsen/logrus v1.9.3

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/carlmjohnson/versioninfo"
 	"github.com/ngshiheng/michelin-my-maps/v2/pkg/crawler"
 	log "github.com/sirupsen/logrus"
 )
@@ -13,6 +14,7 @@ func main() {
 		logLevel = flag.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
 		helpFlag = flag.Bool("help", false, "show help message")
 	)
+	versioninfo.AddFlag(nil)
 	flag.Parse()
 
 	if *helpFlag {
