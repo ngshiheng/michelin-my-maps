@@ -15,6 +15,7 @@ const (
 	restaurantAddressXPath               = "//*[@class='data-sheet__block--text'][1]"
 	restaurantDescriptionXPath           = "//*[@class='data-sheet__description']"
 	restaurantDistinctionXPath           = "//*[@class='data-sheet__classification-item--content'][2]"
+	restaurantGreenStarXPath             = "//*[@class='classfication-content' and contains(text(),'Green Star')]"
 	restaurantFacilitiesAndServicesXPath = "//*[@class='restaurant-details__services']//li"
 	restaurantGoogleMapsXPath            = "//*[@class='google-map__static']/iframe"
 	restaurantNameXPath                  = "//*[@class='data-sheet__title']"
