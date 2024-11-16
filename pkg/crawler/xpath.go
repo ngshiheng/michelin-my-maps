@@ -12,13 +12,14 @@ const (
 	// E.g.: https://guide.michelin.com/en/singapore-region/singapore/restaurant/les-amis
 	restaurantDetailXPath = "//*[@class='restaurant-details']"
 
-	restaurantAddressXPath               = "//*[@class='restaurant-details__heading--address']"
-	restaurantDescriptionXPath           = "//*[@class='restaurant-details__description--text ']"
-	restaurantDistinctionXPath           = "//*[@class='restaurant-details__classification--list']//*[contains(@class, 'classification-item')]//*[contains(@class, 'classfication-content') and not(descendant::img) and not(descendant::span)]"
+	restaurantAddressXPath               = "//*[@class='data-sheet__block--text'][1]"
+	restaurantDescriptionXPath           = "//*[@class='data-sheet__description']"
+	restaurantDistinctionXPath           = "//*[@class='data-sheet__classification-item--content'][2]"
+	restaurantGreenStarXPath             = "//*[@class='classfication-content' and contains(text(),'Green Star')]"
 	restaurantFacilitiesAndServicesXPath = "//*[@class='restaurant-details__services']//li"
 	restaurantGoogleMapsXPath            = "//*[@class='google-map__static']/iframe"
-	restaurantNameXPath                  = "//*[@class='restaurant-details__heading--title']"
+	restaurantNameXPath                  = "//*[@class='data-sheet__title']"
 	restaurantPhoneNumberXPath           = "//a[@data-event='CTA_tel']"
-	restaurantPriceAndCuisineXPath       = "//*[@class='restaurant-details__heading-price']"
+	restaurantPriceAndCuisineXPath       = "//*[@class='data-sheet__block--text'][2]"
 	restaurantWebsiteUrlXPath            = "//a[@data-event='CTA_website']"
 )

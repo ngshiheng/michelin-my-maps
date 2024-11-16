@@ -324,17 +324,9 @@ func (a *App) Crawl() {
 		address = strings.Replace(address, "\n", " ", -1)
 
 		description := e.ChildText(restaurantDescriptionXPath)
+		distinction := e.ChildText(restaurantDistinctionXPath)
 
-		distinctions := e.ChildTexts(restaurantDistinctionXPath)
-		distinction := michelin.SelectedRestaurants
-		if len(distinctions) > 0 {
-			distinction = parser.ParseDistinction(distinctions[0])
-		}
-
-		greenStar := false
-		if len(distinctions) > 1 {
-			greenStar = parser.ParseGreenStar(distinctions[len(distinctions)-1])
-		}
+		greenStar := e.ChildText(restaurantGreenStarXPath)
 
 		priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
 		price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
@@ -356,9 +348,9 @@ func (a *App) Crawl() {
 			Address:               address,
 			Cuisine:               cuisine,
 			Description:           parser.TrimWhiteSpaces(description),
-			Distinction:           distinction,
+			Distinction:           parser.ParseDistinction(distinction),
 			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
-			GreenStar:             greenStar,
+			GreenStar:             parser.ParseGreenStar(greenStar),
 			Location:              e.Request.Ctx.Get("location"),
 			Latitude:              e.Request.Ctx.Get("latitude"),
 			Longitude:             e.Request.Ctx.Get("longitude"),
