@@ -2,7 +2,7 @@ module github.com/ngshiheng/michelin-my-maps/v2
 
 go 1.23.0
 
-toolchain go1.24.3
+toolchain go1.24.4
 
 require (
 	github.com/gocolly/colly/v2 v2.2.0
