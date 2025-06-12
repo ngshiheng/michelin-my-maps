@@ -12,14 +12,14 @@ const (
 	// E.g.: https://guide.michelin.com/en/singapore-region/singapore/restaurant/les-amis
 	restaurantDetailXPath = "//main[@class]"
 
-	restaurantAddressXPath               = "//*[@class='data-sheet__block--text'][1]"
-	restaurantDescriptionXPath           = "//*[@class='data-sheet__description']"
+	restaurantAddressXPath               = "//*[contains(@class, 'data-sheet__block--text')][1]"
+	restaurantDescriptionXPath           = "//*[contains(@class, 'data-sheet__description')]"
 	restaurantDistinctionXPath           = "//*[@class='data-sheet__classification-item--content'][2]"
 	restaurantFacilitiesAndServicesXPath = "//*[contains(@class, 'col col-12 col-lg-6')]//li"
 	restaurantGoogleMapsXPath            = "//*[@class='google-map__static']/iframe"
 	restaurantGreenStarXPath             = "//*[contains(text(),'MICHELIN Green Star')]"
 	restaurantNameXPath                  = "//*[@class='data-sheet__title']"
 	restaurantPhoneNumberXPath           = "//a[@data-event='CTA_tel']"
-	restaurantPriceAndCuisineXPath       = "//*[@class='data-sheet__block--text'][2]"
+	restaurantPriceAndCuisineXPath       = "//*[contains(@class, 'data-sheet__block--text')][2]"
 	restaurantWebsiteUrlXPath            = "//a[@data-event='CTA_website']"
 )
