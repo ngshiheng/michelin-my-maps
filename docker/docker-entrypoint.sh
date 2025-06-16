@@ -9,7 +9,7 @@ MIN_CSV_LINES=15000
 GITHUB_REPO="ngshiheng/michelin-my-maps"
 VERCEL_PROJECT="michelin-my-maps"
 
-REQUIRED_TOOLS="curl datasette jq mym sqlite3 vercel"
+REQUIRED_TOOLS="curl jq mym sqlite3 vercel"
 
 # Main function
 main() {
@@ -89,19 +89,6 @@ publish_to_github() {
         curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
             -d @- \
             https://api.github.com/repos/ngshiheng/michelin-my-maps/contents/data/michelin_my_maps.csv
-}
-
-publish_to_vercel() {
-    echo "Publishing datasette to Vercel..."
-    datasette publish vercel "$DB_FILE" \
-        --project="$VERCEL_PROJECT" \
-        --install=datasette-cluster-map \
-        --install=datasette-hashed-urls \
-        --token="$VERCEL_TOKEN" \
-        --metadata metadata.json \
-        --setting allow_download off \
-        --setting allow_csv_stream off \
-        --extra-options "-i"
 }
 
 # Helper functions
