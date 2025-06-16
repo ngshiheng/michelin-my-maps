@@ -7,7 +7,7 @@ import (
 
 	"runtime/debug"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/crawler"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/scraper"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -55,6 +55,6 @@ func main() {
 	log.SetOutput(os.Stdout)
 
 	// Start crawling process
-	app := crawler.Default()
+	app := scraper.Default()
 	app.Crawl()
 }
