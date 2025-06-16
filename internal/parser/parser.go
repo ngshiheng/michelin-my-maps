@@ -3,7 +3,7 @@ package parser
 import (
 	"strings"
 
-	"github.com/ngshiheng/michelin-my-maps/v2/internal/michelin"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/michelin"
 	"github.com/nyaruka/phonenumbers"
 )
 
