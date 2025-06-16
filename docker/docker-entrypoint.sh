@@ -4,7 +4,7 @@ set -eu
 
 # Configuration
 CSV_FILE="data/michelin_my_maps.csv"
-DB_FILE="michelin.db"
+DB_FILE="data/michelin.db"
 MIN_CSV_LINES=15000
 GITHUB_REPO="ngshiheng/michelin-my-maps"
 VERCEL_PROJECT="michelin-my-maps"

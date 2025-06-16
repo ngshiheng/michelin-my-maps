@@ -28,7 +28,7 @@ build:	## build go binary.
 ##@ Usage
 .PHONY: crawl
 crawl:	## crawl data and save it into /data directory.
-	@rm -rf michelin.db
+	@rm -rf data/michelin.db
 	@go run cmd/mym/mym.go
 
 .PHONY: docker-build
@@ -45,12 +45,12 @@ docker-run:	## run local development server in docker.
 .PHONY: sqlitetocsv
 sqlitetocsv:	## convert data from sqlite3 to csv.
 	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 -header -csv michelin.db "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" > data/michelin_my_maps.csv
+	sqlite3 -header -csv data/michelin.db "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" > data/michelin_my_maps.csv
 
 .PHONY: sqlitetojson
 sqlitetojson:	## convert data from sqlite3 to json.
 	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 michelin.db '.mode json' '.once docs/data.json' 'SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar,facilities_and_services as FacilitiesAndServices, description as Description from restaurants;'
+	sqlite3 data/michelin.db '.mode json' '.once docs/data.json' 'SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar,facilities_and_services as FacilitiesAndServices, description as Description from restaurants;'
 
 .PHONY: csvtojson
 csvtojson:	## convert data from csv to json.

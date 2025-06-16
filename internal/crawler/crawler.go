@@ -34,7 +34,7 @@ const (
 	urlCount    = 30_000 // There are currently ~17k restaurants on Michelin Guide as of Jun 2024
 
 	// SQLite database settings
-	sqlitePath = "michelin.db"
+	sqlitePath = "data/michelin.db"
 )
 
 // App contains the necessary components for the crawler.
