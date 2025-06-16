@@ -28,7 +28,6 @@ build:	## build go binary.
 ##@ Usage
 .PHONY: crawl
 crawl:	## crawl data and save it into /data directory.
-	@rm -rf data/michelin.db
 	@go run cmd/mym/mym.go
 
 .PHONY: docker-build

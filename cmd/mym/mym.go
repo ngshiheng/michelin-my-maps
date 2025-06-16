@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
-
 	"runtime/debug"
 
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/scraper"
@@ -55,6 +55,13 @@ func main() {
 	log.SetOutput(os.Stdout)
 
 	// Start crawling process
-	app := scraper.Default()
-	app.Crawl()
+	app, err := scraper.Default()
+	if err != nil {
+		log.Fatalf("failed to create scraper: %v", err)
+	}
+
+	ctx := context.Background()
+	if err := app.Crawl(ctx); err != nil {
+		log.Fatalf("failed to crawl: %v", err)
+	}
 }
