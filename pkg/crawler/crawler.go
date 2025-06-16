@@ -3,6 +3,7 @@ package crawler
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -153,8 +154,8 @@ func (a *App) initDefaultDatabase() {
 		log.Fatal("failed to set temp_store:", err)
 	}
 
-	// Automigrate the Restaurant model to ensure tables and indexes are created
-	db.AutoMigrate(&michelin.Restaurant{})
+	// Automigrate the Restaurant and RestaurantAward models to ensure tables and indexes are created
+	db.AutoMigrate(&michelin.Restaurant{}, &michelin.RestaurantAward{})
 
 	// Assign the database to the App struct
 	a.database = db
@@ -191,6 +192,102 @@ func (a *App) clearCache(r *colly.Request) {
 			},
 		).Fatal("failed to remove cache file")
 	}
+}
+
+// upsertRestaurantAward creates or updates a restaurant and its award for the current year.
+func (a *App) upsertRestaurantAward(restaurantData RestaurantData) error {
+	currentYear := time.Now().Year()
+
+	// Find or create restaurant
+	var restaurant michelin.Restaurant
+	result := a.database.Where("url = ?", restaurantData.URL).First(&restaurant)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			// Create new restaurant
+			restaurant = michelin.Restaurant{
+				URL:                   restaurantData.URL,
+				Name:                  restaurantData.Name,
+				Description:           restaurantData.Description,
+				Address:               restaurantData.Address,
+				Location:              restaurantData.Location,
+				Latitude:              restaurantData.Latitude,
+				Longitude:             restaurantData.Longitude,
+				Cuisine:               restaurantData.Cuisine,
+				FacilitiesAndServices: restaurantData.FacilitiesAndServices,
+				PhoneNumber:           restaurantData.PhoneNumber,
+				WebsiteURL:            restaurantData.WebsiteURL,
+			}
+			if err := a.database.Create(&restaurant).Error; err != nil {
+				return err
+			}
+		} else {
+			return result.Error
+		}
+	} else {
+		// Update existing restaurant's basic info
+		restaurant.Name = restaurantData.Name
+		restaurant.Description = restaurantData.Description
+		restaurant.Address = restaurantData.Address
+		restaurant.Location = restaurantData.Location
+		restaurant.Latitude = restaurantData.Latitude
+		restaurant.Longitude = restaurantData.Longitude
+		restaurant.Cuisine = restaurantData.Cuisine
+		restaurant.FacilitiesAndServices = restaurantData.FacilitiesAndServices
+		restaurant.PhoneNumber = restaurantData.PhoneNumber
+		restaurant.WebsiteURL = restaurantData.WebsiteURL
+		if err := a.database.Save(&restaurant).Error; err != nil {
+			return err
+		}
+	}
+
+	// Find or create award for current year
+	var award michelin.RestaurantAward
+	result = a.database.Where("restaurant_id = ? AND year = ?", restaurant.ID, currentYear).First(&award)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			// Create new award
+			award = michelin.RestaurantAward{
+				RestaurantID: restaurant.ID,
+				Year:         currentYear,
+				Distinction:  restaurantData.Distinction,
+				Price:        restaurantData.Price,
+				GreenStar:    restaurantData.GreenStar,
+			}
+			if err := a.database.Create(&award).Error; err != nil {
+				return err
+			}
+		} else {
+			return result.Error
+		}
+	} else {
+		// Update existing award for current year
+		award.Distinction = restaurantData.Distinction
+		award.Price = restaurantData.Price
+		award.GreenStar = restaurantData.GreenStar
+		if err := a.database.Save(&award).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// RestaurantData holds the scraped restaurant information.
+type RestaurantData struct {
+	URL                   string
+	Name                  string
+	Address               string
+	Location              string
+	Latitude              string
+	Longitude             string
+	Cuisine               string
+	PhoneNumber           string
+	WebsiteURL            string
+	Distinction           string
+	Description           string
+	Price                 string
+	FacilitiesAndServices string
+	GreenStar             bool
 }
 
 // Crawl crawls Michelin Guide Restaurants information from a.michelinURLs.
@@ -344,26 +441,35 @@ func (a *App) Crawl() {
 
 		facilitiesAndServices := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
 
-		restaurant := michelin.Restaurant{
+		fmt.Println(description)
+		fmt.Println(parser.TrimWhiteSpaces(description))
+
+		restaurantData := RestaurantData{
+			URL:                   url,
+			Name:                  name,
 			Address:               address,
-			Cuisine:               cuisine,
-			Description:           parser.TrimWhiteSpaces(description),
-			Distinction:           parser.ParseDistinction(distinction),
-			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
-			GreenStar:             parser.ParseGreenStar(greenStar),
 			Location:              e.Request.Ctx.Get("location"),
 			Latitude:              e.Request.Ctx.Get("latitude"),
 			Longitude:             e.Request.Ctx.Get("longitude"),
-			Name:                  name,
+			Cuisine:               cuisine,
 			PhoneNumber:           formattedPhoneNumber,
-			Price:                 price,
-			URL:                   url,
 			WebsiteURL:            websiteUrl,
-			UpdatedOn:             time.Now(),
+			Distinction:           parser.ParseDistinction(distinction),
+			Description:           parser.TrimWhiteSpaces(description),
+			Price:                 price,
+			FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
+			GreenStar:             parser.ParseGreenStar(greenStar),
 		}
 
-		log.Debug(restaurant)
-		a.database.Create(&restaurant)
+		log.Debug(restaurantData)
+		if err := a.upsertRestaurantAward(restaurantData); err != nil {
+			log.WithFields(
+				log.Fields{
+					"url":   url,
+					"error": err,
+				},
+			).Error("failed to upsert restaurant award")
+		}
 	})
 
 	for _, url := range a.michelinURLs {
