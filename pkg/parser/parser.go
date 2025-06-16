@@ -1,13 +1,10 @@
 package parser
 
 import (
-	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/ngshiheng/michelin-my-maps/v2/pkg/michelin"
 	"github.com/nyaruka/phonenumbers"
-	log "github.com/sirupsen/logrus"
 )
 
 // SplitUnpack performs SplitN and unpacks a string.
@@ -54,65 +51,6 @@ func ParseDistinction(distinction string) string {
 // ParseGreenStar parses the MICHELIN Green Star based on the input string.
 func ParseGreenStar(distinction string) bool {
 	return strings.ToLower(distinction) == "michelin green star"
-}
-
-/*
-ParseCoordinates extracts and parses longitude and latitude from a Google Maps URL.
-
-Example inputUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyDvEyVCVpGtn81z5NrMKgdehPsrO9sJiMw&q=45.1712728,10.3565788&language=en-US"
-*/
-func ParseCoordinates(inputUrl string) (string, string) {
-	url, err := url.Parse(inputUrl)
-	if err != nil {
-		log.WithFields(log.Fields{"inputUrl": inputUrl}).Fatal(err)
-	}
-
-	queryParams := url.Query()
-	coordinates := queryParams["q"][0] // e.g. "45.4215425,11.8096633"
-
-	if !(IsValidCoordinates(coordinates)) {
-		log.WithFields(log.Fields{"coordinates": coordinates}).Warn("invalid coordinates")
-		return "", ""
-	}
-
-	return SplitUnpack(coordinates, ",")
-}
-
-/*
-IsValidCoordinates checks if a string contains a valid longitude or latitude.
-
-Reference: https://stackoverflow.com/a/18690202/10067850
-*/
-func IsValidCoordinates(coordinates string) bool {
-	longitudeAndLatitudeRegex := `^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$`
-	re := regexp.MustCompile(longitudeAndLatitudeRegex)
-	return re.MatchString(coordinates)
-}
-
-/*
-ParsePrice extracts and parses minPrice, maxPrice, and currency from a raw price string.
-
-Example inputPrice: "148-248 USD", "1,000-1,280 CNY"
-*/
-func ParsePrice(inputPrice string) (string, string, string) {
-	if inputPrice == "" {
-		return "", "", ""
-	}
-
-	currencyRegex := regexp.MustCompile(`(.{3})\s*$`) // Match last 3 characters
-	currency := currencyRegex.FindString(inputPrice)
-
-	minPrice, maxPrice := SplitUnpack(inputPrice[:len(inputPrice)-3], "-")
-
-	numberRegex := regexp.MustCompile(`^\d{1,3}(,\d{3})*(\.\d+)?$`) // Match 0,000 format
-	minPrice = numberRegex.FindString(minPrice)
-	maxPrice = numberRegex.FindString(maxPrice)
-
-	if minPrice == "" {
-		minPrice = maxPrice
-	}
-
-	return minPrice, maxPrice, currency
 }
 
 /*
