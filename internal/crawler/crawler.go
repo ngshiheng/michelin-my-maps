@@ -13,6 +13,7 @@ import (
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/michelin"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
@@ -76,11 +77,11 @@ func New(distinction string, db *gorm.DB) *App {
 // Initialize default start URLs.
 func (a *App) initDefaultURLs() {
 	allAwards := []string{
-		michelin.ThreeStars,
-		michelin.TwoStars,
-		michelin.OneStar,
-		michelin.BibGourmand,
-		michelin.SelectedRestaurants,
+		models.ThreeStars,
+		models.TwoStars,
+		models.OneStar,
+		models.BibGourmand,
+		models.SelectedRestaurants,
 	}
 
 	for _, distinction := range allAwards {
@@ -156,7 +157,7 @@ func (a *App) initDefaultDatabase() {
 	}
 
 	// Automigrate the Restaurant and RestaurantAward models to ensure tables and indexes are created
-	db.AutoMigrate(&michelin.Restaurant{}, &michelin.RestaurantAward{})
+	db.AutoMigrate(&models.Restaurant{}, &models.RestaurantAward{})
 
 	// Assign the database to the App struct
 	a.database = db
@@ -200,7 +201,7 @@ func (a *App) upsertRestaurantAward(restaurantData RestaurantData) error {
 	currentYear := time.Now().Year()
 
 	// Upsert restaurant data
-	restaurant := michelin.Restaurant{
+	restaurant := models.Restaurant{
 		URL:                   restaurantData.URL,
 		Name:                  restaurantData.Name,
 		Description:           restaurantData.Description,
@@ -229,7 +230,7 @@ func (a *App) upsertRestaurantAward(restaurantData RestaurantData) error {
 	// check if this restaurant have any awards first
 	// if if no -> create it. end
 	// if yes -> check if award for
-	var existingAward michelin.RestaurantAward
+	var existingAward models.RestaurantAward
 	result := a.database.Where("restaurant_id = ? AND year = ?", restaurant.ID, currentYear).First(&existingAward)
 
 	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
@@ -238,7 +239,7 @@ func (a *App) upsertRestaurantAward(restaurantData RestaurantData) error {
 
 	noExistingAwardForCurrentYear := result.Error == gorm.ErrRecordNotFound
 	if noExistingAwardForCurrentYear {
-		newAward := michelin.RestaurantAward{
+		newAward := models.RestaurantAward{
 			RestaurantID: restaurant.ID,
 			Year:         currentYear,
 			Distinction:  restaurantData.Distinction,
@@ -270,7 +271,7 @@ func (a *App) upsertRestaurantAward(restaurantData RestaurantData) error {
 			previousYear := currentYear - 1
 
 			// Check if previous year already exists to avoid conflicts
-			var conflictAward michelin.RestaurantAward
+			var conflictAward models.RestaurantAward
 			conflictResult := a.database.Where("restaurant_id = ? AND year = ?", restaurant.ID, previousYear).First(&conflictAward)
 
 			if conflictResult.Error == gorm.ErrRecordNotFound {
@@ -289,7 +290,7 @@ func (a *App) upsertRestaurantAward(restaurantData RestaurantData) error {
 				}).Info("backdated existing award and creating new one")
 
 				// Create new award for current year
-				newAward := michelin.RestaurantAward{
+				newAward := models.RestaurantAward{
 					RestaurantID: restaurant.ID,
 					Year:         currentYear,
 					Distinction:  restaurantData.Distinction,

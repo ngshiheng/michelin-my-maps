@@ -3,7 +3,7 @@ package parser
 import (
 	"strings"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/michelin"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 	"github.com/nyaruka/phonenumbers"
 )
 
@@ -36,15 +36,15 @@ func TrimWhiteSpaces(str string) string {
 func ParseDistinction(distinction string) string {
 	switch strings.ToLower(distinction) {
 	case "three stars: exceptional cuisine":
-		return michelin.ThreeStars
+		return models.ThreeStars
 	case "two stars: excellent cooking":
-		return michelin.TwoStars
+		return models.TwoStars
 	case "one star: high quality cooking":
-		return michelin.OneStar
+		return models.OneStar
 	case "bib gourmand: good quality, good value cooking":
-		return michelin.BibGourmand
+		return models.BibGourmand
 	default:
-		return michelin.SelectedRestaurants
+		return models.SelectedRestaurants
 	}
 }
 
