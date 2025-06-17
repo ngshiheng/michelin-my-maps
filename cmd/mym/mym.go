@@ -11,6 +11,41 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// run contains the main application logic
+func run() error {
+	// Handle global flags first (before subcommands)
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "--version", "-version":
+			printVersion()
+			return nil
+		case "--help", "-help":
+			printUsage()
+			return nil
+		}
+	}
+
+	// Check if we have at least one argument (the subcommand)
+	if len(os.Args) < 2 {
+		printUsage()
+		return nil
+	}
+
+	// Get the subcommand
+	command := os.Args[1]
+	commandArgs := os.Args[2:]
+
+	// Handle subcommands
+	switch command {
+	case "run":
+		return handleRunCommand(commandArgs)
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
+		printUsage()
+		return nil
+	}
+}
+
 // printVersion prints the application version information
 func printVersion() {
 	buildInfo, ok := debug.ReadBuildInfo()
@@ -45,6 +80,27 @@ func printUsage() {
 	fmt.Printf("  %s run -log debug  # start with debug logging\n", os.Args[0])
 }
 
+// handleRunCommand handles the 'run' subcommand with its own flag set
+func handleRunCommand(args []string) error {
+	// Create a new flag set for the run command
+	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
+	logLevel := runCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
+
+	// Parse the run command flags
+	if err := runCmd.Parse(args); err != nil {
+		return err
+	}
+
+	// Setup logging
+	if err := setupLogging(*logLevel); err != nil {
+		return err
+	}
+
+	// Run the scraper
+	ctx := context.Background()
+	return runScraper(ctx)
+}
+
 // setupLogging configures the logging level and output
 func setupLogging(levelStr string) error {
 	level, err := log.ParseLevel(levelStr)
@@ -69,62 +125,6 @@ func runScraper(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// handleRunCommand handles the 'run' subcommand with its own flag set
-func handleRunCommand(args []string) error {
-	// Create a new flag set for the run command
-	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
-	logLevel := runCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-
-	// Parse the run command flags
-	if err := runCmd.Parse(args); err != nil {
-		return err
-	}
-
-	// Setup logging
-	if err := setupLogging(*logLevel); err != nil {
-		return err
-	}
-
-	// Run the scraper
-	ctx := context.Background()
-	return runScraper(ctx)
-}
-
-// run contains the main application logic
-func run() error {
-	// Handle global flags first (before subcommands)
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "--version", "-version":
-			printVersion()
-			return nil
-		case "--help", "-help":
-			printUsage()
-			return nil
-		}
-	}
-
-	// Check if we have at least one argument (the subcommand)
-	if len(os.Args) < 2 {
-		printUsage()
-		return nil
-	}
-
-	// Get the subcommand
-	command := os.Args[1]
-	commandArgs := os.Args[2:]
-
-	// Handle subcommands
-	switch command {
-	case "run":
-		return handleRunCommand(commandArgs)
-	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
-		printUsage()
-		return nil
-	}
 }
 
 func main() {
