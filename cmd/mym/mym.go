@@ -11,25 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Config holds all command-line configuration
-type Config struct {
-	LogLevel string
-	Help     bool
-	Version  bool
-}
-
-// parseGlobalFlags parses global flags and returns a Config
-func parseGlobalFlags() *Config {
-	cfg := &Config{}
-
-	flag.StringVar(&cfg.LogLevel, "log", log.InfoLevel.String(),
-		"log level (debug, info, warning, error, fatal, panic)")
-	flag.BoolVar(&cfg.Help, "help", false, "show help message")
-	flag.BoolVar(&cfg.Version, "version", false, "print version information")
-
-	return cfg
-}
-
 // printVersion prints the application version information
 func printVersion() {
 	buildInfo, ok := debug.ReadBuildInfo()
@@ -48,17 +29,20 @@ func printVersion() {
 
 // printUsage prints the custom usage message
 func printUsage() {
-	fmt.Printf("Usage: %s [global options] <command>\n\n", os.Args[0])
+	fmt.Printf("Usage: %s <command> [options]\n\n", os.Args[0])
 	fmt.Println("Commands:")
 	fmt.Println("  run    start the scraper")
 	fmt.Println("")
 	fmt.Println("Global options:")
-	flag.PrintDefaults()
+	fmt.Println("  -help     show help message")
+	fmt.Println("  -version  print version information")
+	fmt.Println("")
+	fmt.Println("Run command options:")
+	fmt.Println("  -log string  log level (debug, info, warning, error, fatal, panic) (default \"info\")")
 	fmt.Println("")
 	fmt.Println("Examples:")
-	fmt.Printf("  %s run              # start the scraper\n", os.Args[0])
-	fmt.Printf("  %s run --log debug  # start with debug logging\n", os.Args[0])
-	fmt.Printf("  %s --version        # show version\n", os.Args[0])
+	fmt.Printf("  %s run             # start the scraper\n", os.Args[0])
+	fmt.Printf("  %s run -log debug  # start with debug logging\n", os.Args[0])
 }
 
 // setupLogging configures the logging level and output
@@ -87,10 +71,19 @@ func runScraper(ctx context.Context) error {
 	return nil
 }
 
-// handleRunCommand handles the 'run' subcommand
-func handleRunCommand(cfg *Config) error {
+// handleRunCommand handles the 'run' subcommand with its own flag set
+func handleRunCommand(args []string) error {
+	// Create a new flag set for the run command
+	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
+	logLevel := runCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
+
+	// Parse the run command flags
+	if err := runCmd.Parse(args); err != nil {
+		return err
+	}
+
 	// Setup logging
-	if err := setupLogging(cfg.LogLevel); err != nil {
+	if err := setupLogging(*logLevel); err != nil {
 		return err
 	}
 
@@ -101,43 +94,36 @@ func handleRunCommand(cfg *Config) error {
 
 // run contains the main application logic
 func run() error {
-	cfg := parseGlobalFlags()
-
-	// Custom usage function
-	flag.Usage = printUsage
-
-	// Parse global flags first
-	flag.Parse()
-
-	// Handle version flag
-	if cfg.Version {
-		printVersion()
-		return nil
+	// Handle global flags first (before subcommands)
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "--version", "-version":
+			printVersion()
+			return nil
+		case "--help", "-help":
+			printUsage()
+			return nil
+		}
 	}
 
-	// Handle help flag
-	if cfg.Help {
+	// Check if we have at least one argument (the subcommand)
+	if len(os.Args) < 2 {
 		printUsage()
 		return nil
 	}
 
-	// Get remaining arguments (subcommands)
-	args := flag.Args()
-
-	// If no subcommand provided, show usage
-	if len(args) == 0 {
-		printUsage()
-		return nil
-	}
+	// Get the subcommand
+	command := os.Args[1]
+	commandArgs := os.Args[2:]
 
 	// Handle subcommands
-	switch args[0] {
+	switch command {
 	case "run":
-		return handleRunCommand(cfg)
+		return handleRunCommand(commandArgs)
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", args[0])
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
 		printUsage()
-		return fmt.Errorf("unknown command: %s", args[0])
+		return nil
 	}
 }
 
