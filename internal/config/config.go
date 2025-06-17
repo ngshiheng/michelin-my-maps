@@ -43,7 +43,7 @@ func Default() *Config {
 			AdditionalRandomDelay: 5 * time.Second,
 			MaxRetry:              3,
 			ThreadCount:           1,
-			MaxURLs:               30000, // There are currently ~17k restaurants on Michelin Guide as of Jun 2025
+			MaxURLs:               30_000, // There are currently ~17k restaurants on Michelin Guide as of Jun 2025
 		},
 		Cache: Cache{
 			Path: "cache",

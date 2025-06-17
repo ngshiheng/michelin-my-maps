@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"time"
 
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 )
@@ -33,13 +32,4 @@ type RestaurantData struct {
 	Price                 string
 	FacilitiesAndServices string
 	GreenStar             bool
-}
-
-// AwardChangeResult represents the result of award change detection
-type AwardChangeResult struct {
-	Changed         bool
-	PreviousAward   *models.RestaurantAward
-	NewAward        *models.RestaurantAward
-	ChangeReason    string
-	TimeSinceUpdate time.Duration
 }

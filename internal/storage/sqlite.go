@@ -102,7 +102,6 @@ func (r *SQLiteRepository) UpdateAward(ctx context.Context, award *models.Restau
 func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, restaurantData RestaurantData) error {
 	currentYear := time.Now().Year()
 
-	// Upsert restaurant data
 	restaurant := models.Restaurant{
 		URL:                   restaurantData.URL,
 		Name:                  restaurantData.Name,
@@ -121,7 +120,6 @@ func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, restau
 		return fmt.Errorf("failed to save restaurant: %w", err)
 	}
 
-	// Handle award logic
 	return r.handleAwardUpsert(ctx, &restaurant, restaurantData, currentYear)
 }
 

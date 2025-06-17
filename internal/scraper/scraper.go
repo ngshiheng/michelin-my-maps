@@ -17,14 +17,14 @@ import (
 
 // Scraper orchestrates the web scraping process.
 type Scraper struct {
-	client       *WebClient
+	client       *webClient
 	repository   storage.RestaurantRepository
 	config       *config.Config
 	michelinURLs []models.GuideURL
 }
 
 // New creates a new Scraper instance with the provided dependencies.
-func New(client *WebClient, repository storage.RestaurantRepository, cfg *config.Config) *Scraper {
+func New(client *webClient, repository storage.RestaurantRepository, cfg *config.Config) *Scraper {
 	s := &Scraper{
 		client:     client,
 		repository: repository,
@@ -38,7 +38,7 @@ func New(client *WebClient, repository storage.RestaurantRepository, cfg *config
 func Default() (*Scraper, error) {
 	cfg := config.Default()
 
-	client, err := NewWebClient(cfg)
+	client, err := newWebClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web client: %w", err)
 	}
@@ -75,8 +75,8 @@ func (s *Scraper) initURLs() {
 	}
 }
 
-// TimeTrack tracks the time elapsed for a function call and logs the duration.
-func TimeTrack(start time.Time, name string) {
+// timeTrack tracks the time elapsed for a function call and logs the duration.
+func timeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	log.WithFields(log.Fields{
 		"name":    name,
@@ -86,22 +86,22 @@ func TimeTrack(start time.Time, name string) {
 
 // Crawl crawls Michelin Guide Restaurants information from s.michelinURLs.
 func (s *Scraper) Crawl(ctx context.Context) error {
-	defer TimeTrack(time.Now(), "crawl")
+	defer timeTrack(time.Now(), "crawl")
 
-	collector := s.client.GetCollector()
-	queue := s.client.GetQueue()
-	detailCollector := s.client.CreateDetailCollector()
+	queue := s.client.getQueue()
+	collector := s.client.getCollector()
+	detailCollector := s.client.createDetailCollector()
 
 	s.setupMainCollectorHandlers(ctx, collector, queue, detailCollector)
 	s.setupDetailCollectorHandlers(ctx, detailCollector, queue)
 
 	// Add all URLs to the scraping queue
 	for _, url := range s.michelinURLs {
-		s.client.AddURL(url.URL)
+		s.client.addURL(url.URL)
 	}
 
 	// Start scraping
-	s.client.Run()
+	s.client.run()
 	return nil
 }
 
@@ -164,7 +164,8 @@ func (s *Scraper) setupDetailCollectorHandlers(ctx context.Context, detailCollec
 	// Extract details of each restaurant and save to database
 	detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
 		restaurantData := s.extractRestaurantData(e)
-		log.Debug(restaurantData)
+		// NOTE: uncomment this line to log the restaurant data
+		// log.Debug(restaurantData)
 
 		if err := s.repository.UpsertRestaurantWithAward(ctx, restaurantData); err != nil {
 			log.WithFields(log.Fields{
@@ -182,7 +183,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		shouldRetry := r.StatusCode >= 300 && attempt <= s.config.Scraper.MaxRetry
 		if shouldRetry {
-			if cacheErr := s.client.ClearCache(r.Request); cacheErr != nil {
+			if cacheErr := s.client.clearCache(r.Request); cacheErr != nil {
 				log.WithField("cache_error", cacheErr).Warn("failed to clear cache")
 			}
 
@@ -214,7 +215,7 @@ func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantD
 	name := e.ChildText(restaurantNameXPath)
 
 	address := e.ChildText(restaurantAddressXPath)
-	address = strings.Replace(address, "\n", " ", -1)
+	address = strings.ReplaceAll(address, "\n", " ")
 
 	description := e.ChildText(restaurantDescriptionXPath)
 	distinction := e.ChildText(restaurantDistinctionXPath)
