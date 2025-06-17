@@ -23,17 +23,6 @@ type Scraper struct {
 	michelinURLs []models.GuideURL
 }
 
-// New creates a new Scraper instance with the provided dependencies.
-func New(client *webClient, repository storage.RestaurantRepository, cfg *config.Config) *Scraper {
-	s := &Scraper{
-		client:     client,
-		repository: repository,
-		config:     cfg,
-	}
-	s.initURLs()
-	return s
-}
-
 // Default creates a Scraper instance with default settings.
 func Default() (*Scraper, error) {
 	cfg := config.Default()
@@ -48,7 +37,18 @@ func Default() (*Scraper, error) {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
-	return New(client, repository, cfg), nil
+	return new(client, repository, cfg), nil
+}
+
+// new creates a new Scraper instance with the provided dependencies.
+func new(client *webClient, repository storage.RestaurantRepository, cfg *config.Config) *Scraper {
+	s := &Scraper{
+		client:     client,
+		repository: repository,
+		config:     cfg,
+	}
+	s.initURLs()
+	return s
 }
 
 // initURLs initializes the default start URLs for all award distinctions.
