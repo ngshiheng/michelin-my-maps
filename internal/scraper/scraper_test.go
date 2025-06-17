@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -106,30 +107,64 @@ func TestRestaurantListExtraction(t *testing.T) {
 
 	c.Visit(server.URL)
 
-	// Verify we extracted the expected data
-	assert.Equal(t, 24, len(extractedURLs), "Should extract 24 restaurant URLs")
-	assert.Equal(t, 24, len(extractedLocations), "Should extract 24 restaurant locations")
-	assert.Equal(t, 24, len(coordinatePairs), "Should extract 24 coordinate pairs")
+	// Verify exact counts based on actual HTML content
+	assert.Equal(t, 24, len(extractedURLs), "Should extract exactly 24 restaurant URLs")
+	assert.Equal(t, 24, len(extractedLocations), "Should extract exactly 24 restaurant locations")
+	assert.Equal(t, 24, len(coordinatePairs), "Should extract exactly 24 coordinate pairs")
 
-	// Verify URL format (sample check)
-	for _, url := range extractedURLs[:min(3, len(extractedURLs))] {
-		assert.Contains(t, url, "restaurant", "URL should contain 'restaurant': %s", url)
-		assert.NotEmpty(t, url, "URL should not be empty")
+	// Verify specific URLs from actual HTML content
+	expectedURLs := []string{
+		"/en/oslo-region/oslo/restaurant/maaemo-1194933",
+		"/en/rogaland/stavanger/restaurant/re-naa",
+		"/en/stockholm-region/stockholm/restaurant/frantzen",
+	}
+	for i, expectedURL := range expectedURLs {
+		assert.Equal(t, expectedURL, extractedURLs[i], "URL at index %d should match expected value", i)
 	}
 
-	// Verify location format (sample check)
-	for _, location := range extractedLocations[:min(3, len(extractedLocations))] {
-		assert.NotEmpty(t, location, "Location should not be empty")
+	// Verify specific locations from actual HTML content
+	expectedLocations := []string{
+		"Oslo, Norway",
+		"Stavanger, Norway",
+		"Stockholm, Sweden",
+	}
+	for i, expectedLocation := range expectedLocations {
+		assert.Contains(t, extractedLocations[i], expectedLocation, "Location at index %d should contain expected value", i)
 	}
 
-	// Verify coordinate format (sample check)
-	for _, coords := range coordinatePairs[:min(3, len(coordinatePairs))] {
-		assert.Contains(t, coords, ",", "Coordinates should contain comma separator")
-		assert.NotEmpty(t, coords, "Coordinates should not be empty")
+	// Verify all URLs follow the expected pattern
+	for i, url := range extractedURLs {
+		assert.Contains(t, url, "/restaurant/", "URL at index %d should contain '/restaurant/': %s", i, url)
+		assert.True(t, strings.HasPrefix(url, "/en/"), "URL at index %d should start with '/en/': %s", i, url)
+		assert.NotEmpty(t, url, "URL at index %d should not be empty", i)
 	}
 
-	t.Logf("Successfully extracted %d URLs, %d locations, %d coordinate pairs",
-		len(extractedURLs), len(extractedLocations), len(coordinatePairs))
+	// Verify all locations are properly formatted
+	for i, location := range extractedLocations {
+		assert.NotEmpty(t, location, "Location at index %d should not be empty", i)
+		// Note: Some locations like "Dubai" may not have country separators
+		if !strings.Contains(location, ",") {
+			t.Logf("Location at index %d has no country separator: %s", i, location)
+		}
+	}
+
+	// Verify all coordinate pairs are valid
+	for i, coords := range coordinatePairs {
+		assert.Contains(t, coords, ",", "Coordinates at index %d should contain comma separator: %s", i, coords)
+		assert.NotEmpty(t, coords, "Coordinates at index %d should not be empty", i)
+		// Verify coordinate format (latitude,longitude)
+		parts := strings.Split(coords, ",")
+		assert.Len(t, parts, 2, "Coordinates at index %d should have exactly 2 parts: %s", i, coords)
+		// Basic validation that they look like numbers
+		for j, part := range parts {
+			assert.NotEmpty(t, strings.TrimSpace(part), "Coordinate part %d at index %d should not be empty: %s", j, i, coords)
+		}
+	}
+
+	t.Logf("Successfully extracted %d URLs, %d locations, %d coordinate pairs", len(extractedURLs), len(extractedLocations), len(coordinatePairs))
+	t.Logf("Sample URLs: %v", extractedURLs[:min(3, len(extractedURLs))])
+	t.Logf("Sample locations: %v", extractedLocations[:min(3, len(extractedLocations))])
+	t.Logf("Sample coordinates: %v", coordinatePairs[:min(3, len(coordinatePairs))])
 }
 
 // TestScraperIntegration tests end-to-end scraper workflow with mocking
@@ -166,7 +201,6 @@ func TestScraperIntegration(t *testing.T) {
 }
 
 // Helper functions
-
 func createTestServer(htmlContent string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
