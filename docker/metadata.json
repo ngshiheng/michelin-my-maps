@@ -8,9 +8,9 @@
     "databases": {
         "michelin": {
             "restaurants_map": {
-                "sql": "SELECT name, location, latitude, longitude, distinction, cuisine FROM restaurants WHERE latitude IS NOT NULL AND longitude IS NOT NULL",
+                "sql": "SELECT r.name, r.location, r.latitude, r.longitude, ra.distinction, r.cuisine FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) WHERE r.latitude IS NOT NULL AND r.longitude IS NOT NULL",
                 "title": "Restaurant Map",
-                "description": "Geographical view of all restaurants with coordinates",
+                "description": "Geographical view of all restaurants with coordinates and their latest awards",
                 "plugins": {
                     "datasette-cluster-map": {
                         "latitude_column": "latitude",
@@ -21,9 +21,9 @@
             },
             "queries": {
                 "restaurants_map": {
-                    "sql": "SELECT name, location, latitude, longitude, distinction, cuisine FROM restaurants WHERE latitude IS NOT NULL AND longitude IS NOT NULL",
+                    "sql": "SELECT r.name, r.location, r.latitude, r.longitude, ra.distinction, r.cuisine FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) WHERE r.latitude IS NOT NULL AND r.longitude IS NOT NULL",
                     "title": "Restaurant Map",
-                    "description": "Geographical view of all restaurants with coordinates",
+                    "description": "Geographical view of all restaurants with coordinates and their latest awards",
                     "plugins": {
                         "datasette-cluster-map": {
                             "latitude_column": "latitude",
@@ -33,24 +33,34 @@
                     }
                 },
                 "restaurants_by_cuisine": {
-                    "sql": "SELECT cuisine, COUNT(*) as count, GROUP_CONCAT(DISTINCT location) as locations FROM restaurants GROUP BY cuisine ORDER BY count DESC",
+                    "sql": "SELECT r.cuisine, COUNT(*) as count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurants r GROUP BY r.cuisine ORDER BY count DESC",
                     "title": "Restaurants by Cuisine Type",
                     "description": "Summarizes the number of restaurants for each cuisine type and their locations"
                 },
                 "distinction_by_location": {
-                    "sql": "SELECT location, SUM(CASE WHEN distinction = '3 Stars' THEN 1 ELSE 0 END) as three_star, SUM(CASE WHEN distinction = '2 Stars' THEN 1 ELSE 0 END) as two_star, SUM(CASE WHEN distinction = '1 Star' THEN 1 ELSE 0 END) as one_star, SUM(CASE WHEN distinction = 'Bib Gourmand' THEN 1 ELSE 0 END) as bib_gourmand, SUM(CASE WHEN green_star = 1 THEN 1 ELSE 0 END) as green_star FROM restaurants GROUP BY location ORDER BY three_star DESC, two_star DESC, one_star DESC, green_star DESC",
-                    "title": "Michelin Distinction Distribution by Location",
-                    "description": "Shows the number of restaurants with each Michelin distinction for each location"
+                    "sql": "SELECT r.location, SUM(CASE WHEN ra.distinction = '3 Stars' THEN 1 ELSE 0 END) as three_star, SUM(CASE WHEN ra.distinction = '2 Stars' THEN 1 ELSE 0 END) as two_star, SUM(CASE WHEN ra.distinction = '1 Star' THEN 1 ELSE 0 END) as one_star, SUM(CASE WHEN ra.distinction = 'Bib Gourmand' THEN 1 ELSE 0 END) as bib_gourmand, SUM(CASE WHEN ra.green_star = 1 THEN 1 ELSE 0 END) as green_star FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) GROUP BY r.location ORDER BY three_star DESC, two_star DESC, one_star DESC, green_star DESC",
+                    "title": "Michelin Distinction Distribution by Location (Latest Awards)",
+                    "description": "Shows the number of restaurants with each Michelin distinction for each location based on their latest awards"
                 },
                 "popular_facilities": {
-                    "sql": "WITH split(restaurant, facility, str) AS (SELECT name, '', facilities_and_services||',' FROM restaurants UNION ALL SELECT restaurant, substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str != '') SELECT facility, COUNT(*) as count FROM split WHERE facility != '' GROUP BY facility ORDER BY count DESC LIMIT 10",
+                    "sql": "WITH split(restaurant, facility, str) AS (SELECT r.name, '', r.facilities_and_services||',' FROM restaurants r UNION ALL SELECT restaurant, substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str != '') SELECT facility, COUNT(*) as count FROM split WHERE facility != '' GROUP BY facility ORDER BY count DESC LIMIT 10",
                     "title": "Most Common Facilities and Services",
                     "description": "Lists the top 10 most common facilities and services offered by the restaurants"
                 },
                 "price_range_distribution": {
-                    "sql": "SELECT price, COUNT(*) as count, GROUP_CONCAT(DISTINCT location) as locations FROM restaurants WHERE price IS NOT NULL GROUP BY price ORDER BY count DESC",
-                    "title": "Price Range Distribution",
-                    "description": "Shows the distribution of restaurants across different price ranges and the locations where each price range is found"
+                    "sql": "SELECT ra.price, COUNT(*) as count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) WHERE ra.price IS NOT NULL GROUP BY ra.price ORDER BY count DESC",
+                    "title": "Price Range Distribution (Latest Awards)",
+                    "description": "Shows the distribution of restaurants across different price ranges based on their latest awards and the locations where each price range is found"
+                },
+                "awards_by_year": {
+                    "sql": "SELECT ra.year, ra.distinction, COUNT(*) as count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id GROUP BY ra.year, ra.distinction ORDER BY ra.year DESC, count DESC",
+                    "title": "Awards by Year and Distinction",
+                    "description": "Shows the distribution of Michelin awards by year and distinction type"
+                },
+                "restaurants_with_award_history": {
+                    "sql": "SELECT r.name, r.location, GROUP_CONCAT(ra.year || ': ' || ra.distinction, '; ') as award_history FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id GROUP BY r.id, r.name, r.location ORDER BY r.name",
+                    "title": "Restaurants with Award History",
+                    "description": "Shows each restaurant with their complete award history across years"
                 }
             },
             "tables": {
@@ -59,23 +69,40 @@
                         "datasette-cluster-map": {},
                         "datasette-hashed-urls": {}
                     },
-                    "description_html": "A dataset of MICHELIN Guide Restaurants.",
+                    "description_html": "A dataset of MICHELIN Guide Restaurants with basic information.",
                     "columns": {
+                        "id": "Unique identifier for the restaurant",
                         "address": "Address of the restaurant",
                         "cuisine": "Type of cuisines served at the restaurant",
                         "description": "MICHELIN Guide description of the restaurant",
-                        "distinction": "Type of MICHELIN distinction (e.g., 3 Stars, 2 Stars, 1 Star, Bib Gourmand)",
                         "facilities_and_services": "Facilities and services offered at the restaurant",
-                        "green_star": "Indicates whether the restaurant has been awarded a MICHELIN Green Star for sustainable gastronomy practices",
                         "location": "Location of the restaurant",
                         "latitude": "Latitude coordinates of the restaurant",
                         "longitude": "Longitude coordinates of the restaurant",
                         "name": "Name of the restaurant",
                         "phone_number": "Contact phone number of the restaurant",
-                        "price": "Price range of the restaurant (e.g., $, $$, $$$)",
                         "url": "MICHELIN Guide URL of the restaurant's listing",
                         "website_url": "URL of the restaurant's official website",
-                        "updated_on": "Date when the restaurant information was last updated in the dataset"
+                        "created_at": "Timestamp when the restaurant record was created",
+                        "updated_at": "Timestamp when the restaurant record was last updated",
+                        "deleted_at": "Timestamp when the restaurant record was soft deleted (if applicable)"
+                    }
+                },
+                "restaurant_awards": {
+                    "plugins": {
+                        "datasette-hashed-urls": {}
+                    },
+                    "description_html": "A dataset of MICHELIN awards given to restaurants by year.",
+                    "columns": {
+                        "id": "Unique identifier for the award record",
+                        "restaurant_id": "Foreign key reference to the restaurant",
+                        "year": "Year when the award was given",
+                        "distinction": "Type of MICHELIN distinction (e.g., 3 Stars, 2 Stars, 1 Star, Bib Gourmand, Selected Restaurants)",
+                        "price": "Price range of the restaurant for this award year (e.g., $, $$, $$$)",
+                        "green_star": "Boolean indicating whether the restaurant received a MICHELIN Green Star for sustainable gastronomy practices",
+                        "created_at": "Timestamp when the award record was created",
+                        "updated_at": "Timestamp when the award record was last updated",
+                        "deleted_at": "Timestamp when the award record was soft deleted (if applicable)"
                     }
                 }
             }

@@ -42,6 +42,12 @@ docker-run:	## run local development server in docker.
 	@$(DOCKER) stop $(NAME) || true && $(DOCKER) rm $(NAME) || true
 	$(DOCKER) run -e GITHUB_TOKEN=$(GITHUB_TOKEN) --name $(NAME) $(NAME)
 
+.PHONY: datasette
+datasette:	## run datasette with metadata.json for local development.
+	@if [ -z $(PYTHON) ]; then echo "Python3 could not be found. See https://www.python.org/downloads/"; exit 2; fi
+	@pip3 install datasette datasette-cluster-map datasette-hashed-urls >/dev/null 2>&1 || echo "Installing datasette dependencies..."
+	datasette data/michelin.db --metadata docker/metadata.json --host 0.0.0.0 --port 8001 --reload
+
 
 ##@ Utility
 .PHONY: sqlitetocsv
