@@ -55,7 +55,7 @@ Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd
 To crawl, run:
 
 ```sh
-make crawl # go run cmd/mym/mym.go
+make crawl # go run cmd/mym/mym.go run
 ```
 
 Alternatively, you can install this directly via `go install`:

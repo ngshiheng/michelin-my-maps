@@ -21,14 +21,17 @@ lint:	## run lint with golangci-lint in docker.
 	docker run --rm -v $$(pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run -v
 	
 .PHONY: build
-build:	## build go binary.
+build:	## build go binary to current directory.
 	@go build cmd/mym/mym.go
 	
+.PHONY: install
+install:	## install go binary to $GOPATH/bin.
+	@go install cmd/mym/mym.go
 
 ##@ Usage
 .PHONY: crawl
 crawl:	## crawl data and save it into /data directory.
-	@go run cmd/mym/mym.go
+	@go run cmd/mym/mym.go run
 
 .PHONY: docker-build
 docker-build:	## build docker image.
