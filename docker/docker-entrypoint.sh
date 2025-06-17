@@ -5,11 +5,10 @@ set -eu
 # Configuration
 CSV_FILE="data/michelin_my_maps.csv"
 DB_FILE="data/michelin.db"
-MIN_CSV_LINES=15000
+MIN_CSV_LINES=17000
 GITHUB_REPO="ngshiheng/michelin-my-maps"
-VERCEL_PROJECT="michelin-my-maps"
 
-REQUIRED_TOOLS="curl jq mym sqlite3 vercel"
+REQUIRED_TOOLS="curl jq mym sqlite3"
 
 # Main function
 main() {
@@ -18,12 +17,10 @@ main() {
     run_mym
     convert_sqlite_to_csv
     publish_to_github
-    # publish_to_vercel  # Uncomment if needed
 }
 
 # Environment and dependency checks
 check_environment() {
-    check_env_var "VERCEL_TOKEN"
     check_env_var "GITHUB_TOKEN"
 }
 
@@ -52,8 +49,9 @@ check_cli_installed() {
 # Scrape and conversion functions
 run_mym() {
     echo "Running mym..."
+    mkdir -p data/
     rm -rf cache/ "$DB_FILE"
-    mym -log error
+    mym run -log error
     if [ ! -f "$DB_FILE" ]; then
         echo "Error: $DB_FILE does not exist. Exiting..."
         exit 1

@@ -7,18 +7,10 @@ RUN go mod download
 COPY . .
 RUN go build -ldflags='-s -w -extldflags "-static"' -o /bin/mym ./cmd/mym
 
-FROM node:18-alpine AS node-builder
-RUN npm i --silent -g vercel
-
 FROM python:3.13-alpine
 RUN apk update && apk add --no-cache gcc musl-dev libffi-dev curl sqlite jq
 RUN pip install datasette
 COPY --from=go-builder /bin/mym /bin/mym
-COPY --from=node-builder /usr/local/bin/node /usr/local/bin/node
-COPY --from=node-builder /usr/local/lib/node_modules /usr/local/lib/node_modules
-RUN ln -s /usr/local/lib/node_modules/vercel/dist/index.js /usr/local/bin/vercel
-ARG VERCEL_TOKEN
-ENV VERCEL_TOKEN=${VERCEL_TOKEN}
 ARG GITHUB_TOKEN
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 COPY ./docker/docker-entrypoint.sh .
