@@ -44,14 +44,4 @@ docker-run:	## run local development server in docker.
 .PHONY: sqlitetocsv
 sqlitetocsv:	## convert data from sqlite3 to csv.
 	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 -header -csv data/michelin.db "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" > data/michelin_my_maps.csv
-
-.PHONY: sqlitetojson
-sqlitetojson:	## convert data from sqlite3 to json.
-	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 data/michelin.db '.mode json' '.once docs/data.json' 'SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar,facilities_and_services as FacilitiesAndServices, description as Description from restaurants;'
-
-.PHONY: csvtojson
-csvtojson:	## convert data from csv to json.
-	@if [ -z $(MILLER) ]; then echo "Miller could not be found. See https://github.com/johnkerl/miller"; exit 2; fi
-	mlr --c2j --jlistwrap then put 'for (k, v in $$*) { $$[k] = string(v) }' then cat data/michelin_my_maps.csv > docs/data.json
+	sqlite3 -header -csv data/michelin.db "SELECT r.name as Name, r.address as Address, r.location as Location, ra.price as Price, r.cuisine as Cuisine, r.longitude as Longitude, r.latitude as Latitude, r.phone_number as PhoneNumber, r.url as Url, r.website_url as WebsiteUrl, ra.distinction as Award, ra.green_star as GreenStar, r.facilities_and_services as FacilitiesAndServices, r.description as Description FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.year = (SELECT MAX(year) FROM restaurant_awards ra2 WHERE ra2.restaurant_id = r.id);" > data/michelin_my_maps.csv
