@@ -150,19 +150,15 @@ func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *mo
 	}
 
 	// Existing award found - check for changes
-	if r.hasAwardChanged(existingAward, data) {
+	hasAwardChanged := existingAward.Distinction != data.Distinction ||
+		existingAward.Price != data.Price ||
+		existingAward.GreenStar != data.GreenStar
+	if hasAwardChanged {
 		return r.handleAwardChange(ctx, existingAward, restaurant.ID, data, currentYear)
 	}
 
 	// No changes detected
 	return nil
-}
-
-// hasAwardChanged checks if the award data has changed.
-func (r *SQLiteRepository) hasAwardChanged(existingAward *models.RestaurantAward, data RestaurantData) bool {
-	return existingAward.Distinction != data.Distinction ||
-		existingAward.Price != data.Price ||
-		existingAward.GreenStar != data.GreenStar
 }
 
 // handleAwardChange handles the logic when an award change is detected.
