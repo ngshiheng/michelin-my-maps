@@ -174,22 +174,14 @@ func TestScraperIntegration(t *testing.T) {
 		server := createTestServer(htmlContent)
 		defer server.Close()
 
-		cfg := createTestConfig()
 		mockRepo := &MockRepository{}
 		mockRepo.On("UpsertRestaurantWithAward", context.Background(), mock.Anything).Return(nil)
 
-		client, err := newWebClient(cfg)
-		require.NoError(t, err)
-
-		scraper := New(client, mockRepo, cfg)
+		scraper, _ := Default()
 
 		// Test the detail page extraction workflow
 		c := colly.NewCollector()
 		c.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
-			e.Request.Ctx.Put("location", "Singapore")
-			e.Request.Ctx.Put("latitude", "1.304144")
-			e.Request.Ctx.Put("longitude", "103.83147")
-
 			data := scraper.extractRestaurantData(e)
 			err := mockRepo.UpsertRestaurantWithAward(context.Background(), data)
 			assert.NoError(t, err)

@@ -17,9 +17,9 @@ import (
 
 // Scraper orchestrates the web scraping process.
 type Scraper struct {
+	config       *config.Config
 	client       *webClient
 	repository   storage.RestaurantRepository
-	config       *config.Config
 	michelinURLs []models.GuideURL
 }
 
@@ -37,15 +37,15 @@ func Default() (*Scraper, error) {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
-	return new(client, repository, cfg), nil
+	return new(cfg, client, repository), nil
 }
 
 // new creates a new Scraper instance with the provided dependencies.
-func new(client *webClient, repository storage.RestaurantRepository, cfg *config.Config) *Scraper {
+func new(cfg *config.Config, client *webClient, repository storage.RestaurantRepository) *Scraper {
 	s := &Scraper{
+		config:     cfg,
 		client:     client,
 		repository: repository,
-		config:     cfg,
 	}
 	s.initURLs()
 	return s
