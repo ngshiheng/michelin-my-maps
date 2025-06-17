@@ -99,32 +99,32 @@ func (r *SQLiteRepository) UpdateAward(ctx context.Context, award *models.Restau
 }
 
 // UpsertRestaurantWithAward creates or updates a restaurant and its award with simplified change detection.
-func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, restaurantData RestaurantData) error {
+func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data RestaurantData) error {
 	currentYear := time.Now().Year()
 
 	restaurant := models.Restaurant{
-		URL:                   restaurantData.URL,
-		Name:                  restaurantData.Name,
-		Description:           restaurantData.Description,
-		Address:               restaurantData.Address,
-		Location:              restaurantData.Location,
-		Latitude:              restaurantData.Latitude,
-		Longitude:             restaurantData.Longitude,
-		Cuisine:               restaurantData.Cuisine,
-		FacilitiesAndServices: restaurantData.FacilitiesAndServices,
-		PhoneNumber:           restaurantData.PhoneNumber,
-		WebsiteURL:            restaurantData.WebsiteURL,
+		URL:                   data.URL,
+		Name:                  data.Name,
+		Description:           data.Description,
+		Address:               data.Address,
+		Location:              data.Location,
+		Latitude:              data.Latitude,
+		Longitude:             data.Longitude,
+		Cuisine:               data.Cuisine,
+		FacilitiesAndServices: data.FacilitiesAndServices,
+		PhoneNumber:           data.PhoneNumber,
+		WebsiteURL:            data.WebsiteURL,
 	}
 
 	if err := r.SaveRestaurant(ctx, &restaurant); err != nil {
 		return fmt.Errorf("failed to save restaurant: %w", err)
 	}
 
-	return r.handleAwardUpsert(ctx, &restaurant, restaurantData, currentYear)
+	return r.handleAwardUpsert(ctx, &restaurant, data, currentYear)
 }
 
 // handleAwardUpsert handles the complex award upsert logic with change detection.
-func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *models.Restaurant, restaurantData RestaurantData, currentYear int) error {
+func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
 	existingAward, err := r.FindAwardByRestaurantAndYear(ctx, restaurant.ID, currentYear)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return fmt.Errorf("failed to find existing award: %w", err)
@@ -135,23 +135,23 @@ func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *mo
 		newAward := models.RestaurantAward{
 			RestaurantID: restaurant.ID,
 			Year:         currentYear,
-			Distinction:  restaurantData.Distinction,
-			Price:        restaurantData.Price,
-			GreenStar:    restaurantData.GreenStar,
+			Distinction:  data.Distinction,
+			Price:        data.Price,
+			GreenStar:    data.GreenStar,
 		}
 
 		log.WithFields(log.Fields{
 			"restaurant_id": restaurant.ID,
 			"year":          currentYear,
-			"distinction":   restaurantData.Distinction,
+			"distinction":   data.Distinction,
 		}).Info("creating new award")
 
 		return r.SaveAward(ctx, &newAward)
 	}
 
 	// Existing award found - check for changes
-	if r.hasAwardChanged(existingAward, restaurantData) {
-		return r.handleAwardChange(ctx, existingAward, restaurant.ID, restaurantData, currentYear)
+	if r.hasAwardChanged(existingAward, data) {
+		return r.handleAwardChange(ctx, existingAward, restaurant.ID, data, currentYear)
 	}
 
 	// No changes detected
@@ -159,39 +159,39 @@ func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *mo
 }
 
 // hasAwardChanged checks if the award data has changed.
-func (r *SQLiteRepository) hasAwardChanged(existingAward *models.RestaurantAward, restaurantData RestaurantData) bool {
-	return existingAward.Distinction != restaurantData.Distinction ||
-		existingAward.Price != restaurantData.Price ||
-		existingAward.GreenStar != restaurantData.GreenStar
+func (r *SQLiteRepository) hasAwardChanged(existingAward *models.RestaurantAward, data RestaurantData) bool {
+	return existingAward.Distinction != data.Distinction ||
+		existingAward.Price != data.Price ||
+		existingAward.GreenStar != data.GreenStar
 }
 
 // handleAwardChange handles the logic when an award change is detected.
-func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, restaurantData RestaurantData, currentYear int) error {
+func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear int) error {
 	timeSinceUpdate := time.Since(existingAward.UpdatedAt)
 	const changeThreshold = 24 * time.Hour
 
 	if timeSinceUpdate > changeThreshold {
 		// Significant time has passed - likely a real award change
-		return r.handleSignificantAwardChange(ctx, existingAward, restaurantID, restaurantData, currentYear)
+		return r.handleSignificantAwardChange(ctx, existingAward, restaurantID, data, currentYear)
 	} else {
 		// Recent change - likely a correction
 		log.WithFields(log.Fields{
 			"restaurant_id":   restaurantID,
 			"old_distinction": existingAward.Distinction,
-			"new_distinction": restaurantData.Distinction,
+			"new_distinction": data.Distinction,
 			"hours_since":     timeSinceUpdate.Hours(),
 		}).Info("recent change detected, updating existing award")
 	}
 
 	// Update existing award with new data
-	existingAward.Distinction = restaurantData.Distinction
-	existingAward.Price = restaurantData.Price
-	existingAward.GreenStar = restaurantData.GreenStar
+	existingAward.Distinction = data.Distinction
+	existingAward.Price = data.Price
+	existingAward.GreenStar = data.GreenStar
 	return r.UpdateAward(ctx, existingAward)
 }
 
 // handleSignificantAwardChange handles award changes that occurred after significant time.
-func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, restaurantData RestaurantData, currentYear int) error {
+func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear int) error {
 	previousYear := currentYear - 1
 
 	// Check if previous year already exists to avoid conflicts
@@ -206,7 +206,7 @@ func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, exi
 		log.WithFields(log.Fields{
 			"restaurant_id":   restaurantID,
 			"old_distinction": existingAward.Distinction,
-			"new_distinction": restaurantData.Distinction,
+			"new_distinction": data.Distinction,
 			"backdated_year":  previousYear,
 			"current_year":    currentYear,
 		}).Info("backdated existing award and creating new one")
@@ -215,9 +215,9 @@ func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, exi
 		newAward := models.RestaurantAward{
 			RestaurantID: restaurantID,
 			Year:         currentYear,
-			Distinction:  restaurantData.Distinction,
-			Price:        restaurantData.Price,
-			GreenStar:    restaurantData.GreenStar,
+			Distinction:  data.Distinction,
+			Price:        data.Price,
+			GreenStar:    data.GreenStar,
 		}
 
 		return r.SaveAward(ctx, &newAward)
@@ -232,9 +232,9 @@ func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, exi
 		}).Warn("cannot backdate due to year conflict, updating current award")
 
 		// Update existing award with new data
-		existingAward.Distinction = restaurantData.Distinction
-		existingAward.Price = restaurantData.Price
-		existingAward.GreenStar = restaurantData.GreenStar
+		existingAward.Distinction = data.Distinction
+		existingAward.Price = data.Price
+		existingAward.GreenStar = data.GreenStar
 		return r.UpdateAward(ctx, existingAward)
 	}
 }

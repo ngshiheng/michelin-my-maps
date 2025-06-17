@@ -163,13 +163,13 @@ func (s *Scraper) setupDetailCollectorHandlers(ctx context.Context, detailCollec
 
 	// Extract details of each restaurant and save to database
 	detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
-		restaurantData := s.extractRestaurantData(e)
+		data := s.extractRestaurantData(e)
 		// NOTE: uncomment this line to log the restaurant data
-		// log.Debug(restaurantData)
+		// log.Debug(data)
 
-		if err := s.repository.UpsertRestaurantWithAward(ctx, restaurantData); err != nil {
+		if err := s.repository.UpsertRestaurantWithAward(ctx, data); err != nil {
 			log.WithFields(log.Fields{
-				"url":   restaurantData.URL,
+				"url":   data.URL,
 				"error": err,
 			}).Error("failed to upsert restaurant award")
 		}
