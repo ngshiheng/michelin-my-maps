@@ -51,28 +51,6 @@ func Default() (*Scraper, error) {
 	return New(client, repository, cfg), nil
 }
 
-// NewForTesting creates a Scraper instance for testing with custom distinction.
-func NewForTesting(distinction string, repository storage.RestaurantRepository, cfg *config.Config) (*Scraper, error) {
-	client, err := NewWebClient(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create web client: %w", err)
-	}
-
-	url := models.GuideURL{
-		Distinction: distinction,
-		URL:         models.DistinctionURL[distinction],
-	}
-
-	s := &Scraper{
-		client:       client,
-		repository:   repository,
-		config:       cfg,
-		michelinURLs: []models.GuideURL{url},
-	}
-
-	return s, nil
-}
-
 // initURLs initializes the default start URLs for all award distinctions.
 func (s *Scraper) initURLs() {
 	allAwards := []string{
