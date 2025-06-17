@@ -65,7 +65,7 @@ convert_sqlite_to_csv() {
         exit 1
     fi
     mkdir -p "$(dirname "$CSV_FILE")"
-    sqlite3 -header -csv "$DB_FILE" "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" >"$CSV_FILE"
+    make sqlitetocsv
 }
 
 # Publishing functions
