@@ -104,6 +104,9 @@
                         "updated_at": "Timestamp when the award record was last updated",
                         "deleted_at": "Timestamp when the award record was soft deleted (if applicable)"
                     }
+                },
+                "sqlite_sequence": {
+                    "hidden": true
                 }
             }
         }
