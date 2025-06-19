@@ -107,6 +107,11 @@ func (r *SQLiteRepository) UpdateAward(ctx context.Context, award *models.Restau
 func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data RestaurantData) error {
 	currentYear := time.Now().Year()
 
+	log.WithFields(log.Fields{
+		"restaurant":  data.Name,
+		"distinction": data.Distinction,
+	}).Debug("processing restaurant data")
+
 	restaurant := models.Restaurant{
 		URL:                   data.URL,
 		Name:                  data.Name,

@@ -1,6 +1,11 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"errors"
+	"strings"
+
+	"gorm.io/gorm"
+)
 
 const (
 	ThreeStars          = "3 Stars"
@@ -31,8 +36,29 @@ type RestaurantAward struct {
 	RestaurantID uint   `gorm:"not null;index:idx_restaurant_year;constraint:OnDelete:CASCADE;uniqueIndex:idx_restaurant_year_unique"`
 	Year         int    `gorm:"not null;index:idx_restaurant_year;index:idx_year;uniqueIndex:idx_restaurant_year_unique"`
 	Distinction  string `gorm:"not null;index:idx_distinction"`
-	Price        string
+	Price        string `gorm:"not null"`
 	GreenStar    bool
+}
+
+// BeforeCreate runs validation before creating a restaurant award record
+func (r *RestaurantAward) BeforeCreate(tx *gorm.DB) error {
+	return r.validate()
+}
+
+// BeforeUpdate runs validation before updating a restaurant award record
+func (r *RestaurantAward) BeforeUpdate(tx *gorm.DB) error {
+	return r.validate()
+}
+
+// validate checks that required fields are not empty
+func (r *RestaurantAward) validate() error {
+	if strings.TrimSpace(r.Distinction) == "" {
+		return errors.New("distinction cannot be empty")
+	}
+	if strings.TrimSpace(r.Price) == "" {
+		return errors.New("price cannot be empty")
+	}
+	return nil
 }
 
 // TableName sets the table name for RestaurantAward
