@@ -60,8 +60,8 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 // SaveRestaurant saves a restaurant to the database.
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
 	log.WithFields(log.Fields{
-		"name": restaurant.Name,
-		"url":  restaurant.URL,
+		"id":  restaurant.ID,
+		"url": restaurant.URL,
 	}).Debug("upserting restaurant")
 
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
@@ -97,7 +97,7 @@ func (r *SQLiteRepository) UpdateAward(ctx context.Context, award *models.Restau
 // UpsertRestaurantWithAward creates or updates a restaurant and its award with simplified change detection.
 func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data RestaurantData) error {
 	log.WithFields(log.Fields{
-		"restaurant":  data.Name,
+		"url":         data.URL,
 		"distinction": data.Distinction,
 	}).Debug("processing restaurant data")
 
@@ -152,7 +152,6 @@ func (r *SQLiteRepository) processRestaurantAwardChanges(ctx context.Context, re
 func (r *SQLiteRepository) createNewAward(ctx context.Context, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
 	log.WithFields(log.Fields{
 		"id":          restaurant.ID,
-		"name":        data.Name,
 		"distinction": data.Distinction,
 		"url":         data.URL,
 	}).Info("✓ new restaurant award")
@@ -175,7 +174,6 @@ func (r *SQLiteRepository) handleExistingAward(ctx context.Context, existingAwar
 	if !hasAwardChange {
 		log.WithFields(log.Fields{
 			"id":          restaurant.ID,
-			"name":        data.Name,
 			"distinction": data.Distinction,
 			"url":         data.URL,
 		}).Debug("restaurant award unchanged, skipping")
@@ -220,7 +218,6 @@ func (r *SQLiteRepository) backdateAndCreateAward(ctx context.Context, existingA
 
 	log.WithFields(log.Fields{
 		"id":          restaurantID,
-		"name":        data.Name,
 		"from_year":   currentYear,
 		"to_year":     previousYear,
 		"distinction": existingAward.Distinction,
@@ -238,7 +235,6 @@ func (r *SQLiteRepository) backdateAndCreateAward(ctx context.Context, existingA
 
 	log.WithFields(log.Fields{
 		"id":       restaurantID,
-		"name":     data.Name,
 		"year":     currentYear,
 		"previous": existingAward.Distinction,
 		"new":      data.Distinction,

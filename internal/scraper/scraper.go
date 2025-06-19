@@ -213,7 +213,6 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 				log.WithField("error", err).Error("✗ failed to clear cache for ")
 			}
 
-			// Exponential backoff for retries
 			backoff := time.Duration(attempt) * s.config.Scraper.Delay
 
 			log.WithFields(log.Fields{
@@ -221,7 +220,6 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 				"error":       err,
 				"status_code": r.StatusCode,
 				"url":         r.Request.URL,
-				"backoff":     backoff,
 			}).Warnf("⚠ retrying request after %v", backoff)
 
 			time.Sleep(backoff)
@@ -229,10 +227,10 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			r.Request.Retry()
 		} else {
 			log.WithFields(log.Fields{
-				"error":         err,
-				"status_code":   r.StatusCode,
-				"url":           r.Request.URL,
-				"final_attempt": attempt,
+				"attempt":     attempt,
+				"error":       err,
+				"status_code": r.StatusCode,
+				"url":         r.Request.URL,
 			}).Error("✗ giving up after max retries")
 		}
 	}
