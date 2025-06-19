@@ -111,19 +111,23 @@ func (s *Scraper) setupMainCollectorHandlers(ctx context.Context, collector *col
 		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
 			r.Ctx.Put("attempt", 1)
+			attempt = 1
 		}
-		log.WithField("url", r.URL).Debug("visiting")
+		log.WithFields(log.Fields{
+			"attempt": attempt,
+			"url":     r.URL,
+		}).Debug("→ fetching listing")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
 		log.WithFields(log.Fields{
 			"status_code": r.StatusCode,
 			"url":         r.Request.URL,
-		}).Info("visited")
+		}).Info("← listing page received")
 	})
 
 	collector.OnScraped(func(r *colly.Response) {
-		log.WithField("url", r.Request.URL).Debug("finished")
+		log.WithField("url", r.Request.URL).Debug("✓ listing page parsed")
 	})
 
 	collector.OnError(s.createErrorHandler())
@@ -155,8 +159,19 @@ func (s *Scraper) setupDetailCollectorHandlers(ctx context.Context, detailCollec
 		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
 			r.Ctx.Put("attempt", 1)
+			attempt = 1
 		}
-		log.WithField("url", r.URL).Debug("visiting detail")
+		log.WithFields(log.Fields{
+			"attempt": attempt,
+			"url":     r.URL,
+		}).Debug("→ fetching restaurant detail")
+	})
+
+	detailCollector.OnResponse(func(r *colly.Response) {
+		log.WithFields(log.Fields{
+			"status": r.StatusCode,
+			"url":    r.Request.URL,
+		}).Debug("← restaurant detail received")
 	})
 
 	detailCollector.OnError(s.createErrorHandler())
@@ -164,14 +179,23 @@ func (s *Scraper) setupDetailCollectorHandlers(ctx context.Context, detailCollec
 	// Extract details of each restaurant and save to database
 	detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
 		data := s.extractRestaurantData(e)
-		// NOTE: uncomment this line to log the restaurant data
-		// log.Debug(data)
+
+		log.WithFields(log.Fields{
+			"name":        data.Name,
+			"distinction": data.Distinction,
+			"url":         data.URL,
+		}).Debug("✓ restaurant extracted")
 
 		if err := s.repository.UpsertRestaurantWithAward(ctx, data); err != nil {
 			log.WithFields(log.Fields{
-				"url":   data.URL,
 				"error": err,
+				"url":   data.URL,
 			}).Error("failed to upsert restaurant award")
+		} else {
+			log.WithFields(log.Fields{
+				"name":        data.Name,
+				"distinction": data.Distinction,
+			}).Info("✓ restaurant saved")
 		}
 	})
 }
@@ -181,29 +205,30 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := r.Ctx.GetAny("attempt").(int)
 
-		shouldRetry := r.StatusCode >= 300 && attempt <= s.config.Scraper.MaxRetry
+		shouldRetry := attempt <= s.config.Scraper.MaxRetry
+
 		if shouldRetry {
-			if cacheErr := s.client.clearCache(r.Request); cacheErr != nil {
-				log.WithField("cache_error", cacheErr).Warn("failed to clear cache")
-			}
+			// Exponential backoff for retries
+			backoff := time.Duration(attempt) * s.config.Scraper.Delay
 
 			log.WithFields(log.Fields{
 				"attempt":     attempt,
 				"error":       err,
 				"status_code": r.StatusCode,
 				"url":         r.Request.URL,
-			}).Warnf("retrying request in %v", s.config.Scraper.Delay)
+				"backoff":     backoff,
+			}).Warnf("retrying request after %v", backoff)
 
+			time.Sleep(backoff)
 			r.Ctx.Put("attempt", attempt+1)
-			time.Sleep(s.config.Scraper.Delay)
 			r.Request.Retry()
 		} else {
 			log.WithFields(log.Fields{
-				"error":       err,
-				"headers":     r.Request.Headers,
-				"status_code": r.StatusCode,
-				"url":         r.Request.URL,
-			}).Error("error")
+				"error":         err,
+				"status_code":   r.StatusCode,
+				"url":           r.Request.URL,
+				"final_attempt": attempt,
+			}).Error("giving up after max retries")
 		}
 	}
 }
@@ -228,8 +253,8 @@ func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantD
 	formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
 	if formattedPhoneNumber == "" {
 		log.WithFields(log.Fields{
-			"url":          url,
 			"phone_number": phoneNumber,
+			"url":          url,
 		}).Debug("invalid phone number")
 	}
 
