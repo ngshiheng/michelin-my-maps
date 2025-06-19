@@ -4,7 +4,7 @@ set -eu
 
 # Configuration
 CSV_FILE="data/michelin_my_maps.csv"
-DB_FILE="data/michelin.db"
+DB_FILE="${DB_PATH:-data/michelin.db}" # Use DB_PATH env var or default
 MIN_CSV_LINES=17000
 GITHUB_REPO="ngshiheng/michelin-my-maps"
 
@@ -46,11 +46,19 @@ check_cli_installed() {
     fi
 }
 
-# Scrape and conversion functions
+# Scraper function
 run_mym() {
     echo "Running mym..."
+    echo "Database will be created at: $DB_FILE"
+
+    # Create directories for both local data and the database path
     mkdir -p data/
-    rm -rf cache/ "$DB_FILE"
+    mkdir -p "$(dirname "$DB_FILE")"
+
+    # Remove cache and existing database
+    rm -rf cache/
+    [ -f "$DB_FILE" ] && rm -f "$DB_FILE"
+
     mym run -log error
     if [ ! -f "$DB_FILE" ]; then
         echo "Error: $DB_FILE does not exist. Exiting..."
