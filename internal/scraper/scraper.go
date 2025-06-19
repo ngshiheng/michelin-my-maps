@@ -201,7 +201,6 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		attempt := r.Ctx.GetAny("attempt").(int)
 
 		shouldRetry := attempt <= s.config.Scraper.MaxRetry
-
 		if shouldRetry {
 			if cacheErr := s.client.clearCache(r.Request); cacheErr != nil {
 				log.WithField("cache_error", cacheErr).Error("✗ failed to clear cache")

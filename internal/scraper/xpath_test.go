@@ -177,15 +177,6 @@ func TestXPathSelectors(t *testing.T) {
 					}
 				}
 			}
-
-			// Log results for debugging
-			if len(results) > 0 {
-				if len(results) <= 3 {
-					t.Logf("Extracted values: %v", results)
-				} else {
-					t.Logf("Extracted %d values, first 3: %v", len(results), results[:3])
-				}
-			}
 		})
 	}
 }

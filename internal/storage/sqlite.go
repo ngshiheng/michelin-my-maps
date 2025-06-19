@@ -185,7 +185,7 @@ func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward 
 			"new":       data.Distinction,
 			"hours_ago": int(timeSinceUpdate.Hours()),
 			"url":       data.URL,
-		}).Info("⚡ award changed")
+		}).Info("* award changed")
 
 		return r.handleSignificantAwardChange(ctx, existingAward, restaurantID, data, currentYear)
 	} else {
