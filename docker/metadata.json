@@ -2,7 +2,7 @@
     "title": "MICHELIN Guide Restaurants Database",
     "description_html": "Explore MICHELIN Guide restaurants in this curated database. Made by <a href='https://jerrynsh.com'>jerrynsh.com</a>.",
     "source": "Original Data Source",
-    "source_url": "https://guide.michelin.com/",
+    "source_url": "https://guide.michelin.com/en/restaurants",
     "about": "michelin-my-maps",
     "about_url": "https://github.com/ngshiheng/michelin-my-maps",
     "databases": {
@@ -66,8 +66,7 @@
             "tables": {
                 "restaurants": {
                     "plugins": {
-                        "datasette-cluster-map": {},
-                        "datasette-hashed-urls": {}
+                        "datasette-cluster-map": {}
                     },
                     "description_html": "A dataset of MICHELIN Guide Restaurants with basic information.",
                     "columns": {
@@ -89,9 +88,7 @@
                     }
                 },
                 "restaurant_awards": {
-                    "plugins": {
-                        "datasette-hashed-urls": {}
-                    },
+                    "plugins": {},
                     "description_html": "A dataset of MICHELIN awards given to restaurants by year.",
                     "columns": {
                         "id": "Unique identifier for the award record",
