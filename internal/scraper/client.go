@@ -11,7 +11,6 @@ import (
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/config"
-	log "github.com/sirupsen/logrus"
 )
 
 // webClient provides HTTP client functionality for web scraping.
@@ -81,19 +80,10 @@ func (w *webClient) clearCache(r *colly.Request) error {
 	cacheDir := path.Join(w.config.Cache.Path, hash[:2])
 	filename := path.Join(cacheDir, hash)
 
-	if err := os.Remove(filename); err != nil {
-		log.WithFields(
-			log.Fields{
-				"error":    err,
-				"cacheDir": cacheDir,
-				"filename": filename,
-				"url":      url,
-			},
-		).Error("failed to remove cache file")
+	if err := os.Remove(filename); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
-	log.WithField("url", url).Debug("cleared cache for URL")
 	return nil
 }
 

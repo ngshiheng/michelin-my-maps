@@ -200,10 +200,17 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := r.Ctx.GetAny("attempt").(int)
 
-		shouldRetry := attempt <= s.config.Scraper.MaxRetry
+		log.WithFields(log.Fields{
+			"attempt":     attempt,
+			"error":       err,
+			"status_code": r.StatusCode,
+			"url":         r.Request.URL,
+		}).Warnf("✗ request failed on attempt %d", attempt)
+
+		shouldRetry := attempt < s.config.Scraper.MaxRetry
 		if shouldRetry {
-			if cacheErr := s.client.clearCache(r.Request); cacheErr != nil {
-				log.WithField("cache_error", cacheErr).Error("✗ failed to clear cache")
+			if err := s.client.clearCache(r.Request); err != nil {
+				log.WithField("error", err).Error("✗ failed to clear cache for ")
 			}
 
 			// Exponential backoff for retries
