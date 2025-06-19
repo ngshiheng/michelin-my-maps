@@ -173,6 +173,7 @@ func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward 
 		// Recent change - likely a correction
 		log.WithFields(log.Fields{
 			"restaurant_id":   restaurantID,
+			"restaurant_url":  data.URL,
 			"old_distinction": existingAward.Distinction,
 			"new_distinction": data.Distinction,
 			"hours_since":     timeSinceUpdate.Hours(),
@@ -201,6 +202,7 @@ func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, exi
 
 		log.WithFields(log.Fields{
 			"restaurant_id":   restaurantID,
+			"restaurant_url":  data.URL,
 			"old_distinction": existingAward.Distinction,
 			"new_distinction": data.Distinction,
 			"backdated_year":  previousYear,
