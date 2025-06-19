@@ -122,10 +122,9 @@ func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data R
 	return r.processRestaurantAwardChanges(ctx, &restaurant, data)
 }
 
-// processRestaurantAwardChanges handles the complex award upsert logic with change detection.
-// Edge cases (delisted):
-//   - Restaurant closed permanently
-//   - Restaurant dropped below "Selected Restaurant" distinction threshold
+// processRestaurantAwardChanges handles award upsert with temporal assumptions:
+// CAVEAT: Assumes current year = current award year (ignores publication cycles)
+// RISK: May create incorrect historical records via backdating
 func (r *SQLiteRepository) processRestaurantAwardChanges(ctx context.Context, restaurant *models.Restaurant, data RestaurantData) error {
 	currentYear := time.Now().Year()
 
@@ -148,7 +147,8 @@ func (r *SQLiteRepository) processRestaurantAwardChanges(ctx context.Context, re
 	}
 }
 
-// createNewAward creates a new award for the current year
+// createNewAward creates award for current year
+// WARNING: May be incorrect if scraped before official guide publication
 func (r *SQLiteRepository) createNewAward(ctx context.Context, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
 	log.WithFields(log.Fields{
 		"id":          restaurant.ID,
@@ -185,7 +185,10 @@ func (r *SQLiteRepository) handleExistingAward(ctx context.Context, existingAwar
 	return r.handleAwardChange(ctx, existingAward, restaurant.ID, data, currentYear)
 }
 
-// handleAwardChange handles the logic when an award change is detected.
+// handleAwardChange implements backdating logic with data integrity trade-offs:
+// - If prev year exists: assume current award was already correct → update in place
+// - If prev year missing: assume current award was actually for prev year → backdate + create new
+// LIMITATION: Creates phantom historical records that may never have existed
 func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear int) error {
 	previousYear := currentYear - 1
 
@@ -205,6 +208,9 @@ func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward 
 	}
 }
 
+// backdateAndCreateAward moves existing award to previous year and creates new current award
+// ASSUMPTION: Existing award was incorrectly dated and belongs to previous year
+// RISK: Creates false historical record if assumption is wrong
 func (r *SQLiteRepository) backdateAndCreateAward(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear, previousYear int) error {
 	// Safe to backdate - update existing award to previous year
 	existingAward.Year = previousYear
