@@ -114,20 +114,20 @@ func (s *Scraper) setupMainCollectorHandlers(ctx context.Context, collector *col
 			attempt = 1
 		}
 		log.WithFields(log.Fields{
-			"attempt": attempt,
 			"url":     r.URL,
-		}).Debug("→ fetching listing")
+			"attempt": attempt,
+		}).Debug("→ fetching listing page")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
 		log.WithFields(log.Fields{
-			"status_code": r.StatusCode,
-			"url":         r.Request.URL,
-		}).Info("← listing page received")
+			"url":    r.Request.URL,
+			"status": r.StatusCode,
+		}).Debug("→ processing listing page")
 	})
 
 	collector.OnScraped(func(r *colly.Response) {
-		log.WithField("url", r.Request.URL).Debug("✓ listing page parsed")
+		log.WithField("url", r.Request.URL).Info("✓ listing page parsed")
 	})
 
 	collector.OnError(s.createErrorHandler())
@@ -184,18 +184,13 @@ func (s *Scraper) setupDetailCollectorHandlers(ctx context.Context, detailCollec
 			"name":        data.Name,
 			"distinction": data.Distinction,
 			"url":         data.URL,
-		}).Debug("✓ restaurant extracted")
+		}).Debug("✓ restaurant detail extracted")
 
 		if err := s.repository.UpsertRestaurantWithAward(ctx, data); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 				"url":   data.URL,
-			}).Error("failed to upsert restaurant award")
-		} else {
-			log.WithFields(log.Fields{
-				"name":        data.Name,
-				"distinction": data.Distinction,
-			}).Info("✓ restaurant saved")
+			}).Error("✗ failed to upsert restaurant award")
 		}
 	})
 }
@@ -208,6 +203,10 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		shouldRetry := attempt <= s.config.Scraper.MaxRetry
 
 		if shouldRetry {
+			if cacheErr := s.client.clearCache(r.Request); cacheErr != nil {
+				log.WithField("cache_error", cacheErr).Error("✗ failed to clear cache")
+			}
+
 			// Exponential backoff for retries
 			backoff := time.Duration(attempt) * s.config.Scraper.Delay
 
@@ -217,7 +216,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 				"status_code": r.StatusCode,
 				"url":         r.Request.URL,
 				"backoff":     backoff,
-			}).Warnf("retrying request after %v", backoff)
+			}).Warnf("⚠ retrying request after %v", backoff)
 
 			time.Sleep(backoff)
 			r.Ctx.Put("attempt", attempt+1)
@@ -228,7 +227,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 				"status_code":   r.StatusCode,
 				"url":           r.Request.URL,
 				"final_attempt": attempt,
-			}).Error("giving up after max retries")
+			}).Error("✗ giving up after max retries")
 		}
 	}
 }

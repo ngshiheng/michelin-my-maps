@@ -58,6 +58,11 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 
 // SaveRestaurant saves a restaurant to the database.
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
+	log.WithFields(log.Fields{
+		"name": restaurant.Name,
+		"url":  restaurant.URL,
+	}).Debug("upserting restaurant")
+
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "url"}},
 		DoUpdates: clause.AssignmentColumns([]string{
@@ -132,6 +137,13 @@ func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *mo
 
 	// No existing award for current year - create new one
 	if err == gorm.ErrRecordNotFound {
+		log.WithFields(log.Fields{
+			"id":          restaurant.ID,
+			"name":        data.Name,
+			"distinction": data.Distinction,
+			"url":         data.URL,
+		}).Info("✓ new restaurant")
+
 		newAward := models.RestaurantAward{
 			RestaurantID: restaurant.ID,
 			Year:         currentYear,
@@ -139,12 +151,6 @@ func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *mo
 			Price:        data.Price,
 			GreenStar:    data.GreenStar,
 		}
-
-		log.WithFields(log.Fields{
-			"restaurant_id": restaurant.ID,
-			"year":          currentYear,
-			"distinction":   data.Distinction,
-		}).Info("creating new award")
 
 		return r.SaveAward(ctx, &newAward)
 	}
@@ -157,7 +163,11 @@ func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *mo
 		return r.handleAwardChange(ctx, existingAward, restaurant.ID, data, currentYear)
 	}
 
-	// No changes detected
+	log.WithFields(log.Fields{
+		"name":        data.Name,
+		"distinction": data.Distinction,
+	}).Debug("award unchanged, skipping")
+
 	return nil
 }
 
@@ -168,16 +178,26 @@ func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward 
 
 	if timeSinceUpdate > changeThreshold {
 		// Significant time has passed - likely a real award change
+		log.WithFields(log.Fields{
+			"id":        restaurantID,
+			"name":      data.Name,
+			"old":       existingAward.Distinction,
+			"new":       data.Distinction,
+			"hours_ago": int(timeSinceUpdate.Hours()),
+			"url":       data.URL,
+		}).Info("⚡ award changed")
+
 		return r.handleSignificantAwardChange(ctx, existingAward, restaurantID, data, currentYear)
 	} else {
 		// Recent change - likely a correction
 		log.WithFields(log.Fields{
-			"restaurant_id":   restaurantID,
-			"restaurant_url":  data.URL,
-			"old_distinction": existingAward.Distinction,
-			"new_distinction": data.Distinction,
-			"hours_since":     timeSinceUpdate.Hours(),
-		}).Info("recent change detected, updating existing award")
+			"id":        restaurantID,
+			"name":      data.Name,
+			"old":       existingAward.Distinction,
+			"new":       data.Distinction,
+			"hours_ago": int(timeSinceUpdate.Hours()),
+			"url":       data.URL,
+		}).Debug("recent correction, updating existing")
 	}
 
 	// Update existing award with new data
@@ -201,13 +221,12 @@ func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, exi
 		}
 
 		log.WithFields(log.Fields{
-			"restaurant_id":   restaurantID,
-			"restaurant_url":  data.URL,
-			"old_distinction": existingAward.Distinction,
-			"new_distinction": data.Distinction,
-			"backdated_year":  previousYear,
-			"current_year":    currentYear,
-		}).Info("backdated existing award and creating new one")
+			"id":        restaurantID,
+			"name":      data.Name,
+			"from_year": currentYear,
+			"to_year":   previousYear,
+			"url":       data.URL,
+		}).Info("↩ backdated award")
 
 		// Create new award for current year
 		newAward := models.RestaurantAward{
@@ -224,10 +243,11 @@ func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, exi
 	} else {
 		// Conflict exists - just update the current year award
 		log.WithFields(log.Fields{
-			"restaurant_id": restaurantID,
+			"id":            restaurantID,
+			"name":          data.Name,
 			"conflict_year": previousYear,
-			"current_year":  currentYear,
-		}).Warn("cannot backdate due to year conflict, updating current award")
+			"url":           data.URL,
+		}).Warn("⚠ cannot backdate due to year conflict")
 
 		// Update existing award with new data
 		existingAward.Distinction = data.Distinction
