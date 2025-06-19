@@ -1,7 +1,7 @@
 NAME := michelin-my-maps
 DOCKER := $(shell command -v docker 2> /dev/null)
 MILLER := $(shell command -v mlr 2> /dev/null)
-PYTHON := $(shell command -v python3 2> /dev/null)
+DATASETTE := $(shell command -v datasette 2> /dev/null)
 SQLITE := $(shell command -v sqlite3 2> /dev/null)
 
 .DEFAULT_GOAL := help
@@ -44,9 +44,8 @@ docker-run:	## run local development server in docker.
 
 .PHONY: datasette
 datasette:	## run datasette with metadata.json for local development.
-	@if [ -z $(PYTHON) ]; then echo "Python3 could not be found. See https://www.python.org/downloads/"; exit 2; fi
-	@pip3 install datasette datasette-cluster-map datasette-hashed-urls >/dev/null 2>&1 || echo "Installing datasette dependencies..."
-	datasette data/michelin.db --metadata docker/metadata.json --host 0.0.0.0 --port 8001 --reload
+	@if [ -z $(DATASETTE) ]; then echo "Datasette could not be found. See https://docs.datasette.io/en/stable/installation.html"; exit 2; fi
+	$(DATASETTE) data/michelin.db --metadata docker/metadata.json
 
 
 ##@ Utility
