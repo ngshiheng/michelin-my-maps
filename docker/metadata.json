@@ -1,74 +1,76 @@
 {
     "title": "MICHELIN Guide Restaurants Database",
-    "description_html": "Explore MICHELIN Guide restaurants in this curated database. Made by <a href='https://jerrynsh.com'>jerrynsh.com</a>.",
-    "source": "Original Data Source",
+    "description": "Comprehensive database of MICHELIN Guide restaurants with awards, locations, cuisines, and detailed analytics",
+    "license": "MIT",
+    "license_url": "https://github.com/ngshiheng/michelin-my-maps/blob/main/LICENSE",
+    "source": "MICHELIN Guide",
     "source_url": "https://guide.michelin.com/en/restaurants",
     "about": "michelin-my-maps",
     "about_url": "https://github.com/ngshiheng/michelin-my-maps",
+    "plugins": {
+        "datasette-cluster-map": {
+            "latitude_column": "latitude",
+            "longitude_column": "longitude"
+        }
+    },
     "databases": {
         "michelin": {
-            "restaurants_map": {
-                "sql": "SELECT r.name, r.location, r.latitude, r.longitude, ra.distinction, r.cuisine FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) WHERE r.latitude IS NOT NULL AND r.longitude IS NOT NULL",
-                "title": "Restaurant Map",
-                "description": "Geographical view of all restaurants with coordinates and their latest awards",
-                "plugins": {
-                    "datasette-cluster-map": {
-                        "latitude_column": "latitude",
-                        "longitude_column": "longitude",
-                        "popup_html": "<b>{name}</b><br>Location: {location}<br>Distinction: {distinction}<br>Cuisine: {cuisine}"
-                    }
-                }
-            },
             "queries": {
-                "restaurants_map": {
-                    "sql": "SELECT r.name, r.location, r.latitude, r.longitude, ra.distinction, r.cuisine FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) WHERE r.latitude IS NOT NULL AND r.longitude IS NOT NULL",
-                    "title": "Restaurant Map",
-                    "description": "Geographical view of all restaurants with coordinates and their latest awards",
+                "restaurant_search": {
+                    "sql": "SELECT r.name, r.location, r.latitude, r.longitude, r.cuisine, ra.distinction as current_distinction, ra.price as current_price, ra.green_star, ra_prev.distinction as previous_distinction, ra_prev.year as previous_year, CASE WHEN ra.distinction IS NOT NULL AND ra_prev.distinction IS NOT NULL AND ra.distinction != ra_prev.distinction AND ((ra.distinction = '3 Stars' AND ra_prev.distinction IN ('2 Stars', '1 Star')) OR (ra.distinction = '2 Stars' AND ra_prev.distinction = '1 Star')) THEN 'Upgraded' WHEN ra.distinction IS NOT NULL AND ra_prev.distinction IS NOT NULL AND ra.distinction != ra_prev.distinction AND ((ra.distinction = '1 Star' AND ra_prev.distinction IN ('2 Stars', '3 Stars')) OR (ra.distinction = '2 Stars' AND ra_prev.distinction = '3 Stars')) THEN 'Downgraded' WHEN ra.distinction IS NOT NULL AND ra_prev.distinction IS NOT NULL AND ra.distinction = ra_prev.distinction THEN 'Maintained' ELSE NULL END as award_status, r.description, r.updated_at FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = CASE WHEN :year IS NULL OR :year = '' THEN (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) ELSE :year END LEFT JOIN restaurant_awards ra_prev ON r.id = ra_prev.restaurant_id AND ra_prev.year = CASE WHEN :year IS NULL OR :year = '' THEN (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id AND year < (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id)) ELSE :year - 1 END WHERE (:search IS NULL OR :search = '' OR LOWER(r.name) LIKE LOWER('%' || :search || '%') OR LOWER(r.location) LIKE LOWER('%' || :search || '%') OR LOWER(r.cuisine) LIKE LOWER('%' || :search || '%')) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) AND (:year IS NULL OR :year = '' OR ra.year = :year OR (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) = :year) ORDER BY CASE ra.distinction WHEN '3 Stars' THEN 1 WHEN '2 Stars' THEN 2 WHEN '1 Star' THEN 3 WHEN 'Bib Gourmand' THEN 4 WHEN 'Selected Restaurants' THEN 5 ELSE 6 END, r.name LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
+                    "title": "Restaurants Search",
+                    "description": "Find restaurants with current and previous award status comparison. Returns restaurant details including coordinates for mapping.",
+                    "params": ["search", "location", "cuisine", "distinction", "year", "limit"],
                     "plugins": {
                         "datasette-cluster-map": {
                             "latitude_column": "latitude",
                             "longitude_column": "longitude",
-                            "popup_html": "<b>{name}</b><br>Location: {location}<br>Distinction: {distinction}<br>Cuisine: {cuisine}"
+                            "popup_html": "<b>{name}</b><br>Location: {location}<br>Current: {current_distinction}<br>Cuisine: {cuisine}<br>Status: {award_status}"
                         }
                     }
                 },
-                "restaurants_by_cuisine": {
-                    "sql": "SELECT r.cuisine, COUNT(*) as count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurants r GROUP BY r.cuisine ORDER BY count DESC",
-                    "title": "Restaurants by Cuisine Type",
-                    "description": "Summarizes the number of restaurants for each cuisine type and their locations"
+                "cuisine_analysis": {
+                    "sql": "SELECT r.cuisine, COUNT(*) as total_restaurants, COUNT(CASE WHEN ra.distinction = '3 Stars' THEN 1 END) as three_stars, COUNT(CASE WHEN ra.distinction = '2 Stars' THEN 1 END) as two_stars, COUNT(CASE WHEN ra.distinction = '1 Star' THEN 1 END) as one_star, COUNT(CASE WHEN ra.distinction = 'Bib Gourmand' THEN 1 END) as bib_gourmand_count, COUNT(CASE WHEN ra.green_star = 1 THEN 1 END) as green_star_count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND (:year IS NULL OR :year = '' OR ra.year = :year) AND ra.year = CASE WHEN :year IS NULL OR :year = '' THEN (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) ELSE :year END WHERE (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) GROUP BY r.cuisine HAVING total_restaurants >= 1 ORDER BY three_stars DESC, two_stars DESC, one_star DESC, total_restaurants DESC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
+                    "title": "Cuisines by Awards",
+                    "description": "Count restaurants and award distribution grouped by cuisine type. Shows star counts separately and locations where each cuisine appears.",
+                    "params": ["location", "cuisine", "year", "limit"]
                 },
-                "distinction_by_location": {
-                    "sql": "SELECT r.location, SUM(CASE WHEN ra.distinction = '3 Stars' THEN 1 ELSE 0 END) as three_star, SUM(CASE WHEN ra.distinction = '2 Stars' THEN 1 ELSE 0 END) as two_star, SUM(CASE WHEN ra.distinction = '1 Star' THEN 1 ELSE 0 END) as one_star, SUM(CASE WHEN ra.distinction = 'Bib Gourmand' THEN 1 ELSE 0 END) as bib_gourmand, SUM(CASE WHEN ra.green_star = 1 THEN 1 ELSE 0 END) as green_star FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) GROUP BY r.location ORDER BY three_star DESC, two_star DESC, one_star DESC, green_star DESC",
-                    "title": "Michelin Distinction Distribution by Location (Latest Awards)",
-                    "description": "Shows the number of restaurants with each Michelin distinction for each location based on their latest awards"
+                "location_analysis": {
+                    "sql": "SELECT r.location, COUNT(*) as total_restaurants, COUNT(CASE WHEN ra.distinction = '3 Stars' THEN 1 END) as three_stars, COUNT(CASE WHEN ra.distinction = '2 Stars' THEN 1 END) as two_stars, COUNT(CASE WHEN ra.distinction = '1 Star' THEN 1 END) as one_star, COUNT(CASE WHEN ra.distinction = 'Bib Gourmand' THEN 1 END) as bib_gourmand, COUNT(CASE WHEN ra.distinction = 'Selected Restaurants' THEN 1 END) as selected_restaurants, COUNT(CASE WHEN ra.green_star = 1 THEN 1 END) as green_stars FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND (:year IS NULL OR :year = '' OR ra.year = :year) AND ra.year = CASE WHEN :year IS NULL OR :year = '' THEN (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) ELSE :year END WHERE (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) GROUP BY r.location HAVING total_restaurants >= 1 ORDER BY three_stars DESC, two_stars DESC, one_star DESC, total_restaurants DESC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
+                    "title": "Locations by Awards",
+                    "description": "Count restaurants and award distribution grouped by location. Shows star counts separately and highlights top dining destinations.",
+                    "params": ["location", "year", "limit"]
                 },
-                "popular_facilities": {
-                    "sql": "WITH split(restaurant, facility, str) AS (SELECT r.name, '', r.facilities_and_services||',' FROM restaurants r UNION ALL SELECT restaurant, substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str != '') SELECT facility, COUNT(*) as count FROM split WHERE facility != '' GROUP BY facility ORDER BY count DESC LIMIT 10",
-                    "title": "Most Common Facilities and Services",
-                    "description": "Lists the top 10 most common facilities and services offered by the restaurants"
+                "price_analysis": {
+                    "sql": "SELECT ra.price, ra.distinction, COUNT(*) as restaurant_count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.price IS NOT NULL AND (:year IS NULL OR :year = '' OR ra.year = :year) AND ra.year = CASE WHEN :year IS NULL OR :year = '' THEN (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) ELSE :year END AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) GROUP BY ra.price, ra.distinction ORDER BY CASE ra.distinction WHEN '3 Stars' THEN 1 WHEN '2 Stars' THEN 2 WHEN '1 Star' THEN 3 WHEN 'Bib Gourmand' THEN 4 WHEN 'Selected Restaurants' THEN 5 END, ra.price",
+                    "title": "Prices by Awards",
+                    "description": "Count restaurants grouped by price range and award distinction. Shows how many restaurants have each price-award combination.",
+                    "params": ["distinction", "location", "year"]
                 },
-                "price_range_distribution": {
-                    "sql": "SELECT ra.price, COUNT(*) as count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) WHERE ra.price IS NOT NULL GROUP BY ra.price ORDER BY count DESC",
-                    "title": "Price Range Distribution (Latest Awards)",
-                    "description": "Shows the distribution of restaurants across different price ranges based on their latest awards and the locations where each price range is found"
+                "facilities_analysis": {
+                    "sql": "WITH facilities_split AS (SELECT r.name, r.location, ra.distinction, TRIM(REPLACE(REPLACE(facility.value, '\"', ''), '[', '')) as facility FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = CASE WHEN :year IS NULL OR :year = '' THEN (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) ELSE :year END, json_each('[\"' || REPLACE(r.facilities_and_services, ',', '\",\"') || '\"]') as facility WHERE r.facilities_and_services IS NOT NULL AND r.facilities_and_services != '' AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%'))) SELECT facility, COUNT(*) as total_restaurants, COUNT(CASE WHEN distinction = '3 Stars' THEN 1 END) as three_stars, COUNT(CASE WHEN distinction = '2 Stars' THEN 1 END) as two_stars, COUNT(CASE WHEN distinction = '1 Star' THEN 1 END) as one_star, COUNT(CASE WHEN distinction = 'Bib Gourmand' THEN 1 END) as bib_gourmand, COUNT(CASE WHEN distinction = 'Selected Restaurants' THEN 1 END) as selected_restaurants FROM facilities_split WHERE facility != '' AND (:facility IS NULL OR :facility = '' OR LOWER(facility) LIKE LOWER('%' || :facility || '%')) GROUP BY facility HAVING total_restaurants >= CASE WHEN :min_count IS NULL OR :min_count = '' THEN 2 ELSE :min_count END ORDER BY three_stars DESC, two_stars DESC, one_star DESC, total_restaurants DESC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 30 ELSE :limit END",
+                    "title": "Facilities by Awards",
+                    "description": "Count restaurants with each facility grouped by award distinction. Shows which amenities are most common among starred restaurants.",
+                    "params": ["facility", "distinction", "year", "min_count", "limit"]
                 },
-                "awards_by_year": {
-                    "sql": "SELECT ra.year, ra.distinction, COUNT(*) as count, GROUP_CONCAT(DISTINCT r.location) as locations FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id GROUP BY ra.year, ra.distinction ORDER BY ra.year DESC, count DESC",
-                    "title": "Awards by Year and Distinction",
-                    "description": "Shows the distribution of Michelin awards by year and distinction type"
-                },
-                "restaurants_with_award_history": {
-                    "sql": "SELECT r.name, r.location, GROUP_CONCAT(ra.year || ': ' || ra.distinction, '; ') as award_history FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id GROUP BY r.id, r.name, r.location ORDER BY r.name",
-                    "title": "Restaurants with Award History",
-                    "description": "Shows each restaurant with their complete award history across years"
+                "award_history": {
+                    "sql": "SELECT r.name, r.location, r.cuisine, ra.year, ra.distinction, ra.price, ra.green_star FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE (:restaurant IS NULL OR :restaurant = '' OR LOWER(r.name) LIKE LOWER('%' || :restaurant || '%')) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) AND (:start_year IS NULL OR :start_year = '' OR ra.year >= :start_year) AND (:end_year IS NULL OR :end_year = '' OR ra.year <= :end_year) ORDER BY r.name, ra.year DESC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 100 ELSE :limit END",
+                    "title": "Restaurant Awards Timeline",
+                    "description": "List all restaurant awards by year showing historical progression. Returns one row per restaurant per award year.",
+                    "params": ["restaurant", "location", "cuisine", "distinction", "start_year", "end_year", "limit"]
                 }
             },
             "tables": {
                 "restaurants": {
+                    "sortable_columns": ["name", "location", "cuisine", "created_at", "updated_at"],
+                    "facets": ["location", "cuisine"],
+                    "description_html": "Core dataset of MICHELIN Guide restaurants with comprehensive information including location, cuisine type, facilities, and contact details.",
                     "plugins": {
-                        "datasette-cluster-map": {}
+                        "datasette-cluster-map": {
+                            "latitude_column": "latitude",
+                            "longitude_column": "longitude"
+                        }
                     },
-                    "description_html": "A dataset of MICHELIN Guide Restaurants with basic information.",
                     "columns": {
                         "id": "Unique identifier for the restaurant",
                         "address": "Address of the restaurant",
@@ -88,8 +90,9 @@
                     }
                 },
                 "restaurant_awards": {
-                    "plugins": {},
-                    "description_html": "A dataset of MICHELIN awards given to restaurants by year.",
+                    "sortable_columns": ["year", "distinction", "price", "green_star", "created_at", "updated_at"],
+                    "facets": ["year", "distinction", "price", "green_star"],
+                    "description_html": "Historical dataset of MICHELIN awards including stars, Bib Gourmand designations, price ranges, and Green Star sustainability awards by year.",
                     "columns": {
                         "id": "Unique identifier for the award record",
                         "restaurant_id": "Foreign key reference to the restaurant",
