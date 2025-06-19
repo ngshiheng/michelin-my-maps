@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -73,16 +74,6 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 	}).Create(restaurant).Error
 }
 
-// FindRestaurantByURL finds a restaurant by its URL.
-func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) (*models.Restaurant, error) {
-	var restaurant models.Restaurant
-	err := r.db.WithContext(ctx).Where("url = ?", url).First(&restaurant).Error
-	if err != nil {
-		return nil, err
-	}
-	return &restaurant, nil
-}
-
 // SaveAward saves an award to the database.
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
 	return r.db.WithContext(ctx).Create(award).Error
@@ -105,8 +96,6 @@ func (r *SQLiteRepository) UpdateAward(ctx context.Context, award *models.Restau
 
 // UpsertRestaurantWithAward creates or updates a restaurant and its award with simplified change detection.
 func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data RestaurantData) error {
-	currentYear := time.Now().Year()
-
 	log.WithFields(log.Fields{
 		"restaurant":  data.Name,
 		"distinction": data.Distinction,
@@ -130,136 +119,127 @@ func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data R
 		return fmt.Errorf("failed to save restaurant: %w", err)
 	}
 
-	return r.handleAwardUpsert(ctx, &restaurant, data, currentYear)
+	return r.processRestaurantAwardChanges(ctx, &restaurant, data)
 }
 
-// handleAwardUpsert handles the complex award upsert logic with change detection.
-func (r *SQLiteRepository) handleAwardUpsert(ctx context.Context, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
-	existingAward, err := r.FindAwardByRestaurantAndYear(ctx, restaurant.ID, currentYear)
-	if err != nil && err != gorm.ErrRecordNotFound {
+// processRestaurantAwardChanges handles the complex award upsert logic with change detection.
+// Edge cases (delisted):
+//   - Restaurant closed permanently
+//   - Restaurant dropped below "Selected Restaurant" distinction threshold
+func (r *SQLiteRepository) processRestaurantAwardChanges(ctx context.Context, restaurant *models.Restaurant, data RestaurantData) error {
+	currentYear := time.Now().Year()
+
+	currentYearAward, err := r.FindAwardByRestaurantAndYear(ctx, restaurant.ID, currentYear)
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		// No award exists for current year - create new one
+		//
+		// NOTE:
+		//		May create incorrect current year awards
+		// 		E.g.: Les Amis 3★ (2025) → scraped Jan 1, 2026 → creates 3★ (2026) even though 2026 guide isn't published yet
+		// 		Here, I chose to accept temporary incorrect state, let system self-correct
+		// 		However, if restaurant is completely not found at source, this will be wrong perpetually
+		return r.createNewAward(ctx, restaurant, data, currentYear)
+	case err == nil:
+		// Award exists - check for changes
+		return r.handleExistingAward(ctx, currentYearAward, restaurant, data, currentYear)
+	default:
 		return fmt.Errorf("failed to find existing award: %w", err)
 	}
+}
 
-	// No existing award for current year - create new one
-	if err == gorm.ErrRecordNotFound {
+// createNewAward creates a new award for the current year
+func (r *SQLiteRepository) createNewAward(ctx context.Context, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
+	log.WithFields(log.Fields{
+		"id":          restaurant.ID,
+		"name":        data.Name,
+		"distinction": data.Distinction,
+		"url":         data.URL,
+	}).Info("✓ new restaurant award")
+
+	newAward := models.RestaurantAward{
+		RestaurantID: restaurant.ID,
+		Year:         currentYear,
+		Distinction:  data.Distinction,
+		Price:        data.Price,
+		GreenStar:    data.GreenStar,
+	}
+	return r.SaveAward(ctx, &newAward)
+}
+
+// handleExistingAward processes an existing award of the year, checking for changes
+func (r *SQLiteRepository) handleExistingAward(ctx context.Context, existingAward *models.RestaurantAward, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
+	hasAwardChange := existingAward.Distinction != data.Distinction ||
+		existingAward.Price != data.Price ||
+		existingAward.GreenStar != data.GreenStar
+	if !hasAwardChange {
 		log.WithFields(log.Fields{
 			"id":          restaurant.ID,
 			"name":        data.Name,
 			"distinction": data.Distinction,
 			"url":         data.URL,
-		}).Info("✓ new restaurant")
-
-		newAward := models.RestaurantAward{
-			RestaurantID: restaurant.ID,
-			Year:         currentYear,
-			Distinction:  data.Distinction,
-			Price:        data.Price,
-			GreenStar:    data.GreenStar,
-		}
-
-		return r.SaveAward(ctx, &newAward)
+		}).Debug("restaurant award unchanged, skipping")
+		return nil
 	}
 
-	// Existing award found - check for changes
-	hasAwardChanged := existingAward.Distinction != data.Distinction ||
-		existingAward.Price != data.Price ||
-		existingAward.GreenStar != data.GreenStar
-	if hasAwardChanged {
-		return r.handleAwardChange(ctx, existingAward, restaurant.ID, data, currentYear)
-	}
-
-	log.WithFields(log.Fields{
-		"name":        data.Name,
-		"distinction": data.Distinction,
-	}).Debug("award unchanged, skipping")
-
-	return nil
+	return r.handleAwardChange(ctx, existingAward, restaurant.ID, data, currentYear)
 }
 
 // handleAwardChange handles the logic when an award change is detected.
 func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear int) error {
-	timeSinceUpdate := time.Since(existingAward.UpdatedAt)
-	const changeThreshold = 24 * time.Hour
-
-	if timeSinceUpdate > changeThreshold {
-		// Significant time has passed - likely a real award change
-		log.WithFields(log.Fields{
-			"id":        restaurantID,
-			"name":      data.Name,
-			"old":       existingAward.Distinction,
-			"new":       data.Distinction,
-			"hours_ago": int(timeSinceUpdate.Hours()),
-			"url":       data.URL,
-		}).Info("* award changed")
-
-		return r.handleSignificantAwardChange(ctx, existingAward, restaurantID, data, currentYear)
-	} else {
-		// Recent change - likely a correction
-		log.WithFields(log.Fields{
-			"id":        restaurantID,
-			"name":      data.Name,
-			"old":       existingAward.Distinction,
-			"new":       data.Distinction,
-			"hours_ago": int(timeSinceUpdate.Hours()),
-			"url":       data.URL,
-		}).Debug("recent correction, updating existing")
-	}
-
-	// Update existing award with new data
-	existingAward.Distinction = data.Distinction
-	existingAward.Price = data.Price
-	existingAward.GreenStar = data.GreenStar
-	return r.UpdateAward(ctx, existingAward)
-}
-
-// handleSignificantAwardChange handles award changes that occurred after significant time.
-func (r *SQLiteRepository) handleSignificantAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear int) error {
 	previousYear := currentYear - 1
 
-	// Check if previous year already exists to avoid conflicts
 	_, err := r.FindAwardByRestaurantAndYear(ctx, restaurantID, previousYear)
-	if err == gorm.ErrRecordNotFound {
-		// Safe to backdate - update existing award to previous year
-		existingAward.Year = previousYear
-		if err := r.UpdateAward(ctx, existingAward); err != nil {
-			return fmt.Errorf("failed to backdate existing award: %w", err)
-		}
-
-		log.WithFields(log.Fields{
-			"id":        restaurantID,
-			"name":      data.Name,
-			"from_year": currentYear,
-			"to_year":   previousYear,
-			"url":       data.URL,
-		}).Info("↩ backdated award")
-
-		// Create new award for current year
-		newAward := models.RestaurantAward{
-			RestaurantID: restaurantID,
-			Year:         currentYear,
-			Distinction:  data.Distinction,
-			Price:        data.Price,
-			GreenStar:    data.GreenStar,
-		}
-
-		return r.SaveAward(ctx, &newAward)
-	} else if err != nil {
-		return fmt.Errorf("failed to check for previous year conflict: %w", err)
-	} else {
-		// Conflict exists - just update the current year award
-		log.WithFields(log.Fields{
-			"id":            restaurantID,
-			"name":          data.Name,
-			"conflict_year": previousYear,
-			"url":           data.URL,
-		}).Warn("⚠ cannot backdate due to year conflict")
-
-		// Update existing award with new data
+	switch {
+	case err == nil:
+		// Award already exists for previous year - update current award with new data
 		existingAward.Distinction = data.Distinction
 		existingAward.Price = data.Price
 		existingAward.GreenStar = data.GreenStar
 		return r.UpdateAward(ctx, existingAward)
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		// Safe to backdate - update existing award to previous year
+		return r.backdateAndCreateAward(ctx, existingAward, restaurantID, data, currentYear, previousYear)
+	default:
+		return fmt.Errorf("failed to check for previous year conflict: %w", err)
 	}
+}
+
+func (r *SQLiteRepository) backdateAndCreateAward(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear, previousYear int) error {
+	// Safe to backdate - update existing award to previous year
+	existingAward.Year = previousYear
+	if err := r.UpdateAward(ctx, existingAward); err != nil {
+		return fmt.Errorf("failed to backdate existing award: %w", err)
+	}
+
+	log.WithFields(log.Fields{
+		"id":          restaurantID,
+		"name":        data.Name,
+		"from_year":   currentYear,
+		"to_year":     previousYear,
+		"distinction": existingAward.Distinction,
+		"url":         data.URL,
+	}).Info("↩ backdated award")
+
+	// Create new award for current year
+	newAward := models.RestaurantAward{
+		RestaurantID: restaurantID,
+		Year:         currentYear,
+		Distinction:  data.Distinction,
+		Price:        data.Price,
+		GreenStar:    data.GreenStar,
+	}
+
+	log.WithFields(log.Fields{
+		"id":       restaurantID,
+		"name":     data.Name,
+		"year":     currentYear,
+		"previous": existingAward.Distinction,
+		"new":      data.Distinction,
+		"url":      data.URL,
+	}).Info("✓ created new award - distinction changed")
+
+	return r.SaveAward(ctx, &newAward)
 }
 
 // Close closes the database connection.
