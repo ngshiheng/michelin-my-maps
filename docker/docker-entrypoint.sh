@@ -50,6 +50,7 @@ check_cli_installed() {
 
 download_from_minio() {
     echo "Downloading $DB_FILE from MinIO (if exists)..."
+    mkdir -p data/
     if [ -z "${MINIO_ENDPOINT:-}" ] || [ -z "${MINIO_ACCESS_KEY:-}" ] || [ -z "${MINIO_SECRET_KEY:-}" ] || [ -z "${MINIO_BUCKET:-}" ]; then
         echo "Error: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET must be set."
         exit 1
