@@ -74,7 +74,7 @@ func printUsage() {
 	fmt.Println("  -version  print version information")
 	fmt.Println("")
 	fmt.Println("Run command options:")
-	fmt.Println("  -log string  log level (\"debug\", \"info\", \"warning\", \"error\", \"fatal\", \"panic\") (default: \"info\")")
+	fmt.Println("  -log <level> (\"debug\", \"info\", \"warning\", \"error\", \"fatal\", \"panic\") (default: \"info\")")
 	fmt.Println("")
 	fmt.Println("Examples:")
 	fmt.Printf("  %s run             # start the scraper\n", os.Args[0])
