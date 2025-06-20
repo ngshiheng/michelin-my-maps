@@ -1,7 +1,7 @@
 NAME := michelin-my-maps
 DOCKER := $(shell command -v docker 2> /dev/null)
 MILLER := $(shell command -v mlr 2> /dev/null)
-PYTHON := $(shell command -v python3 2> /dev/null)
+DATASETTE := $(shell command -v datasette 2> /dev/null)
 SQLITE := $(shell command -v sqlite3 2> /dev/null)
 
 .DEFAULT_GOAL := help
@@ -21,38 +21,41 @@ lint:	## run lint with golangci-lint in docker.
 	docker run --rm -v $$(pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run -v
 	
 .PHONY: build
-build:	## build go binary.
+build:	## build go binary to current directory.
 	@go build cmd/mym/mym.go
 	
+.PHONY: install
+install:	## install go binary to $GOPATH/bin.
+	@go install cmd/mym/mym.go
 
 ##@ Usage
-.PHONY: crawl
-crawl:	## crawl data and save it into /data directory.
-	@rm -rf michelin.db
-	@go run cmd/mym/mym.go
+.PHONY: run
+run:	## run data and save it into /data directory.
+	@go run cmd/mym/mym.go run
 
 .PHONY: docker-build
 docker-build:	## build docker image.
 	$(DOCKER) build -t $(NAME) . -f docker/Dockerfile
 
 .PHONY: docker-run
-docker-run:	## run local development server in docker.
+docker-run:## run local development server in docker.
 	@$(DOCKER) stop $(NAME) || true && $(DOCKER) rm $(NAME) || true
-	$(DOCKER) run -e VERCEL_TOKEN=$(VERCEL_TOKEN) -e GITHUB_TOKEN=$(GITHUB_TOKEN) --name $(NAME) $(NAME)
+	$(DOCKER) run \
+        -e GITHUB_TOKEN=$(GITHUB_TOKEN) \
+        -e MINIO_ENDPOINT=$(MINIO_ENDPOINT) \
+        -e MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) \
+        -e MINIO_SECRET_KEY=$(MINIO_SECRET_KEY) \
+        -e MINIO_BUCKET=$(MINIO_BUCKET) \
+        --name $(NAME) $(NAME)
+
+.PHONY: datasette
+datasette:	## run datasette with metadata.json for local development.
+	@if [ -z $(DATASETTE) ]; then echo "Datasette could not be found. See https://docs.datasette.io/en/stable/installation.html"; exit 2; fi
+	$(DATASETTE) data/michelin.db --metadata docker/metadata.json
 
 
 ##@ Utility
 .PHONY: sqlitetocsv
 sqlitetocsv:	## convert data from sqlite3 to csv.
 	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 -header -csv michelin.db "SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar, facilities_and_services as FacilitiesAndServices, description as Description from restaurants;" > data/michelin_my_maps.csv
-
-.PHONY: sqlitetojson
-sqlitetojson:	## convert data from sqlite3 to json.
-	@if [ -z $(SQLITE) ]; then echo "SQLite3 could not be found. See https://www.sqlite.org/download.html"; exit 2; fi
-	sqlite3 michelin.db '.mode json' '.once docs/data.json' 'SELECT name as Name, address as Address, location as Location, price as Price, cuisine as Cuisine, longitude as Longitude, latitude as Latitude, phone_number as PhoneNumber, url as Url, website_url as WebsiteUrl, distinction as Award, green_star as GreenStar,facilities_and_services as FacilitiesAndServices, description as Description from restaurants;'
-
-.PHONY: csvtojson
-csvtojson:	## convert data from csv to json.
-	@if [ -z $(MILLER) ]; then echo "Miller could not be found. See https://github.com/johnkerl/miller"; exit 2; fi
-	mlr --c2j --jlistwrap then put 'for (k, v in $$*) { $$[k] = string(v) }' then cat data/michelin_my_maps.csv > docs/data.json
+	sqlite3 -header -csv data/michelin.db "SELECT r.name as Name, r.address as Address, r.location as Location, ra.price as Price, r.cuisine as Cuisine, r.longitude as Longitude, r.latitude as Latitude, r.phone_number as PhoneNumber, r.url as Url, r.website_url as WebsiteUrl, ra.distinction as Award, ra.green_star as GreenStar, r.facilities_and_services as FacilitiesAndServices, r.description as Description FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.year = (SELECT MAX(year) FROM restaurant_awards ra2 WHERE ra2.restaurant_id = r.id);" > data/michelin_my_maps.csv

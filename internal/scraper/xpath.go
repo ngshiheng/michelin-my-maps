@@ -1,4 +1,4 @@
-package crawler
+package scraper
 
 const (
 	// All restaurants page.

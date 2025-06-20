@@ -7,11 +7,12 @@
 - [Disclaimer](#disclaimer)
 - [Content](#content)
 - [Inspiration](#inspiration)
+- [Installation](#installation)
 - [Usage](#usage)
 - [Development](#development)
-  - [Selector](#selector)
   - [Testing](#testing)
   - [Caching](#caching)
+  - [Selector](#selector)
 - [Contributing](#contributing)
 
 ## Context
@@ -30,7 +31,7 @@ This software is only used for research purposes, users must abide by the releva
 
 ## Content
 
-The dataset contains a list of restaurants along with additional details (e.g. address, price range, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions (i.e. the 'Award' column) of the restaurants included are:
+The dataset contains a list of restaurants along with additional details (e.g. address, price, cuisine type, longitude, latitude, etc.) curated from the [MICHELIN Restaurants guide](https://guide.michelin.com/en/restaurants). The culinary distinctions of the restaurants included are:
 
 -   3 Stars
 -   2 Stars
@@ -47,32 +48,23 @@ The dataset contains a list of restaurants along with additional details (e.g. a
 
 Inspired by [this Reddit post](https://www.reddit.com/r/singapore/comments/pqnjd2/singapore_michelin_guide_2021_map/), my initial intention of creating this dataset is so that I can map all Michelin Guide Restaurants from all around the world on Google My Maps ([see an example](https://www.google.com/maps/d/edit?mid=1wSXxkPcNY50R78_T83tUZdZuYRk2L6jY&usp=sharing)).
 
-## Usage
-
-> **NOTE**
-> Check out the [Makefile](./Makefile) or run `make help`.
-
-To crawl, run:
+## Installation
 
 ```sh
-make crawl # go run cmd/mym/mym.go
+go install github.com/ngshiheng/michelin-my-maps/v3/cmd/mym
 ```
 
-Alternatively, you can install this directly via `go install`:
+## Usage
 
 ```sh
-go install github.com/ngshiheng/michelin-my-maps/v2/cmd/mym
-rm michelin.db
-mym -log debug
+mym -help
+mym run
 ```
 
 ## Development
 
-### Selector
-
-As websites use JavaScript to dynamically generate content, the content may not be present in the initial HTML response. [Disabling JavaScript](https://developer.chrome.com/docs/devtools/javascript/disable/) can help you see the underlying HTML structure of the page and make it easier to identify the elements you want to scrape.
-
-To extract relevant information from the site's HTML, we use XPath as our choice of selector language. You can make use of this [XPath cheat sheet](https://devhints.io/xpath).
+> **NOTE**
+> Check out the [Makefile](./Makefile) or run `make help`.
 
 ### Testing
 
@@ -87,6 +79,12 @@ make test # go test ./... -v -count=1
 Caching is enabled by default to avoid hammering the targeted site with too many unnecessary requests during development. After your first run, a [`cache/`](./cache/) folder (size of ~6GB) will be created. Your subsequent runs should be cached, they should take less than a minute to finish scraping the entire site.
 
 To clear the cache, simply delete the [`cache/`](./cache/) folder.
+
+### Selector
+
+As websites use JavaScript to dynamically generate content, the content may not be present in the initial HTML response. [Disabling JavaScript](https://developer.chrome.com/docs/devtools/javascript/disable/) can help you see the underlying HTML structure of the page and make it easier to identify the elements you want to scrape.
+
+To extract relevant information from the site's HTML, we use XPath as our choice of selector language. You can make use of this [XPath cheat sheet](https://devhints.io/xpath).
 
 ## Contributing
 

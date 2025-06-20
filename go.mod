@@ -1,8 +1,6 @@
-module github.com/ngshiheng/michelin-my-maps/v2
+module github.com/ngshiheng/michelin-my-maps/v3
 
-go 1.23.0
-
-toolchain go1.24.4
+go 1.24.4
 
 require (
 	github.com/gocolly/colly/v2 v2.2.0
@@ -31,6 +29,7 @@ require (
 	github.com/nlnwa/whatwg-url v0.6.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/net v0.37.0 // indirect
