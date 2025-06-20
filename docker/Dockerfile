@@ -1,29 +1,18 @@
-FROM golang:1.24-alpine
+# Build stage
+FROM golang:1.24-alpine AS builder
 
 RUN apk add --no-cache \
     gcc \
     musl-dev \
-    curl \
-    sqlite \
-    jq \
-    && rm -rf /var/cache/apk/*
-
-RUN adduser -D -s /bin/sh appuser
+    curl
 
 WORKDIR /app
 
-RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
-    -o /usr/local/bin/mc \
-    && chmod +x /usr/local/bin/mc
-
 COPY go.mod go.sum ./
-
 ENV CGO_ENABLED=1
 RUN go mod download && go mod verify
 
 COPY . .
-
-RUN chmod +x ./docker/docker-entrypoint.sh
 
 RUN CGO_ENABLED=1 go build \
     -ldflags='-s -w -extldflags "-static"' \
@@ -31,6 +20,28 @@ RUN CGO_ENABLED=1 go build \
     -o /bin/mym \
     ./cmd/mym
 
+# Runtime stage
+FROM alpine:3.20
+
+RUN apk add --no-cache \
+    sqlite \
+    jq \
+    curl
+
+RUN adduser -D -s /bin/sh appuser
+
+# Install mc
+RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
+    -o /usr/local/bin/mc \
+    && chmod +x /usr/local/bin/mc
+
+COPY --from=builder /bin/mym /bin/mym
+COPY --from=builder /app/docker/docker-entrypoint.sh /docker/docker-entrypoint.sh
+
+RUN chmod +x /docker/docker-entrypoint.sh
+
 USER appuser
 
-CMD ["./docker/docker-entrypoint.sh"]
+WORKDIR /app
+
+CMD ["/docker/docker-entrypoint.sh"]
