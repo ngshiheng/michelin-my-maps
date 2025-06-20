@@ -50,14 +50,14 @@ check_cli_installed() {
 
 download_from_minio() {
     echo "Downloading $DB_FILE from MinIO (if exists)..."
-    mkdir -p data/
+    mkdir -p ./data/
     if [ -z "${MINIO_ENDPOINT:-}" ] || [ -z "${MINIO_ACCESS_KEY:-}" ] || [ -z "${MINIO_SECRET_KEY:-}" ] || [ -z "${MINIO_BUCKET:-}" ]; then
         echo "Error: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET must be set."
         exit 1
     fi
     mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
-    if mc ls "minio/$MINIO_BUCKET/$(basename "$DB_FILE")" >/dev/null 2>&1; then
-        mc cp "minio/$MINIO_BUCKET/$(basename "$DB_FILE")" "./data/$(basename "$DB_FILE")"
+    if mc ls "minio/$MINIO_BUCKET/michelin.db" >/dev/null 2>&1; then
+        mc cp "minio/$MINIO_BUCKET/michelin.db" "./data/michelin.db"
         echo "Downloaded existing DB file from MinIO to ./data."
     else
         echo "No existing DB file found in MinIO, starting fresh."
@@ -93,14 +93,8 @@ run_mym() {
     echo "Running mym..."
     echo "Database will be created at: $DB_FILE"
 
-    # Create directories for both local data and the database path
-    mkdir -p data/
-    mkdir -p "$(dirname "$DB_FILE")"
-
-    # Remove cache and existing database
+    # Remove cache
     rm -rf cache/
-    [ -f "$DB_FILE" ] && rm -f "$DB_FILE"
-
     mym run -log error
     if [ ! -f "$DB_FILE" ]; then
         echo "Error: $DB_FILE does not exist. Exiting..."
