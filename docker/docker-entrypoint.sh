@@ -4,9 +4,8 @@ set -eu
 
 # Configuration
 CSV_FILE="data/michelin_my_maps.csv"
-DB_FILE="${DB_PATH:-data/michelin.db}" # Use DB_PATH env var or default
+DB_FILE="data/michelin.db"
 MIN_CSV_LINES=17000
-GITHUB_REPO="ngshiheng/michelin-my-maps"
 
 REQUIRED_TOOLS="curl jq mym sqlite3 mc"
 
@@ -57,9 +56,8 @@ download_from_minio() {
     fi
     mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
     if mc ls "minio/$MINIO_BUCKET/$(basename "$DB_FILE")" >/dev/null 2>&1; then
-        mkdir -p "$(dirname "$DB_FILE")"
-        mc cp "minio/$MINIO_BUCKET/$(basename "$DB_FILE")" "$DB_FILE"
-        echo "Downloaded existing DB file from MinIO."
+        mc cp "minio/$MINIO_BUCKET/$(basename "$DB_FILE")" "./data/$(basename "$DB_FILE")"
+        echo "Downloaded existing DB file from MinIO to ./data."
     else
         echo "No existing DB file found in MinIO, starting fresh."
     fi

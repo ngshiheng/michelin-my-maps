@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"time"
 )
 
@@ -34,14 +33,9 @@ type Cache struct {
 
 // Default returns a configuration with default values.
 func Default() *Config {
-	dbPath := "data/michelin.db"
-	if envPath := os.Getenv("DB_PATH"); envPath != "" {
-		dbPath = envPath
-	}
-
 	return &Config{
 		Database: Database{
-			Path: dbPath,
+			Path: "data/michelin.db",
 		},
 		Scraper: Scraper{
 			AllowedDomain:         "guide.michelin.com",
