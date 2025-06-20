@@ -62,6 +62,7 @@
             },
             "tables": {
                 "restaurants": {
+                    "sort": "updated_at",
                     "sortable_columns": ["name", "location", "cuisine", "created_at", "updated_at"],
                     "facets": ["location", "cuisine"],
                     "description_html": "Core dataset of MICHELIN Guide restaurants with comprehensive information including location, cuisine type, facilities, and contact details.",
@@ -90,6 +91,7 @@
                     }
                 },
                 "restaurant_awards": {
+                    "sort": "updated_at",
                     "sortable_columns": ["year", "distinction", "price", "green_star", "created_at", "updated_at"],
                     "facets": ["year", "distinction", "price", "green_star"],
                     "description_html": "Historical dataset of MICHELIN awards including stars, Bib Gourmand designations, price ranges, and Green Star sustainability awards by year.",
