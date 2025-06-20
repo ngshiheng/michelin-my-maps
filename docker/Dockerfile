@@ -1,11 +1,38 @@
 FROM golang:1.24-alpine
-ENV CGO_ENABLED=1
-RUN apk add -q --no-cache gcc musl-dev curl sqlite jq
-WORKDIR $GOPATH/src/github.com/ngshiheng/michelin-my-maps
+
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    curl \
+    sqlite \
+    jq \
+    && rm -rf /var/cache/apk/*
+
+RUN adduser -D -s /bin/sh appuser
+
+WORKDIR /app
+
+RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
+    -o /usr/local/bin/mc \
+    && chmod +x /usr/local/bin/mc
+
 COPY go.mod go.sum ./
-RUN go mod download
+
+ENV CGO_ENABLED=1
+RUN go mod download && go mod verify
+
 COPY . .
-RUN go build -ldflags='-s -w -extldflags "-static"' -o /bin/mym ./cmd/mym
+
+RUN chmod +x ./docker/docker-entrypoint.sh
+
+RUN CGO_ENABLED=1 go build \
+    -ldflags='-s -w -extldflags "-static"' \
+    -trimpath \
+    -o /bin/mym \
+    ./cmd/mym
+
 ARG GITHUB_TOKEN
-ENV GITHUB_TOKEN=${GITHUB_TOKEN}
-CMD ["sh","./docker/docker-entrypoint.sh"]
+
+USER appuser
+
+CMD ["./docker/docker-entrypoint.sh"]

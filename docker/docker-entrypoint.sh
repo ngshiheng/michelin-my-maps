@@ -8,13 +8,16 @@ DB_FILE="${DB_PATH:-data/michelin.db}" # Use DB_PATH env var or default
 MIN_CSV_LINES=17000
 GITHUB_REPO="ngshiheng/michelin-my-maps"
 
-REQUIRED_TOOLS="curl jq mym sqlite3"
+REQUIRED_TOOLS="curl jq mym sqlite3 mc"
 
 # Main function
 main() {
     check_environment
     check_dependencies
+    download_from_minio
     run_mym
+    upload_to_minio
+    # trigger_datasette_redeploy
     convert_sqlite_to_csv
     publish_to_github
 }
@@ -28,7 +31,7 @@ check_dependencies() {
     for tool in $REQUIRED_TOOLS; do
         check_cli_installed "$tool"
     done
-    curl https://api.incolumitas.com/ | jq
+    # curl https://api.incolumitas.com/ | jq # FIXME: endpoint not available
     echo "All checks passed."
 }
 
@@ -44,6 +47,46 @@ check_cli_installed() {
         echo >&2 "Error: $1 is not installed."
         exit 1
     fi
+}
+
+download_from_minio() {
+    echo "Downloading $DB_FILE from MinIO (if exists)..."
+    if [ -z "${MINIO_ENDPOINT:-}" ] || [ -z "${MINIO_ACCESS_KEY:-}" ] || [ -z "${MINIO_SECRET_KEY:-}" ] || [ -z "${MINIO_BUCKET:-}" ]; then
+        echo "Error: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET must be set."
+        exit 1
+    fi
+    mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
+    if mc ls "minio/$MINIO_BUCKET/$(basename "$DB_FILE")" >/dev/null 2>&1; then
+        mkdir -p "$(dirname "$DB_FILE")"
+        mc cp "minio/$MINIO_BUCKET/$(basename "$DB_FILE")" "$DB_FILE"
+        echo "Downloaded existing DB file from MinIO."
+    else
+        echo "No existing DB file found in MinIO, starting fresh."
+    fi
+}
+
+# Trigger Datasette redeploy on Railway
+# trigger_datasette_redeploy() {
+#     if [ -z "${RAILWAY_API_TOKEN:-}" ] || [ -z "${DATASETTE_SERVICE_ID:-}" ]; then
+#         echo "Skipping Datasette redeploy: RAILWAY_API_TOKEN or DATASETTE_SERVICE_ID not set."
+#         return 0
+#     fi
+#     echo "Triggering Datasette redeploy on Railway..."
+#     curl -X POST "https://backboard.railway.app/project/${DATASETTE_SERVICE_ID}/deployments" \
+#         -H "Authorization: Bearer $RAILWAY_API_TOKEN" \
+#         -H "Content-Type: application/json" \
+#         -d '{}'
+# }
+
+# Upload SQLite to MinIO
+upload_to_minio() {
+    echo "Uploading $DB_FILE to MinIO..."
+    if [ -z "${MINIO_ENDPOINT:-}" ] || [ -z "${MINIO_ACCESS_KEY:-}" ] || [ -z "${MINIO_SECRET_KEY:-}" ] || [ -z "${MINIO_BUCKET:-}" ]; then
+        echo "Error: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET must be set."
+        exit 1
+    fi
+    mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
+    mc cp "$DB_FILE" "minio/$MINIO_BUCKET/$(basename "$DB_FILE")"
 }
 
 # Scraper function
