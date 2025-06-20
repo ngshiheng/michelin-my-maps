@@ -3,13 +3,14 @@ package models
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 // Restaurant stores information about a restaurant on Michelin Guide.
 type Restaurant struct {
-	gorm.Model
+	ID                    uint   `gorm:"primaryKey"`
 	URL                   string `gorm:"unique;not null;index"`
 	Name                  string `gorm:"index:idx_name"`
 	Description           string `gorm:"not null"`
@@ -24,6 +25,9 @@ type Restaurant struct {
 
 	// Relationship
 	Awards []RestaurantAward `gorm:"foreignKey:RestaurantID"`
+
+	CreatedAt time.Time `gorm:"type:datetime"`
+	UpdatedAt time.Time `gorm:"type:datetime"`
 }
 
 // BeforeCreate runs validation before creating a restaurant record

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"time"
 
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/scraper"
 	log "github.com/sirupsen/logrus"
@@ -128,6 +129,8 @@ func runScraper(ctx context.Context) error {
 }
 
 func main() {
+	os.Setenv("TZ", "UTC")
+	time.Local = time.UTC
 	if err := run(); err != nil {
 		log.Fatalf("Error: %v", err)
 	}

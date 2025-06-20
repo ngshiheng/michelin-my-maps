@@ -21,9 +21,13 @@ type SQLiteRepository struct {
 
 // NewSQLiteRepository creates a new SQLite repository instance.
 func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+	dsn := fmt.Sprintf("%s?_loc=UTC", dbPath)
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		PrepareStmt: true,
 		Logger:      logger.Default.LogMode(logger.Silent), // Disable GORM logging
+		NowFunc: func() time.Time {
+			return time.Now().UTC() // Force UTC timestamps
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)

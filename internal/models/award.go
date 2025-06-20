@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -32,12 +33,15 @@ var DistinctionURL = map[string]string{
 
 // RestaurantAward stores award information for a restaurant in a specific year.
 type RestaurantAward struct {
-	gorm.Model
+	ID           uint   `gorm:"primaryKey"`
 	RestaurantID uint   `gorm:"not null;index:idx_restaurant_year;constraint:OnDelete:CASCADE;uniqueIndex:idx_restaurant_year_unique"`
 	Year         int    `gorm:"not null;index:idx_restaurant_year;index:idx_year;uniqueIndex:idx_restaurant_year_unique"`
 	Distinction  string `gorm:"not null;index:idx_distinction"`
 	Price        string `gorm:"not null"`
 	GreenStar    bool
+
+	CreatedAt time.Time `gorm:"type:datetime"`
+	UpdatedAt time.Time `gorm:"type:datetime"`
 }
 
 // BeforeCreate runs validation before creating a restaurant award record
