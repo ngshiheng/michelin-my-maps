@@ -31,8 +31,6 @@ RUN CGO_ENABLED=1 go build \
     -o /bin/mym \
     ./cmd/mym
 
-ARG GITHUB_TOKEN
-
 USER appuser
 
 CMD ["./docker/docker-entrypoint.sh"]

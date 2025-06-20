@@ -38,9 +38,15 @@ docker-build:	## build docker image.
 	$(DOCKER) build -t $(NAME) . -f docker/Dockerfile
 
 .PHONY: docker-run
-docker-run:	## run local development server in docker.
+docker-run:## run local development server in docker.
 	@$(DOCKER) stop $(NAME) || true && $(DOCKER) rm $(NAME) || true
-	$(DOCKER) run -e GITHUB_TOKEN=$(GITHUB_TOKEN) --name $(NAME) $(NAME)
+	$(DOCKER) run \
+        -e GITHUB_TOKEN=$(GITHUB_TOKEN) \
+        -e MINIO_ENDPOINT=$(MINIO_ENDPOINT) \
+        -e MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) \
+        -e MINIO_SECRET_KEY=$(MINIO_SECRET_KEY) \
+        -e MINIO_BUCKET=$(MINIO_BUCKET) \
+        --name $(NAME) $(NAME)
 
 .PHONY: datasette
 datasette:	## run datasette with metadata.json for local development.
