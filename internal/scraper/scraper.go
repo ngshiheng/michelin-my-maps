@@ -199,39 +199,27 @@ func (s *Scraper) setupDetailCollectorHandlers(ctx context.Context, detailCollec
 func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := r.Ctx.GetAny("attempt").(int)
+		shouldRetry := attempt < s.config.Scraper.MaxRetry
 
-		log.WithFields(log.Fields{
+		fields := log.Fields{
 			"attempt":     attempt,
 			"error":       err,
 			"status_code": r.StatusCode,
 			"url":         r.Request.URL,
-		}).Warnf("✗ request failed on attempt %d", attempt)
+		}
 
-		shouldRetry := attempt < s.config.Scraper.MaxRetry
 		if shouldRetry {
 			if err := s.client.clearCache(r.Request); err != nil {
 				log.WithField("error", err).Error("✗ failed to clear cache for ")
 			}
-
 			backoff := time.Duration(attempt) * s.config.Scraper.Delay
-
-			log.WithFields(log.Fields{
-				"attempt":     attempt,
-				"error":       err,
-				"status_code": r.StatusCode,
-				"url":         r.Request.URL,
-			}).Warnf("⚠ retrying request after %v", backoff)
-
+			fields["backoff"] = backoff
+			log.WithFields(fields).Warnf("✗ request failed on attempt %d, retrying after %v", attempt, backoff)
 			time.Sleep(backoff)
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(log.Fields{
-				"attempt":     attempt,
-				"error":       err,
-				"status_code": r.StatusCode,
-				"url":         r.Request.URL,
-			}).Error("✗ giving up after max retries")
+			log.WithFields(fields).Errorf("✗ request failed on attempt %d, giving up after max retries", attempt)
 		}
 	}
 }
