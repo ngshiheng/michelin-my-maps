@@ -74,6 +74,7 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 			"name", "description", "address", "location",
 			"latitude", "longitude", "cuisine",
 			"facilities_and_services", "phone_number", "website_url",
+			"updated_at",
 		}),
 	}).Create(restaurant).Error
 }
