@@ -34,8 +34,8 @@ run:	## run data and save it into /data directory.
 	@go run cmd/mym/mym.go run
 
 .PHONY: docker-build
-docker-build:	## build docker image.
-	$(DOCKER) build -t $(NAME) . -f docker/Dockerfile
+docker-build:## build scraper docker image.
+	$(DOCKER) build -t $(NAME) . -f docker/scraper/Dockerfile
 
 .PHONY: docker-run
 docker-run:## run local development server in docker.
@@ -49,9 +49,9 @@ docker-run:## run local development server in docker.
         --name $(NAME) $(NAME)
 
 .PHONY: datasette
-datasette:	## run datasette with metadata.json for local development.
+datasette:## run datasette with metadata.json for local development.
 	@if [ -z $(DATASETTE) ]; then echo "Datasette could not be found. See https://docs.datasette.io/en/stable/installation.html"; exit 2; fi
-	$(DATASETTE) data/michelin.db --metadata docker/metadata.json
+	$(DATASETTE) data/michelin.db --metadata docker/datasette/metadata.json
 
 
 ##@ Utility

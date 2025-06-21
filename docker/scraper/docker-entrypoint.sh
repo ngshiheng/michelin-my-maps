@@ -16,7 +16,7 @@ main() {
     download_from_minio
     run_mym
     upload_to_minio
-    # trigger_datasette_redeploy
+    trigger_datasette_redeploy
     convert_sqlite_to_csv
     publish_to_github
 }
@@ -65,17 +65,17 @@ download_from_minio() {
 }
 
 # Trigger Datasette redeploy on Railway
-# trigger_datasette_redeploy() {
-#     if [ -z "${RAILWAY_API_TOKEN:-}" ] || [ -z "${DATASETTE_SERVICE_ID:-}" ]; then
-#         echo "Skipping Datasette redeploy: RAILWAY_API_TOKEN or DATASETTE_SERVICE_ID not set."
-#         return 0
-#     fi
-#     echo "Triggering Datasette redeploy on Railway..."
-#     curl -X POST "https://backboard.railway.app/project/${DATASETTE_SERVICE_ID}/deployments" \
-#         -H "Authorization: Bearer $RAILWAY_API_TOKEN" \
-#         -H "Content-Type: application/json" \
-#         -d '{}'
-# }
+trigger_datasette_redeploy() {
+    if [ -z "${RAILWAY_API_TOKEN:-}" ] || [ -z "${DATASETTE_SERVICE_ID:-}" ]; then
+        echo "Skipping Datasette redeploy: RAILWAY_API_TOKEN or DATASETTE_SERVICE_ID not set."
+        return 0
+    fi
+    echo "Triggering Datasette redeploy on Railway..."
+    curl -X POST "https://backboard.railway.app/project/${DATASETTE_SERVICE_ID}/deployments" \
+        -H "Authorization: Bearer $RAILWAY_API_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{}'
+}
 
 # Upload SQLite to MinIO
 upload_to_minio() {

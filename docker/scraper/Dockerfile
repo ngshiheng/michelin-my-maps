@@ -36,12 +36,12 @@ RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
     && chmod +x /usr/local/bin/mc
 
 COPY --from=builder /bin/mym /bin/mym
-COPY --from=builder /app/docker/docker-entrypoint.sh /docker/docker-entrypoint.sh
+COPY --from=builder /app/docker/scraper/docker-entrypoint.sh /docker/scraper/docker-entrypoint.sh
 
-RUN chmod +x /docker/docker-entrypoint.sh
+RUN chmod +x /docker/scraper/docker-entrypoint.sh
 
 USER appuser
 
 WORKDIR /app
 
-CMD ["/docker/docker-entrypoint.sh"]
+CMD ["/docker/scraper/docker-entrypoint.sh"]
