@@ -21,7 +21,7 @@ RUN CGO_ENABLED=1 go build \
     ./cmd/mym
 
 # Runtime stage
-FROM alpine:3.20
+FROM alpine:3.22
 
 RUN apk add --no-cache \
     sqlite \
