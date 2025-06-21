@@ -8,6 +8,7 @@ RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
     && chmod +x /usr/local/bin/mc
 
 COPY docker/datasette/docker-entrypoint.sh /docker/datasette/docker-entrypoint.sh
+COPY docker/datasette/metadata.json /docker/datasette/metadata.json
 RUN chmod +x /docker/datasette/docker-entrypoint.sh
 
 ENTRYPOINT ["/docker/datasette/docker-entrypoint.sh"]
