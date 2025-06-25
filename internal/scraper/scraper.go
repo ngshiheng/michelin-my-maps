@@ -53,6 +53,11 @@ type Scraper struct {
 func New() (*Scraper, error) {
 	cfg := DefaultConfig()
 
+	repo, err := storage.NewSQLiteRepository(cfg.DatabasePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create repository: %w", err)
+	}
+
 	wc, err := webclient.New(&webclient.Config{
 		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
@@ -65,23 +70,13 @@ func New() (*Scraper, error) {
 		return nil, fmt.Errorf("failed to create web client: %w", err)
 	}
 
-	repository, err := storage.NewSQLiteRepository(cfg.DatabasePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create repository: %w", err)
-	}
-
-	return newScraper(cfg, wc, repository), nil
-}
-
-// newScraper creates a new Scraper instance with the provided dependencies.
-func newScraper(cfg *Config, client *webclient.WebClient, repository storage.RestaurantRepository) *Scraper {
 	s := &Scraper{
+		client:     wc,
 		config:     cfg,
-		client:     client,
-		repository: repository,
+		repository: repo,
 	}
 	s.initURLs()
-	return s
+	return s, nil
 }
 
 // initURLs initializes the default start URLs for all award distinctions.

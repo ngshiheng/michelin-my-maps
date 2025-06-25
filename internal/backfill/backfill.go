@@ -36,10 +36,10 @@ func DefaultConfig() *Config {
 		CachePath:      "cache/wayback",
 		DatabasePath:   "data/michelin.db",
 		Delay:          1 * time.Second,
-		MaxRetry:       3,
+		MaxRetry:       2,
 		MaxURLs:        300_000,
 		RandomDelay:    2 * time.Second,
-		ThreadCount:    1,
+		ThreadCount:    3,
 	}
 }
 
@@ -53,10 +53,12 @@ type Scraper struct {
 // New creates a new Scraper with default config and repository.
 func New() (*Scraper, error) {
 	cfg := DefaultConfig()
+
 	repo, err := storage.NewSQLiteRepository(cfg.DatabasePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
+
 	wc, err := webclient.New(&webclient.Config{
 		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
@@ -68,11 +70,13 @@ func New() (*Scraper, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web client: %w", err)
 	}
-	return &Scraper{
+
+	s := &Scraper{
+		client:     wc,
 		config:     cfg,
 		repository: repo,
-		client:     wc,
-	}, nil
+	}
+	return s, nil
 }
 
 func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
