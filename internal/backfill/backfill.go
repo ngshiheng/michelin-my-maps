@@ -1,6 +1,3 @@
-// Package backfill provides the orchestration logic for Wayback Machine-based Michelin Guide award backfilling.
-// This package is designed to be used as a subcommand in the main CLI, mimicking the collector/queue pattern of the main scraper.
-
 package backfill
 
 import (
@@ -193,7 +190,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		distinction = parser.ParseDistinction(distinction)
 		price = parser.MapPrice(price)
 
-		year := parser.ExtractYear(publishedDate)
+		year := parser.ParseYear(publishedDate)
 		if year == 0 {
 			log.WithFields(log.Fields{
 				"publishedDate": publishedDate,

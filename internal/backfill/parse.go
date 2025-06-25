@@ -1,10 +1,3 @@
-// parse.go: Parsing and normalization helpers for Wayback backfill (migrated from cmd/wayback_backfill/main.go)
-
-/*
-Package backfill/parse provides HTML extraction and orchestration helpers
-specific to the Wayback backfill workflow. This file should only contain
-logic for extracting award data from HTML, not generic parsing utilities.
-*/
 package backfill
 
 import (
@@ -48,7 +41,7 @@ func parseAwardDataFromHTML(html []byte) (distinction, price string, greenstar b
 
 	// Try dLayer extraction first
 	if d, p, g := extractFromDLayer(doc); d != "" || p != "" {
-		return d, p, g, extractPublishedDate(doc), nil
+		return d, strings.ReplaceAll(p, "\\u002c", ","), g, extractPublishedDate(doc), nil
 	}
 
 	// Try distinction helpers
@@ -76,9 +69,9 @@ func extractFromDLayer(doc *goquery.Document) (distinction, price string, greens
 		return true
 	})
 	if scriptContent != "" {
-		distinction = parser.ExtractDLayerValue(scriptContent, "distinction")
-		price = parser.ExtractDLayerValue(scriptContent, "price")
-		greenstarStr := parser.ExtractDLayerValue(scriptContent, "greenstar")
+		distinction = parser.ParseDLayerValue(scriptContent, "distinction")
+		price = parser.ParseDLayerValue(scriptContent, "price")
+		greenstarStr := parser.ParseDLayerValue(scriptContent, "greenstar")
 		greenstar = strings.EqualFold(greenstarStr, "True")
 	}
 	return

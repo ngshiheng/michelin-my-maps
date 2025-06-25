@@ -1,8 +1,3 @@
-/*
-Package parser provides generic, reusable parsing and normalization utilities
-for Michelin Guide data. All helpers here are input-agnostic and can be used
-across different parts of the project (scraper, backfill, etc).
-*/
 package parser
 
 import (
@@ -149,8 +144,8 @@ func MapPrice(price string) string {
 	}
 }
 
-// ExtractYear parses the year from a publishedDate string.
-func ExtractYear(publishedDate string) int {
+// ParseYear parses the year from a publishedDate string.
+func ParseYear(publishedDate string) int {
 	if publishedDate == "" {
 		return 0
 	}
@@ -172,8 +167,8 @@ func ExtractYear(publishedDate string) int {
 	return 0
 }
 
-// ExtractDLayerValue extracts a value from a dLayer script.
-func ExtractDLayerValue(script, key string) string {
+// ParseDLayerValue parses a value from a dLayer script.
+func ParseDLayerValue(script, key string) string {
 	re := regexp.MustCompile(key + `'\]\s*=\s*'([^']*)'`)
 	m := re.FindStringSubmatch(script)
 	if len(m) > 1 {
