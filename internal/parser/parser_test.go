@@ -60,16 +60,85 @@ func TestParseDistinction(t *testing.T) {
 		{"Two Stars: Excellent cooking", "2 Stars"},
 		{"One Star: High quality cooking", "1 Star"},
 		{"Three Stars: Exceptional cuisine", "3 Stars"},
+		{"Three Stars &bull; Exceptional cuisine, worth a special journey", "3 Stars"},
+		{"Two Stars • Excellent cooking, worth a detour", "2 Stars"},
+		{"3 stars", "3 Stars"},
+		{"three star", "3 Stars"},
+		{"two stars", "2 Stars"},
+		{"2 star", "2 Stars"},
+		{"one star", "1 Star"},
+		{"1 star", "1 Star"},
 		{"Bib Gourmand: good quality, good value cooking", "Bib Gourmand"},
+		{"bib gourmand", "Bib Gourmand"},
+		{"Selected Restaurant", "Selected Restaurants"},
+		{"Selected Restaurants", "Selected Restaurants"},
+		{"plate", "Selected Restaurants"},
 		{"MICHELIN Green Star", "Selected Restaurants"},
 		{"Street Food", "Selected Restaurants"},
 		{"Invalid Input", "Selected Restaurants"},
 	}
 
 	for _, tt := range cases {
-		t.Run("test ParseDistinction", func(t *testing.T) {
+		t.Run("test ParseDistinction: "+tt.Got, func(t *testing.T) {
 			got := ParseDistinction(tt.Got)
 			assert.Equal(t, tt.Expected, got)
+		})
+	}
+}
+
+func TestParsePublishedYearFromJSONLD(t *testing.T) {
+	cases := []struct {
+		Name     string
+		JSONLD   string
+		Expected int
+	}{
+		{
+			"full date",
+			`{"review":{"datePublished":"2022-03-15"}}`,
+			2022,
+		},
+		{
+			"date with time",
+			`{"review":{"datePublished":"2021-07-01T10:00"}}`,
+			2021,
+		},
+		{
+			"date with seconds",
+			`{"review":{"datePublished":"2020-12-31T23:59:59"}}`,
+			2020,
+		},
+		{
+			"year only",
+			`{"review":{"datePublished":"2019"}}`,
+			2019,
+		},
+		{
+			"missing datePublished",
+			`{"review":{}}`,
+			0,
+		},
+		{
+			"missing review",
+			`{"foo":"bar"}`,
+			0,
+		},
+		{
+			"empty string",
+			"",
+			0,
+		},
+		{
+			"malformed JSON",
+			`{"review":{"datePublished":2022}}`,
+			0,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.Name, func(t *testing.T) {
+			year, err := ParsePublishedYearFromJSONLD(tt.JSONLD)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.Expected, year)
 		})
 	}
 }

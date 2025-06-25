@@ -9,10 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/config"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +24,7 @@ func TestRestaurantDetailExtraction(t *testing.T) {
 	server := createTestServer(htmlContent)
 	defer server.Close()
 
-	cfg := createTestConfig()
+	cfg := DefaultConfig()
 	scraper := &Scraper{config: cfg}
 
 	c := colly.NewCollector()
@@ -177,7 +175,7 @@ func TestScraperIntegration(t *testing.T) {
 		mockRepo := &MockRepository{}
 		mockRepo.On("UpsertRestaurantWithAward", context.Background(), mock.Anything).Return(nil)
 
-		scraper, _ := Default()
+		scraper, _ := New()
 
 		// Test the detail page extraction workflow
 		c := colly.NewCollector()
@@ -208,13 +206,11 @@ func loadTestHTML(t *testing.T, filename string) string {
 	return string(content)
 }
 
-func createTestConfig() *config.Config {
-	cfg := config.Default()
-	cfg.Scraper.Delay = 100 * time.Millisecond // Fast for testing
-	cfg.Scraper.AdditionalRandomDelay = 0
-	cfg.Scraper.MaxRetry = 1
-	cfg.Cache.Path = "test_cache"
-	return cfg
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // MockRepository for testing

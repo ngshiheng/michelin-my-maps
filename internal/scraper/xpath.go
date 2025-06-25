@@ -13,6 +13,7 @@ const (
 	restaurantDetailXPath = "//main[@class]"
 
 	restaurantAddressXPath               = "//*[contains(@class, 'data-sheet__block--text')][1]"
+	restaurantAwardPublishedYearXPath    = "//script[@type='application/ld+json']"
 	restaurantDescriptionXPath           = "//*[contains(@class, 'data-sheet__description')]"
 	restaurantDistinctionXPath           = "//*[@class='data-sheet__classification-item--content'][2]"
 	restaurantFacilitiesAndServicesXPath = "//*[contains(@class, 'col col-12 col-lg-6')]//li"

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -79,31 +78,35 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 	}).Create(restaurant).Error
 }
 
-// SaveAward saves an award to the database.
+/*
+SaveAward upserts an award for (restaurant_id, year).
+If a record exists, it updates distinction, price, greenstar, and updated_at.
+*/
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
-	return r.db.WithContext(ctx).Create(award).Error
+	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "restaurant_id"}, {Name: "year"}},
+		DoUpdates: clause.AssignmentColumns([]string{"distinction", "price", "green_star", "updated_at"}),
+	}).Create(award).Error
 }
 
-// FindAwardByRestaurantAndYear finds an award by restaurant ID and year.
-func (r *SQLiteRepository) FindAwardByRestaurantAndYear(ctx context.Context, restaurantID uint, year int) (*models.RestaurantAward, error) {
-	var award models.RestaurantAward
-	err := r.db.WithContext(ctx).Where("restaurant_id = ? AND year = ?", restaurantID, year).First(&award).Error
+func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) (*models.Restaurant, error) {
+	var restaurant models.Restaurant
+	err := r.db.WithContext(ctx).Where("url = ?", url).First(&restaurant).Error
 	if err != nil {
 		return nil, err
 	}
-	return &award, nil
+	return &restaurant, nil
 }
 
-// UpdateAward updates an existing award.
-func (r *SQLiteRepository) UpdateAward(ctx context.Context, award *models.RestaurantAward) error {
-	return r.db.WithContext(ctx).Save(award).Error
-}
-
-// UpsertRestaurantWithAward creates or updates a restaurant and its award with simplified change detection.
+/*
+UpsertRestaurantWithAward creates or updates a restaurant and its award for the explicit year provided in data.Year.
+If data.Year is zero or invalid, the award upsert is skipped and a warning is logged.
+*/
 func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data RestaurantData) error {
 	log.WithFields(log.Fields{
 		"url":         data.URL,
 		"distinction": data.Distinction,
+		"year":        data.Year,
 	}).Debug("processing restaurant data")
 
 	restaurant := models.Restaurant{
@@ -124,129 +127,29 @@ func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data R
 		return fmt.Errorf("failed to save restaurant: %w", err)
 	}
 
-	return r.processRestaurantAwardChanges(ctx, &restaurant, data)
-}
-
-// processRestaurantAwardChanges handles award upsert with temporal assumptions:
-// CAVEAT: Assumes current year = current award year (ignores publication cycles)
-// RISK: May create incorrect historical records via backdating
-func (r *SQLiteRepository) processRestaurantAwardChanges(ctx context.Context, restaurant *models.Restaurant, data RestaurantData) error {
-	currentYear := time.Now().Year()
-
-	currentYearAward, err := r.FindAwardByRestaurantAndYear(ctx, restaurant.ID, currentYear)
-	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		// No award exists for current year - create new one
-		//
-		// NOTE:
-		//		May create incorrect current year awards
-		// 		E.g.: Les Amis 3★ (2025) → scraped Jan 1, 2026 → creates 3★ (2026) even though 2026 guide isn't published yet
-		// 		Here, I chose to accept temporary incorrect state, let system self-correct
-		// 		However, if restaurant is completely not found at source, this will be wrong perpetually
-		return r.createNewAward(ctx, restaurant, data, currentYear)
-	case err == nil:
-		// Award exists - check for changes
-		return r.handleExistingAward(ctx, currentYearAward, restaurant, data, currentYear)
-	default:
-		return fmt.Errorf("failed to find existing award: %w", err)
-	}
-}
-
-// createNewAward creates award for current year
-// WARNING: May be incorrect if scraped before official guide publication
-func (r *SQLiteRepository) createNewAward(ctx context.Context, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
-	log.WithFields(log.Fields{
-		"id":          restaurant.ID,
-		"distinction": data.Distinction,
-		"url":         data.URL,
-	}).Info("✓ new restaurant award")
-
-	newAward := models.RestaurantAward{
-		RestaurantID: restaurant.ID,
-		Year:         currentYear,
-		Distinction:  data.Distinction,
-		Price:        data.Price,
-		GreenStar:    data.GreenStar,
-	}
-	return r.SaveAward(ctx, &newAward)
-}
-
-// handleExistingAward processes an existing award of the year, checking for changes
-func (r *SQLiteRepository) handleExistingAward(ctx context.Context, existingAward *models.RestaurantAward, restaurant *models.Restaurant, data RestaurantData, currentYear int) error {
-	hasAwardChange := existingAward.Distinction != data.Distinction ||
-		existingAward.Price != data.Price ||
-		existingAward.GreenStar != data.GreenStar
-	if !hasAwardChange {
+	if data.Year <= 0 {
 		log.WithFields(log.Fields{
-			"id":          restaurant.ID,
-			"distinction": data.Distinction,
-			"url":         data.URL,
-		}).Debug("restaurant award unchanged, skipping")
+			"url":  data.URL,
+			"note": "award year missing or invalid, skipping award upsert",
+		}).Warn("Skipping award upsert due to invalid year")
 		return nil
 	}
 
-	return r.handleAwardChange(ctx, existingAward, restaurant.ID, data, currentYear)
-}
-
-// handleAwardChange implements backdating logic with data integrity trade-offs:
-// - If prev year exists: assume current award was already correct → update in place
-// - If prev year missing: assume current award was actually for prev year → backdate + create new
-// LIMITATION: Creates phantom historical records that may never have existed
-func (r *SQLiteRepository) handleAwardChange(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear int) error {
-	previousYear := currentYear - 1
-
-	_, err := r.FindAwardByRestaurantAndYear(ctx, restaurantID, previousYear)
-	switch {
-	case err == nil:
-		// Award already exists for previous year - update current award with new data
-		existingAward.Distinction = data.Distinction
-		existingAward.Price = data.Price
-		existingAward.GreenStar = data.GreenStar
-		return r.UpdateAward(ctx, existingAward)
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		// Safe to backdate - update existing award to previous year
-		return r.backdateAndCreateAward(ctx, existingAward, restaurantID, data, currentYear, previousYear)
-	default:
-		return fmt.Errorf("failed to check for previous year conflict: %w", err)
-	}
-}
-
-// backdateAndCreateAward moves existing award to previous year and creates new current award
-// ASSUMPTION: Existing award was incorrectly dated and belongs to previous year
-// RISK: Creates false historical record if assumption is wrong
-func (r *SQLiteRepository) backdateAndCreateAward(ctx context.Context, existingAward *models.RestaurantAward, restaurantID uint, data RestaurantData, currentYear, previousYear int) error {
-	// Safe to backdate - update existing award to previous year
-	existingAward.Year = previousYear
-	if err := r.UpdateAward(ctx, existingAward); err != nil {
-		return fmt.Errorf("failed to backdate existing award: %w", err)
-	}
-
-	log.WithFields(log.Fields{
-		"id":          restaurantID,
-		"from_year":   currentYear,
-		"to_year":     previousYear,
-		"distinction": existingAward.Distinction,
-		"url":         data.URL,
-	}).Info("↩ backdated award")
-
-	// Create new award for current year
-	newAward := models.RestaurantAward{
-		RestaurantID: restaurantID,
-		Year:         currentYear,
+	award := &models.RestaurantAward{
+		RestaurantID: restaurant.ID,
+		Year:         data.Year,
 		Distinction:  data.Distinction,
 		Price:        data.Price,
 		GreenStar:    data.GreenStar,
 	}
+	return r.SaveAward(ctx, award)
+}
 
-	log.WithFields(log.Fields{
-		"id":       restaurantID,
-		"year":     currentYear,
-		"previous": existingAward.Distinction,
-		"new":      data.Distinction,
-		"url":      data.URL,
-	}).Info("✓ created new award - distinction changed")
-
-	return r.SaveAward(ctx, &newAward)
+// Keep only one ListAllRestaurantsWithURL implementation
+func (r *SQLiteRepository) ListAllRestaurantsWithURL() ([]models.Restaurant, error) {
+	var restaurants []models.Restaurant
+	err := r.db.Where("url != ''").Find(&restaurants).Error
+	return restaurants, err
 }
 
 // Close closes the database connection.
