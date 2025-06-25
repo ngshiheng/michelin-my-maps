@@ -22,3 +22,7 @@ mym
 *.db
 *.db-shm
 *.db-wal
+
+# Cline
+.clinerules
+memory-bank/
