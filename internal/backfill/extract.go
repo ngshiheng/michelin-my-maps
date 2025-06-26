@@ -7,253 +7,197 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
 )
 
-/*
-extractAwardDataFromHTML extracts distinction and price from dLayer,
-and publishedDate from JSON-LD. Includes fallback logic.
-
-Example HTML:
-
-	<script>
-	    dLayer['distinction'] = '3 Stars'
-	    dLayer['price'] = '$$$'
-	    dLayer['greenstar'] = 'True'
-	</script>
-	<script type="application/ld+json">
-	    {"@type":"Restaurant","review":{"datePublished":"2023-07-01"}}
-	</script>
-
-Extraction result:
-
-	distinction: "3 Stars"
-	price: "$$$"
-	greenstar: true
-	publishedDate: "2023-07-01"
-*/
-func extractAwardDataFromHTML(html []byte) (distinction, price string, greenstar bool, publishedDate string, err error) {
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
-	if err != nil {
-		return "", "", false, "", err
-	}
-
-	// Try dLayer extraction first
-	if d, p, g := extractFromDLayer(doc); d != "" || p != "" {
-		return d, strings.ReplaceAll(p, "\\u002c", ","), g, extractPublishedDate(doc), nil
-	}
-
-	// Try distinction helpers
-	distinction = extractDistinction(doc)
-	if distinction == "" || distinction == models.SelectedRestaurants {
-		distinction = extractDistinctionFromMeta(doc)
-	}
-
-	price = extractPrice(doc)
-	greenstar = extractGreenStar(doc)
-	publishedDate = extractPublishedDate(doc)
-
-	return distinction, price, greenstar, publishedDate, nil
+// MichelinExtractor handles extraction of Michelin award data from HTML documents,
+// supporting multiple layouts and fallbacks for different Wayback Machine snapshots.
+type MichelinExtractor struct {
+	// Regex patterns for date extraction
+	datePatterns []*regexp.Regexp
 }
 
-// extractFromDLayer tries to extract distinction, price, and greenstar from dLayer script
-func extractFromDLayer(doc *goquery.Document) (distinction, price string, greenstar bool) {
-	var scriptContent string
-	doc.Find("script").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		txt := s.Text()
-		if strings.Contains(txt, "dLayer") && strings.Contains(txt, "distinction") {
-			scriptContent = txt
+// AwardData represents extracted Michelin award information for a restaurant.
+type AwardData struct {
+	Distinction   string
+	Price         string
+	GreenStar     bool
+	PublishedDate string
+}
+
+// NewMichelinExtractor creates and returns a new MichelinExtractor instance.
+func NewMichelinExtractor() *MichelinExtractor {
+	return &MichelinExtractor{
+		datePatterns: []*regexp.Regexp{
+			regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`),
+			regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`), // ISO date format
+		},
+	}
+}
+
+// Extract parses the provided HTML and extracts Michelin award data.
+// Returns an AwardData struct or an error if parsing fails.
+func (e *MichelinExtractor) Extract(html []byte) (*AwardData, error) {
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
+	if err != nil {
+		return nil, err
+	}
+
+	data := &AwardData{}
+
+	data.PublishedDate = e.extractPublishedDate(doc)
+
+	// Try dLayer first (highest priority for newer pages; 2020+)
+	if e.extractFromDLayer(doc, data) && data.PublishedDate != "" {
+		return data, nil
+	}
+
+	// Fallback to individual extractors
+	data.Distinction = e.extractDistinction(doc)
+	data.Price = e.extractPrice(doc)
+
+	return data, nil
+}
+
+// extractFromDLayer attempts to extract distinction, price, and green star status from the dLayer script tag.
+func (e *MichelinExtractor) extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
+	scriptContent := e.findScript(doc, func(text string) bool {
+		return strings.Contains(text, "dLayer") && strings.Contains(text, "distinction")
+	})
+
+	if scriptContent == "" {
+		return false
+	}
+
+	distinction := parser.ParseDLayerValue(scriptContent, "distinction")
+	price := parser.ParseDLayerValue(scriptContent, "price")
+	greenStar := parser.ParseDLayerValue(scriptContent, "greenStar")
+
+	if distinction == "" && price == "" {
+		return false
+	}
+
+	data.Distinction = distinction
+	data.Price = strings.ReplaceAll(price, "\\u002c", ",") // Handle unicode escape for commas
+	data.GreenStar = strings.EqualFold(greenStar, "True")
+
+	return true
+}
+
+// extractDistinction extracts the restaurant distinction from the document using a selector fallback pattern.
+func (e *MichelinExtractor) extractDistinction(doc *goquery.Document) string {
+	selector := "ul.restaurant-details__classification--list li, div.restaurant__classification p.flex-fill"
+	var result string
+	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
+		text := strings.TrimSpace(s.Text())
+		if parsed := parser.ParseDistinction(text); parsed != "" {
+			result = parsed
 			return false
 		}
 		return true
 	})
-
-	if scriptContent != "" {
-		distinction = parser.ParseDLayerValue(scriptContent, "distinction")
-		price = parser.ParseDLayerValue(scriptContent, "price")
-		greenstarStr := parser.ParseDLayerValue(scriptContent, "greenstar")
-		greenstar = strings.EqualFold(greenstarStr, "True")
-	}
-	return
+	return result
 }
 
-// extractDistinction tries to extract distinction from the classification list
-func extractDistinction(doc *goquery.Document) string {
-	var starDistinction, bibDistinction, selectedDistinction string
-	doc.Find("ul.restaurant-details__classification--list li").Each(func(i int, s *goquery.Selection) {
-		liText := s.Text()
-		parsed := parser.ParseDistinction(liText)
-		switch parsed {
-		case models.ThreeStars, models.TwoStars, models.OneStar:
-			if starDistinction == "" {
-				starDistinction = parsed
-			}
-		case models.BibGourmand:
-			if bibDistinction == "" {
-				bibDistinction = parsed
-			}
-		case models.SelectedRestaurants:
-			if selectedDistinction == "" {
-				selectedDistinction = parsed
+// extractPrice extracts the price information from the document using a selector fallback pattern.
+func (e *MichelinExtractor) extractPrice(doc *goquery.Document) string {
+	selector := "li.restaurant-details__heading-price, li:has(span.mg-price)"
+	var result string
+	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
+		clone := s.Clone()
+		clone.Find("span.mg-price").Remove()
+		text := strings.TrimSpace(clone.Text())
+		if idx := strings.Index(text, "•"); idx != -1 {
+			text = strings.TrimSpace(text[:idx])
+		}
+		normalized := strings.Join(strings.Fields(text), " ")
+		if normalized != "" {
+			result = normalized
+			return false
+		}
+		return true
+	})
+	return result
+}
+
+/*
+extractPublishedDate extracts the published date from the document.
+Supports both legacy and modern layouts by using a unified selector.
+*/
+func (e *MichelinExtractor) extractPublishedDate(doc *goquery.Document) string {
+	// Try JSON-LD first (2021+ layout)
+	if date := e.extractDateFromJSONLD(doc); date != "" {
+		return date
+	}
+
+	selector := "div.restaurant-details__heading--label-title, div.label-text"
+	var result string
+	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
+		text := strings.TrimSpace(s.Text())
+		for _, pattern := range e.datePatterns {
+			if matches := pattern.FindStringSubmatch(text); len(matches) > 1 {
+				result = matches[1]
+				return false
 			}
 		}
+		return true
 	})
-	if starDistinction != "" {
-		return starDistinction
+	return result
+}
+
+/*
+extractDateFromJSONLD extracts the published date from JSON-LD script tags.
+
+Example:
+
+	<script type="application/ld+json">
+	{
+	  "@type": "Restaurant",
+	  "review": {
+	    "datePublished": "2021-01-25T05:32"
+	  }
 	}
-	if bibDistinction != "" {
-		return bibDistinction
+	</script>
+
+The function will extract and return "2021-01-25T05:32".
+*/
+func (e *MichelinExtractor) extractDateFromJSONLD(doc *goquery.Document) string {
+	jsonLD := e.findScript(doc, func(text string) bool {
+		return strings.Contains(text, `"@type":"Restaurant"`)
+	})
+
+	if jsonLD == "" {
+		return ""
 	}
-	if selectedDistinction != "" {
-		return selectedDistinction
+
+	var ld map[string]any
+	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
+		return ""
+	}
+
+	if review, ok := ld["review"].(map[string]any); ok {
+		if date, ok := review["datePublished"].(string); ok {
+			return date
+		}
 	}
 	return ""
 }
 
-// extractDistinctionFromMeta tries to extract distinction from meta description tags
-func extractDistinctionFromMeta(doc *goquery.Document) string {
-	var distinction string
-	doc.Find("meta[name='description'],meta[property='og:description']").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		content, exists := s.Attr("content")
-		if !exists {
-			return true
-		}
-		parsed := parser.ParseDistinction(content)
-		if parsed != "" && parsed != models.SelectedRestaurants {
-			distinction = parsed
-			return true
-		}
-		return false
-	})
-	return distinction
-}
-
-/*
-extractPrice tries to extract price from the price element.
-If not found, falls back to 2019 Wayback layout:
-<li>
-
-	<span class="mg-price jumbotron__card-detail--icon"></span>
-	30 - 45 SGD
-
-</li>
-*/
-func extractPrice(doc *goquery.Document) string {
-	var price string
-	// Primary selector (modern layout)
-	doc.Find("li.restaurant-details__heading-price").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		priceText := strings.TrimSpace(s.Text())
-		if idx := strings.Index(priceText, "•"); idx != -1 {
-			priceText = strings.TrimSpace(priceText[:idx])
-		}
-		priceText = strings.Join(strings.Fields(priceText), " ")
-		price = priceText
-		return false
-	})
-
-	if price != "" {
-		return price
-	}
-
-	/*
-	   Flexible fallback: search any <li> with a <span> whose class contains "mg-price"
-	*/
-	doc.Find("li").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		found := false
-		s.Find("span").EachWithBreak(func(j int, spanSel *goquery.Selection) bool {
-			for _, class := range strings.Fields(spanSel.AttrOr("class", "")) {
-				if strings.Contains(class, "mg-price") {
-					found = true
-					return false
-				}
-			}
-			return true
-		})
-		if found {
-			clone := s.Clone()
-			clone.Find("span").Each(func(j int, spanSel *goquery.Selection) {
-				for _, class := range strings.Fields(spanSel.AttrOr("class", "")) {
-					if strings.Contains(class, "mg-price") {
-						spanSel.Remove()
-					}
-				}
-			})
-			priceText := strings.TrimSpace(clone.Text())
-			priceText = strings.Join(strings.Fields(priceText), " ")
-			price = priceText
+// findScript searches for a <script> tag whose content matches the given condition.
+func (e *MichelinExtractor) findScript(doc *goquery.Document, condition func(string) bool) string {
+	var result string
+	doc.Find("script").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		text := s.Text()
+		if condition(text) {
+			result = text
 			return false
 		}
 		return true
 	})
-	return price
+	return result
 }
 
-// extractGreenStar tries to extract greenstar from dLayer or other logic if needed
-func extractGreenStar(doc *goquery.Document) bool {
-	// This can be extended if greenstar is found elsewhere
-	_, _, greenstar := extractFromDLayer(doc)
-	return greenstar
-}
-
-// extractPublishedDate tries to extract publishedDate from JSON-LD or fallback
-func extractPublishedDate(doc *goquery.Document) string {
-	var publishedDate string
-	var jsonLD string
-	doc.Find("script[type='application/ld+json']").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		txt := s.Text()
-		if strings.Contains(txt, "\"@type\":\"Restaurant\"") {
-			jsonLD = txt
-			return false
-		}
-		return true
-	})
-	if jsonLD != "" {
-		var ld map[string]any
-		if err := json.Unmarshal([]byte(jsonLD), &ld); err == nil {
-			if review, ok := ld["review"].(map[string]any); ok {
-				if pd, ok := review["datePublished"].(string); ok {
-					publishedDate = pd
-				}
-			}
-		}
-	}
-	if publishedDate != "" {
-		return publishedDate
-	}
-
-	// Fallback to extracting from the restaurant details heading
-	doc.Find("div.restaurant-details__heading--label-title").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		text := strings.TrimSpace(s.Text())
-		re := regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`)
-		m := re.FindStringSubmatch(text)
-		if len(m) == 2 {
-			publishedDate = m[1]
-			return false
-		}
-		return true
-	})
-
-	/*
-	   Fallback to extracting from 2019 layout:
-	   Look for div.label-text containing "MICHELIN Guide <year>"
-	*/
-	if publishedDate == "" {
-		doc.Find("div.label-text").EachWithBreak(func(i int, s *goquery.Selection) bool {
-			text := strings.TrimSpace(s.Text())
-			re := regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`)
-			m := re.FindStringSubmatch(text)
-			if len(m) == 2 {
-				publishedDate = m[1]
-				return false
-			}
-			return true
-		})
-	}
-
-	return publishedDate
-}
-
+// extractOriginalURL extracts the original URL from a Wayback Machine snapshot URL.
 func extractOriginalURL(snapshotURL string) string {
 	const idMarker = "id_/"
 	if pos := len(snapshotURL) - len(idMarker); pos >= 0 {
@@ -264,6 +208,7 @@ func extractOriginalURL(snapshotURL string) string {
 	return ""
 }
 
+// findLastIndex returns the last index of substr in s, or -1 if not found.
 func findLastIndex(s, substr string) int {
 	last := -1
 	for i := 0; ; {

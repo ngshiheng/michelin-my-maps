@@ -80,7 +80,7 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 
 /*
 SaveAward upserts an award for (restaurant_id, year).
-If a record exists, it updates distinction, price, greenstar, and updated_at.
+If a record exists, it updates distinction, price, greenStar, and updated_at.
 */
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{

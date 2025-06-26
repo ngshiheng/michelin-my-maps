@@ -239,7 +239,9 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		distinction, price, greenstar, publishedDate, err := extractAwardDataFromHTML(html)
+		extractor := NewMichelinExtractor()
+		data, err := extractor.Extract(html)
+
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -248,8 +250,8 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		distinction = parser.ParseDistinction(distinction)
-		price = parser.MapPrice(price)
+		distinction := parser.ParseDistinction(data.Distinction)
+		price := parser.MapPrice(data.Price)
 		if price == "" {
 			log.WithFields(log.Fields{
 				"price": price,
@@ -258,10 +260,10 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		year := parser.ParseYear(publishedDate)
+		year := parser.ParseYear(data.PublishedDate)
 		if year == 0 {
 			log.WithFields(log.Fields{
-				"publishedDate": publishedDate,
+				"publishedDate": data.PublishedDate,
 				"url":           r.Request.URL.String(),
 			}).Warn("skipping award: invalid or missing year")
 			return
@@ -271,19 +273,15 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			RestaurantID: restaurant.ID,
 			Distinction:  distinction,
 			Price:        price,
-			GreenStar:    greenstar,
+			GreenStar:    data.GreenStar,
 			Year:         year,
 		}
+
 		err = b.repository.SaveAward(ctx, award)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"distinction":   distinction,
-				"error":         err,
-				"greenstar":     greenstar,
-				"price":         price,
-				"publishedDate": publishedDate,
-				"url":           r.Request.URL.String(),
-				"year":          year,
+				"error": err,
+				"url":   r.Request.URL.String(),
 			}).Error("failed to upsert award")
 			return
 		}
@@ -291,6 +289,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		log.WithFields(log.Fields{
 			"distinction": distinction,
 			"name":        restaurant.Name,
+			"price":       price,
 			"url":         r.Request.URL.String(),
 			"year":        year,
 		}).Info("upserted restaurant award")
