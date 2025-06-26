@@ -239,8 +239,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		extractor := NewMichelinExtractor()
-		data, err := extractor.Extract(html)
+		data, err := Extract(html)
 
 		if err != nil {
 			log.WithFields(log.Fields{
