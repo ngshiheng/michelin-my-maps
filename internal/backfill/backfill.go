@@ -88,22 +88,13 @@ func (b *Scraper) Run(ctx context.Context, urlFilter string) error {
 		restaurants []models.Restaurant
 		err         error
 	)
+
 	if urlFilter != "" {
-		all, err := sqliteRepo.ListAllRestaurantsWithURL()
+		restaurant, err := sqliteRepo.FindRestaurantByURL(ctx, urlFilter)
 		if err != nil {
-			return fmt.Errorf("failed to list restaurants: %w", err)
+			return fmt.Errorf("failed to find restaurant by URL: %w", err)
 		}
-		found := false
-		for _, r := range all {
-			if r.URL == urlFilter {
-				restaurants = []models.Restaurant{r}
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("no restaurant found with URL: %s", urlFilter)
-		}
+		restaurants = append(restaurants, *restaurant)
 	} else {
 		restaurants, err = sqliteRepo.ListAllRestaurantsWithURL()
 		if err != nil {
@@ -224,12 +215,12 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		}
 
 		restaurant, err := sqliteRepo.FindRestaurantByURL(ctx, restaurantURL)
-		if err != nil || restaurant == nil {
+		if err != nil {
 			log.WithFields(log.Fields{
 				"error":          err,
 				"restaurant_url": restaurantURL,
 				"url":            r.Request.URL.String(),
-			}).Warn("no restaurant found for snapshot response")
+			}).Error("no restaurant found for URL")
 			return
 		}
 

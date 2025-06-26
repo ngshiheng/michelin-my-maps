@@ -141,7 +141,7 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 	})
 
 	collector.OnScraped(func(r *colly.Response) {
-		log.WithFields(log.Fields{"url": r.Request.URL.String()}).Info("listing page parsed")
+		log.WithFields(log.Fields{"url": r.Request.URL.String()}).Debug("listing page parsed")
 	})
 
 	collector.OnError(s.createErrorHandler())
