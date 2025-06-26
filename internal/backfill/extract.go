@@ -18,12 +18,8 @@ type AwardData struct {
 	PublishedDate string
 }
 
-/*
-Extract parses the provided HTML and returns Michelin award data for a restaurant.
-It attempts to extract the published date, distinction, price, and green star status using multiple strategies.
-Returns a populated AwardData struct or an error if parsing fails.
-*/
-func Extract(html []byte) (*AwardData, error) {
+// extractRestaurantAwardData parses the provided HTML and returns Michelin award data for a restaurant.
+func extractRestaurantAwardData(html []byte) (*AwardData, error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
 	if err != nil {
 		return nil, err
