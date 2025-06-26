@@ -61,7 +61,7 @@ func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
 
 	distinction := parser.ParseDLayerValue(scriptContent, "distinction")
 	price := parser.ParseDLayerValue(scriptContent, "price")
-	greenStar := parser.ParseDLayerValue(scriptContent, "greenStar")
+	greenStar := parser.ParseDLayerValue(scriptContent, "greenstar")
 
 	if distinction == "" && price == "" {
 		return false
