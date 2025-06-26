@@ -120,7 +120,7 @@ func extractPublishedDate(doc *goquery.Document) string {
 	}
 
 	datePatterns := []*regexp.Regexp{
-		regexp.MustCompile(`MICHELIN Guide (\d{4})`),
+		regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`),
 		regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`), // ISO date format
 	}
 

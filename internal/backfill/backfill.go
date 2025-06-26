@@ -127,13 +127,7 @@ func (b *Scraper) Run(ctx context.Context, urlFilter string) error {
 	}
 
 	log.Info("collecting Wayback snapshots for restaurants")
-	if err := mainQueue.Run(collector); err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("failed to run main collector queue")
-		return fmt.Errorf("failed to run main collector queue: %w", err)
-	}
-
+	mainQueue.Run(collector)
 	log.Info("backfill completed")
 	return nil
 }
@@ -245,7 +239,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"error": err,
 				"url":   r.Request.URL.String(),
-			}).Warn("skipping award: failed to parse award data from HTML")
+			}).Error("failed to parse award data from HTML")
 			return
 		}
 
@@ -255,7 +249,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"price": price,
 				"url":   r.Request.URL.String(),
-			}).Warn("skipping award: price is empty")
+			}).Error("skipping award: price is empty")
 			return
 		}
 
@@ -264,7 +258,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"publishedDate": data.PublishedDate,
 				"url":           r.Request.URL.String(),
-			}).Warn("skipping award: invalid or missing year")
+			}).Error("skipping award: invalid or missing year")
 			return
 		}
 
