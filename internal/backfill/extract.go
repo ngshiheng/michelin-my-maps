@@ -92,11 +92,11 @@ extractPrice returns the restaurant's price information from the HTML document
 using known selectors and normalization logic.
 */
 func extractPrice(doc *goquery.Document) string {
-	selector := "li.restaurant-details__heading-price, li:has(span.mg-price)"
+	selector := "li.restaurant-details__heading-price, li:has(span.mg-price), li:has(span.mg-euro-circle)"
 	var result string
 	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
 		clone := s.Clone()
-		clone.Find("span.mg-price").Remove()
+		clone.Find("span").Remove()
 		text := strings.TrimSpace(clone.Text())
 		if idx := strings.Index(text, "•"); idx != -1 {
 			text = strings.TrimSpace(text[:idx])

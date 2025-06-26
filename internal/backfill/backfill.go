@@ -320,7 +320,7 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("request failed on attempt %d, giving up after max retries", attempt)
+			log.WithFields(fields).Warnf("request failed on attempt %d, giving up after max retries", attempt)
 		}
 	}
 }
