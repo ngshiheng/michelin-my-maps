@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -33,7 +34,7 @@ func DefaultConfig() *Config {
 		CachePath:      "cache/wayback",
 		DatabasePath:   "data/michelin.db",
 		Delay:          1 * time.Second,
-		MaxRetry:       2,
+		MaxRetry:       3,
 		MaxURLs:        300_000,
 		RandomDelay:    2 * time.Second,
 		ThreadCount:    3,
@@ -74,6 +75,67 @@ func New() (*Scraper, error) {
 		repository: repo,
 	}
 	return s, nil
+}
+
+// Run runs the backfill workflow for all restaurants or a specific URL.
+func (b *Scraper) Run(ctx context.Context, urlFilter string) error {
+	sqliteRepo, ok := b.repository.(*storage.SQLiteRepository)
+	if !ok {
+		return fmt.Errorf("repository does not support listing restaurants")
+	}
+
+	var (
+		restaurants []models.Restaurant
+		err         error
+	)
+	if urlFilter != "" {
+		all, err := sqliteRepo.ListAllRestaurantsWithURL()
+		if err != nil {
+			return fmt.Errorf("failed to list restaurants: %w", err)
+		}
+		found := false
+		for _, r := range all {
+			if r.URL == urlFilter {
+				restaurants = []models.Restaurant{r}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("no restaurant found with URL: %s", urlFilter)
+		}
+	} else {
+		restaurants, err = sqliteRepo.ListAllRestaurantsWithURL()
+		if err != nil {
+			return fmt.Errorf("failed to list restaurants: %w", err)
+		}
+	}
+
+	log.WithFields(log.Fields{"count": len(restaurants)}).Info("restaurants to backfill")
+
+	collector := b.client.GetCollector()
+	detailCollector := b.client.CreateDetailCollector()
+
+	mainQueue := b.client.GetQueue()
+
+	b.setupMainHandlers(collector, detailCollector)
+	b.setupDetailHandlers(ctx, detailCollector)
+
+	for _, r := range restaurants {
+		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
+		mainQueue.AddURL(api)
+	}
+
+	log.Info("collecting Wayback snapshots for restaurants")
+	if err := mainQueue.Run(collector); err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("failed to run main collector queue")
+		return fmt.Errorf("failed to run main collector queue: %w", err)
+	}
+
+	log.Info("backfill completed")
+	return nil
 }
 
 func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
@@ -177,7 +239,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		distinction, price, greenstar, publishedDate, err := parseAwardDataFromHTML(html)
+		distinction, price, greenstar, publishedDate, err := extractAwardDataFromHTML(html)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"url": r.Request.URL.String(),
@@ -228,31 +290,6 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	})
 }
 
-func extractOriginalURL(snapshotURL string) string {
-	const idMarker = "id_/"
-	if pos := len(snapshotURL) - len(idMarker); pos >= 0 {
-		if i := findLastIndex(snapshotURL, idMarker); i != -1 {
-			return snapshotURL[i+len(idMarker):]
-		}
-	}
-	return ""
-}
-
-func findLastIndex(s, substr string) int {
-	last := -1
-	for i := 0; ; {
-		j := i + len(substr)
-		if j > len(s) {
-			break
-		}
-		if s[i:j] == substr {
-			last = i
-		}
-		i++
-	}
-	return last
-}
-
 // createErrorHandler creates a reusable error handler for collectors with retry logic.
 func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
@@ -262,7 +299,7 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 				attempt = a
 			}
 		}
-		shouldRetry := attempt < b.config.MaxRetry
+		shouldRetry := r.StatusCode != http.StatusForbidden && attempt < b.config.MaxRetry
 
 		fields := log.Fields{
 			"attempt":     attempt,
@@ -287,65 +324,4 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 			log.WithFields(fields).Errorf("request failed on attempt %d, giving up after max retries", attempt)
 		}
 	}
-}
-
-// Run runs the backfill workflow for all restaurants or a specific URL.
-func (b *Scraper) Run(ctx context.Context, urlFilter string) error {
-	sqliteRepo, ok := b.repository.(*storage.SQLiteRepository)
-	if !ok {
-		return fmt.Errorf("repository does not support listing restaurants")
-	}
-
-	var (
-		restaurants []models.Restaurant
-		err         error
-	)
-	if urlFilter != "" {
-		all, err := sqliteRepo.ListAllRestaurantsWithURL()
-		if err != nil {
-			return fmt.Errorf("failed to list restaurants: %w", err)
-		}
-		found := false
-		for _, r := range all {
-			if r.URL == urlFilter {
-				restaurants = []models.Restaurant{r}
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("no restaurant found with URL: %s", urlFilter)
-		}
-	} else {
-		restaurants, err = sqliteRepo.ListAllRestaurantsWithURL()
-		if err != nil {
-			return fmt.Errorf("failed to list restaurants: %w", err)
-		}
-	}
-
-	log.WithFields(log.Fields{"count": len(restaurants)}).Info("restaurants to backfill")
-
-	collector := b.client.GetCollector()
-	detailCollector := b.client.CreateDetailCollector()
-
-	mainQueue := b.client.GetQueue()
-
-	b.setupMainHandlers(collector, detailCollector)
-	b.setupDetailHandlers(ctx, detailCollector)
-
-	for _, r := range restaurants {
-		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
-		mainQueue.AddURL(api)
-	}
-
-	log.Info("collecting Wayback snapshots for restaurants")
-	if err := mainQueue.Run(collector); err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("failed to run main collector queue")
-		return fmt.Errorf("failed to run main collector queue: %w", err)
-	}
-
-	log.Info("backfill completed")
-	return nil
 }

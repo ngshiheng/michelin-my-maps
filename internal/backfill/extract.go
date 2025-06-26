@@ -12,7 +12,7 @@ import (
 )
 
 /*
-parseAwardDataFromHTML extracts distinction and price from dLayer,
+extractAwardDataFromHTML extracts distinction and price from dLayer,
 and publishedDate from JSON-LD. Includes fallback logic.
 
 Example HTML:
@@ -33,7 +33,7 @@ Extraction result:
 	greenstar: true
 	publishedDate: "2023-07-01"
 */
-func parseAwardDataFromHTML(html []byte) (distinction, price string, greenstar bool, publishedDate string, err error) {
+func extractAwardDataFromHTML(html []byte) (distinction, price string, greenstar bool, publishedDate string, err error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
 	if err != nil {
 		return "", "", false, "", err
@@ -188,4 +188,29 @@ func extractPublishedDate(doc *goquery.Document) string {
 		return true
 	})
 	return publishedDate
+}
+
+func extractOriginalURL(snapshotURL string) string {
+	const idMarker = "id_/"
+	if pos := len(snapshotURL) - len(idMarker); pos >= 0 {
+		if i := findLastIndex(snapshotURL, idMarker); i != -1 {
+			return snapshotURL[i+len(idMarker):]
+		}
+	}
+	return ""
+}
+
+func findLastIndex(s, substr string) int {
+	last := -1
+	for i := 0; ; {
+		j := i + len(substr)
+		if j > len(s) {
+			break
+		}
+		if s[i:j] == substr {
+			last = i
+		}
+		i++
+	}
+	return last
 }

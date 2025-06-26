@@ -3,7 +3,6 @@ package scraper
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -263,58 +262,5 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		} else {
 			log.WithFields(fields).Errorf("request failed on attempt %d, giving up after max retries", attempt)
 		}
-	}
-}
-
-// extractRestaurantData extracts restaurant data from the XML element.
-func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantData {
-	url := e.Request.URL.String()
-	websiteUrl := e.ChildAttr(restaurantWebsiteUrlXPath, "href")
-	name := e.ChildText(restaurantNameXPath)
-
-	address := e.ChildText(restaurantAddressXPath)
-	address = strings.ReplaceAll(address, "\n", " ")
-
-	description := e.ChildText(restaurantDescriptionXPath)
-	distinction := e.ChildText(restaurantDistinctionXPath)
-	greenStar := e.ChildText(restaurantGreenStarXPath)
-
-	priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
-	price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
-
-	phoneNumber := e.ChildAttr(restaurantPhoneNumberXPath, "href")
-	formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
-	if formattedPhoneNumber == "" {
-		log.WithFields(log.Fields{
-			"phone_number": phoneNumber,
-			"url":          url,
-		}).Debug("invalid phone number")
-	}
-
-	facilitiesAndServices := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
-
-	var year int
-	if v := e.Request.Ctx.GetAny("publishedYear"); v != nil {
-		if y, ok := v.(int); ok {
-			year = y
-		}
-	}
-
-	return storage.RestaurantData{
-		URL:                   url,
-		Year:                  year,
-		Name:                  name,
-		Address:               address,
-		Location:              e.Request.Ctx.Get("location"),
-		Latitude:              e.Request.Ctx.Get("latitude"),
-		Longitude:             e.Request.Ctx.Get("longitude"),
-		Cuisine:               cuisine,
-		PhoneNumber:           formattedPhoneNumber,
-		WebsiteURL:            websiteUrl,
-		Distinction:           parser.ParseDistinction(distinction),
-		Description:           parser.TrimWhiteSpaces(description),
-		Price:                 price,
-		FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
-		GreenStar:             parser.ParseGreenStar(greenStar),
 	}
 }
