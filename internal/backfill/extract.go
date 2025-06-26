@@ -35,8 +35,13 @@ func extractRestaurantAwardData(html []byte) (*AwardData, error) {
 	}
 
 	// Fallback to individual extractors
-	data.Distinction = extractDistinction(doc)
-	data.Price = extractPrice(doc)
+	if data.Distinction == "" {
+		data.Distinction = extractDistinction(doc)
+	}
+
+	if data.Price == "" {
+		data.Price = extractPrice(doc)
+	}
 
 	return data, nil
 }
@@ -120,14 +125,25 @@ func extractPublishedDate(doc *goquery.Document) string {
 	}
 
 	datePatterns := []*regexp.Regexp{
-		regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`),
-		regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`), // ISO date format
+		regexp.MustCompile(`(\d{4})\s+MICHELIN Guide`), // e.g. "2023 MICHELIN Guide"
+		regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`), // e.g. "MICHELIN Guide ... 2023"
+		regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`),      // ISO date format
 	}
 
-	selector := "div.restaurant-details__heading--label-title, div.label-text"
+	selector := "div.restaurant-details__heading--label-title, div.label-text, meta[name=\"description\"]"
 	var result string
 	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
-		text := strings.TrimSpace(s.Text())
+		var text string
+		if goquery.NodeName(s) == "meta" {
+			content, exists := s.Attr("content")
+			if !exists {
+				return true
+			}
+			text = strings.TrimSpace(content)
+		} else {
+			text = strings.TrimSpace(s.Text())
+		}
+
 		for _, pattern := range datePatterns {
 			if matches := pattern.FindStringSubmatch(text); len(matches) > 1 {
 				result = matches[1]
