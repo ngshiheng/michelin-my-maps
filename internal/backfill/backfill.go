@@ -156,7 +156,7 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 			log.WithFields(log.Fields{
 				"url":     url,
 				"cdx_api": r.Request.URL.String(),
-			}).Warn("no snapshot rows found")
+			}).Debug("no snapshot rows found")
 			return
 		}
 
@@ -216,7 +216,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		if html == nil {
 			log.WithFields(log.Fields{
 				"url": r.Request.URL.String(),
-			}).Warn("no HTML body for snapshot")
+			}).Error("no HTML body for snapshot")
 			return
 		}
 
@@ -232,9 +232,9 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		restaurant, err := sqliteRepo.FindRestaurantByURL(ctx, restaurantURL)
 		if err != nil || restaurant == nil {
 			log.WithFields(log.Fields{
-				"url":            r.Request.URL.String(),
-				"restaurant_url": restaurantURL,
 				"error":          err,
+				"restaurant_url": restaurantURL,
+				"url":            r.Request.URL.String(),
 			}).Warn("no restaurant found for snapshot response")
 			return
 		}
@@ -242,15 +242,21 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		distinction, price, greenstar, publishedDate, err := extractAwardDataFromHTML(html)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"url": r.Request.URL.String(),
-
 				"error": err,
-			}).Warn("failed to parse award data from HTML")
+				"url":   r.Request.URL.String(),
+			}).Warn("skipping award: failed to parse award data from HTML")
 			return
 		}
 
 		distinction = parser.ParseDistinction(distinction)
 		price = parser.MapPrice(price)
+		if price == "" {
+			log.WithFields(log.Fields{
+				"price": price,
+				"url":   r.Request.URL.String(),
+			}).Warn("skipping award: price is empty")
+			return
+		}
 
 		year := parser.ParseYear(publishedDate)
 		if year == 0 {
@@ -284,6 +290,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 		log.WithFields(log.Fields{
 			"distinction": distinction,
+			"name":        restaurant.Name,
 			"url":         r.Request.URL.String(),
 			"year":        year,
 		}).Info("upserted restaurant award")

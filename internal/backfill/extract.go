@@ -68,6 +68,7 @@ func extractFromDLayer(doc *goquery.Document) (distinction, price string, greens
 		}
 		return true
 	})
+
 	if scriptContent != "" {
 		distinction = parser.ParseDLayerValue(scriptContent, "distinction")
 		price = parser.ParseDLayerValue(scriptContent, "price")
@@ -128,9 +129,19 @@ func extractDistinctionFromMeta(doc *goquery.Document) string {
 	return distinction
 }
 
-// extractPrice tries to extract price from the price element
+/*
+extractPrice tries to extract price from the price element.
+If not found, falls back to 2019 Wayback layout:
+<li>
+
+	<span class="mg-price jumbotron__card-detail--icon"></span>
+	30 - 45 SGD
+
+</li>
+*/
 func extractPrice(doc *goquery.Document) string {
 	var price string
+	// Primary selector (modern layout)
 	doc.Find("li.restaurant-details__heading-price").EachWithBreak(func(i int, s *goquery.Selection) bool {
 		priceText := strings.TrimSpace(s.Text())
 		if idx := strings.Index(priceText, "•"); idx != -1 {
@@ -139,6 +150,41 @@ func extractPrice(doc *goquery.Document) string {
 		priceText = strings.Join(strings.Fields(priceText), " ")
 		price = priceText
 		return false
+	})
+
+	if price != "" {
+		return price
+	}
+
+	/*
+	   Flexible fallback: search any <li> with a <span> whose class contains "mg-price"
+	*/
+	doc.Find("li").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		found := false
+		s.Find("span").EachWithBreak(func(j int, spanSel *goquery.Selection) bool {
+			for _, class := range strings.Fields(spanSel.AttrOr("class", "")) {
+				if strings.Contains(class, "mg-price") {
+					found = true
+					return false
+				}
+			}
+			return true
+		})
+		if found {
+			clone := s.Clone()
+			clone.Find("span").Each(func(j int, spanSel *goquery.Selection) {
+				for _, class := range strings.Fields(spanSel.AttrOr("class", "")) {
+					if strings.Contains(class, "mg-price") {
+						spanSel.Remove()
+					}
+				}
+			})
+			priceText := strings.TrimSpace(clone.Text())
+			priceText = strings.Join(strings.Fields(priceText), " ")
+			price = priceText
+			return false
+		}
+		return true
 	})
 	return price
 }
@@ -187,6 +233,24 @@ func extractPublishedDate(doc *goquery.Document) string {
 		}
 		return true
 	})
+
+	/*
+	   Fallback to extracting from 2019 layout:
+	   Look for div.label-text containing "MICHELIN Guide <year>"
+	*/
+	if publishedDate == "" {
+		doc.Find("div.label-text").EachWithBreak(func(i int, s *goquery.Selection) bool {
+			text := strings.TrimSpace(s.Text())
+			re := regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`)
+			m := re.FindStringSubmatch(text)
+			if len(m) == 2 {
+				publishedDate = m[1]
+				return false
+			}
+			return true
+		})
+	}
+
 	return publishedDate
 }
 
