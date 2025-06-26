@@ -166,7 +166,7 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 					"url":          url,
 					"snapshot_url": snapshotURL,
 					"error":        err,
-				}).Warn("failed to visit snapshot URL")
+				}).Debug("failed to visit snapshot URL")
 				continue
 			}
 			snapCount++
@@ -306,12 +306,12 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 				}).Error("failed to clear cache for request")
 			}
 			backoff := time.Duration(attempt) * b.config.Delay
-			log.WithFields(fields).Warnf("request failed on attempt %d, retrying after %v", attempt, backoff)
+			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
 			time.Sleep(backoff)
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Warnf("request failed on attempt %d, giving up after max retries", attempt)
+			log.WithFields(fields).Warnf("request failed after %d attempts, giving up", attempt)
 		}
 	}
 }
