@@ -95,7 +95,7 @@ run_mym() {
 
     # Remove cache
     rm -rf cache/
-    mym run -log error
+    mym scrape -log error
     if [ ! -f "$DB_FILE" ]; then
         echo "Error: $DB_FILE does not exist. Exiting..."
         exit 1

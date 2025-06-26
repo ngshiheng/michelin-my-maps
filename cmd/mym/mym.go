@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/backfill"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/scraper"
 	log "github.com/sirupsen/logrus"
 )
@@ -38,8 +39,10 @@ func run() error {
 
 	// Handle subcommands
 	switch command {
-	case "run":
-		return handleRunCommand(commandArgs)
+	case "scrape":
+		return handleScrape(commandArgs)
+	case "backfill":
+		return handleBackfill(commandArgs)
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
 		printUsage()
@@ -67,39 +70,17 @@ func printVersion() {
 func printUsage() {
 	fmt.Printf("Usage: %s <command> [options]\n\n", os.Args[0])
 	fmt.Println("Commands:")
-	fmt.Println("  run    start the scraper")
+	fmt.Println("  scrape     Scrape data")
+	fmt.Println("  backfill   Backfill data")
 	fmt.Println("")
-	fmt.Println("Global options:")
-	fmt.Println("  -help     show help message")
-	fmt.Println("  -version  print version information")
+	fmt.Println("Options:")
+	fmt.Println("  -log <level>   Set log level (default: info)")
+	fmt.Println("  -help          Show help")
+	fmt.Println("  -version       Show version")
 	fmt.Println("")
-	fmt.Println("Run command options:")
-	fmt.Println("  -log <level> (\"debug\", \"info\", \"warning\", \"error\", \"fatal\", \"panic\") (default: \"info\")")
+	fmt.Println("Backfill:")
+	fmt.Println("  [url]          (optional) Michelin restaurant URL to backfill")
 	fmt.Println("")
-	fmt.Println("Examples:")
-	fmt.Printf("  %s run             # start the scraper\n", os.Args[0])
-	fmt.Printf("  %s run -log debug  # start with debug logging\n", os.Args[0])
-}
-
-// handleRunCommand handles the 'run' subcommand with its own flag set
-func handleRunCommand(args []string) error {
-	// Create a new flag set for the run command
-	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
-	logLevel := runCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-
-	// Parse the run command flags
-	if err := runCmd.Parse(args); err != nil {
-		return err
-	}
-
-	// Setup logging
-	if err := setupLogging(*logLevel); err != nil {
-		return err
-	}
-
-	// Run the scraper
-	ctx := context.Background()
-	return runScraper(ctx)
 }
 
 // setupLogging configures the logging level and output
@@ -114,18 +95,59 @@ func setupLogging(levelStr string) error {
 	return nil
 }
 
-// runScraper initializes and runs the scraper
-func runScraper(ctx context.Context) error {
-	app, err := scraper.Default()
+// handleScrape handles the 'scrape' subcommand with its own flag set
+func handleScrape(args []string) error {
+	scrapeCmd := flag.NewFlagSet("scrape", flag.ExitOnError)
+	logLevel := scrapeCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
+
+	if err := scrapeCmd.Parse(args); err != nil {
+		return err
+	}
+
+	if err := setupLogging(*logLevel); err != nil {
+		return err
+	}
+
+	log.Info("starting scrape command")
+	ctx := context.Background()
+	app, err := scraper.New()
 	if err != nil {
 		return fmt.Errorf("failed to create scraper: %w", err)
 	}
 
-	if err := app.Crawl(ctx); err != nil {
-		return fmt.Errorf("failed to crawl: %w", err)
+	if err := app.Run(ctx); err != nil {
+		return fmt.Errorf("failed to run scraper: %w", err)
 	}
 
 	return nil
+}
+
+// handleBackfill handles the 'backfill' subcommand with its own flag set
+func handleBackfill(args []string) error {
+	backfillCmd := flag.NewFlagSet("backfill", flag.ExitOnError)
+	logLevel := backfillCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
+
+	// Parse flags, remaining args may include [url]
+	if err := backfillCmd.Parse(args); err != nil {
+		return err
+	}
+	if err := setupLogging(*logLevel); err != nil {
+		return err
+	}
+
+	log.Info("starting backfill command")
+	var urlFilter string
+	rest := backfillCmd.Args()
+	if len(rest) > 0 {
+		urlFilter = rest[0]
+	}
+
+	ctx := context.Background()
+	bs, err := backfill.New()
+	if err != nil {
+		return fmt.Errorf("failed to create backfill scraper: %w", err)
+	}
+	return bs.Run(ctx, urlFilter)
 }
 
 func main() {

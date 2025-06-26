@@ -56,11 +56,28 @@ func (r *RestaurantAward) BeforeUpdate(tx *gorm.DB) error {
 
 // validate checks that required fields are not empty
 func (r *RestaurantAward) validate() error {
+	if r.RestaurantID == 0 {
+		return errors.New("restaurant ID must be positive")
+	}
 	if strings.TrimSpace(r.Distinction) == "" {
 		return errors.New("distinction cannot be empty")
 	}
+	allowed := map[string]bool{
+		ThreeStars:          true,
+		TwoStars:            true,
+		OneStar:             true,
+		BibGourmand:         true,
+		SelectedRestaurants: true,
+	}
+	if !allowed[r.Distinction] {
+		return errors.New("distinction must be a valid value")
+	}
 	if strings.TrimSpace(r.Price) == "" {
 		return errors.New("price cannot be empty")
+	}
+	currentYear := time.Now().Year()
+	if r.Year < 1900 || r.Year > currentYear+1 {
+		return errors.New("year must be between 1900 and next year")
 	}
 	return nil
 }
