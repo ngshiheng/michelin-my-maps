@@ -31,7 +31,7 @@ install:	## install go binary to $GOPATH/bin.
 ##@ Usage
 .PHONY: run
 run:	## run data and save it into /data directory.
-	@go run cmd/mym/mym.go run
+	@go run cmd/mym/mym.go scrape
 
 .PHONY: docker-build
 docker-build:## build scraper docker image.
