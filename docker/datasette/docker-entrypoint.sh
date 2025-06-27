@@ -22,4 +22,4 @@ else
 fi
 
 # Start Datasette
-exec datasette "$DB_FILE" --metadata /docker/datasette/metadata.json --host 0.0.0.0 --port 8001
+exec datasette "$DB_FILE" --metadata /docker/datasette/metadata.json --host 0.0.0.0 --port 8001 --setting sql_time_limit_ms 3500
