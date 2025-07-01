@@ -159,9 +159,9 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 			err := detailCollector.Visit(snapshotURL)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"url":          url,
-					"snapshot_url": snapshotURL,
 					"error":        err,
+					"snapshot_url": snapshotURL,
+					"url":          url,
 				}).Debug("failed to visit snapshot URL")
 				continue
 			}
@@ -171,6 +171,7 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 		log.WithFields(log.Fields{
 			"url":       url,
 			"snapshots": snapCount,
+			"cdx_api":   r.Request.URL.String(),
 		}).Info("processed Wayback snapshot URLs")
 	})
 
@@ -206,9 +207,9 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		restaurant, err := b.repository.FindRestaurantByURL(ctx, restaurantURL)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error":          err,
-				"restaurant_url": restaurantURL,
-				"url":            r.Request.URL.String(),
+				"error":        err,
+				"snapshot_url": r.Request.URL.String(),
+				"url":          restaurantURL,
 			}).Warn("no restaurant found for URL")
 			return
 		}

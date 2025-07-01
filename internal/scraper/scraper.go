@@ -146,8 +146,6 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 		log.WithFields(log.Fields{"url": r.Request.URL.String()}).Debug("listing page parsed")
 	})
 
-	collector.OnError(s.createErrorHandler())
-
 	// Extract restaurant URLs from the main page and visit them
 	collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
 		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
@@ -177,6 +175,8 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 		}).Debug("queueing next page")
 		e.Request.Visit(e.Attr("href"))
 	})
+
+	collector.OnError(s.createErrorHandler())
 }
 
 func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector, q *queue.Queue) {
@@ -192,8 +192,6 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			"restaurant_id": r.Ctx.Get("restaurant_id"),
 		}).Debug("fetching restaurant detail")
 	})
-
-	detailCollector.OnError(s.createErrorHandler())
 
 	detailCollector.OnXML(restaurantAwardPublishedYearXPath, func(e *colly.XMLElement) {
 		jsonLD := e.Text
@@ -229,6 +227,8 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			}).Info("upserted restaurant award")
 		}
 	})
+
+	detailCollector.OnError(s.createErrorHandler())
 }
 
 /* removed duplicate import block */
