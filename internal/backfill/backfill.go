@@ -79,24 +79,19 @@ func New() (*Scraper, error) {
 
 // Run runs the backfill workflow for all restaurants or a specific URL.
 func (b *Scraper) Run(ctx context.Context, urlFilter string) error {
-	sqliteRepo, ok := b.repository.(*storage.SQLiteRepository)
-	if !ok {
-		return fmt.Errorf("repository does not support listing restaurants")
-	}
-
 	var (
 		restaurants []models.Restaurant
 		err         error
 	)
 
 	if urlFilter != "" {
-		restaurant, err := sqliteRepo.FindRestaurantByURL(ctx, urlFilter)
+		restaurant, err := b.repository.FindRestaurantByURL(ctx, urlFilter)
 		if err != nil {
 			return fmt.Errorf("failed to find restaurant by URL: %w", err)
 		}
 		restaurants = append(restaurants, *restaurant)
 	} else {
-		restaurants, err = sqliteRepo.ListAllRestaurantsWithURL()
+		restaurants, err = b.repository.ListAllRestaurantsWithURL()
 		if err != nil {
 			return fmt.Errorf("failed to list restaurants: %w", err)
 		}
@@ -206,15 +201,8 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		}
 
 		restaurantURL := extractOriginalURL(r.Request.URL.String())
-		sqliteRepo, ok := b.repository.(*storage.SQLiteRepository)
-		if !ok {
-			log.WithFields(log.Fields{
-				"url": r.Request.URL.String(),
-			}).Error("repository does not support FindRestaurantByURL")
-			return
-		}
 
-		restaurant, err := sqliteRepo.FindRestaurantByURL(ctx, restaurantURL)
+		restaurant, err := b.repository.FindRestaurantByURL(ctx, restaurantURL)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error":          err,

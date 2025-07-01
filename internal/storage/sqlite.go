@@ -151,12 +151,3 @@ func (r *SQLiteRepository) ListAllRestaurantsWithURL() ([]models.Restaurant, err
 	err := r.db.Where("url != ''").Find(&restaurants).Error
 	return restaurants, err
 }
-
-// Close closes the database connection.
-func (r *SQLiteRepository) Close() error {
-	sqlDB, err := r.db.DB()
-	if err != nil {
-		return err
-	}
-	return sqlDB.Close()
-}
