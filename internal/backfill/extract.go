@@ -61,7 +61,10 @@ func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
 	}
 
 	distinction := parser.ParseDLayerValue(scriptContent, "distinction")
-	price := parser.ParseDLayerValue(scriptContent, "price")
+	price := extractPrice(doc)
+	if price == "" {
+		price = parser.ParseDLayerValue(scriptContent, "price")
+	}
 	greenStar := parser.ParseDLayerValue(scriptContent, "greenstar")
 
 	if distinction == "" && price == "" {
@@ -94,26 +97,65 @@ func extractDistinction(doc *goquery.Document) string {
 }
 
 /*
-extractPrice returns the restaurant's price information from the HTML document
-using known selectors and normalization logic.
+extractPrice returns the restaurant's price information from the HTML document.
+It checks known selectors and also handles price info in service rows (e.g., "Over 75 USD").
 */
 func extractPrice(doc *goquery.Document) string {
-	selector := "li.restaurant-details__heading-price, li:has(span.mg-price), li:has(span.mg-euro-circle)"
+	selector := "li.restaurant-details__heading-price, li:has(span.mg-price), li:has(span.mg-euro-circle), div.data-sheet__block--text"
 	var result string
+
 	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
-		clone := s.Clone()
-		clone.Find("span").Remove()
-		text := strings.TrimSpace(clone.Text())
-		if idx := strings.Index(text, "•"); idx != -1 {
-			text = strings.TrimSpace(text[:idx])
+		var candidate string
+
+		var span = s.Find("span").First()
+		if span.Length() > 0 && strings.TrimSpace(span.Text()) != "" {
+			candidate = strings.TrimSpace(span.Text())
+		} else if span.Length() > 0 {
+			// If span exists but is empty, remove it and use the remaining text
+			clone := s.Clone()
+			clone.Find("span").Remove()
+			candidate = strings.TrimSpace(clone.Text())
+		} else {
+			candidate = strings.TrimSpace(s.Text())
 		}
-		normalized := strings.Join(strings.Fields(text), " ")
-		if normalized != "" {
-			result = normalized
+
+		// Only consider text before "·" or "•"
+		if idx := strings.IndexAny(candidate, "·•"); idx != -1 {
+			candidate = strings.TrimSpace(candidate[:idx])
+		}
+
+		normalized := strings.Join(strings.Fields(candidate), " ")
+		trimmed := strings.TrimSpace(normalized)
+
+		// Accept if only currency symbols (e.g., "$$$$", "€€€€")
+		if regexp.MustCompile(`^[€$£¥₩₽₹]+$`).MatchString(trimmed) {
+			result = trimmed
 			return false
 		}
+		// Accept if price + currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
+		if m := regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`).FindString(trimmed); m != "" {
+			result = m
+			return false
+		}
+		// Accept if price range or number (e.g., "155 - 380", "300 - 2,000")
+		if regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`).MatchString(trimmed) {
+			result = trimmed
+			return false
+		}
+		// Accept if "Over X" or "Under X" (e.g., "Over 75 USD")
+		if regexp.MustCompile(`^(Over|Under)\s+\d+`).MatchString(trimmed) {
+			result = trimmed
+			return false
+		}
+		// Accept if "Between X and Y [CURRENCY]" (e.g., "Between 350 and 500 HKD")
+		if regexp.MustCompile(`^Between\s+\d+.*\d+\s+[A-Z]{2,4}$`).MatchString(trimmed) {
+			result = trimmed
+			return false
+		}
+
 		return true
 	})
+
 	return result
 }
 
