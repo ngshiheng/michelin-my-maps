@@ -11,6 +11,14 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
 )
 
+var (
+	currencyRegex   = regexp.MustCompile(`^[€$£¥₩₽₹]+$`)
+	priceCodeRegex  = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`)
+	priceRangeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`)
+	overUnderRegex  = regexp.MustCompile(`^(Over|Under)\s+\d+`)
+	betweenRegex    = regexp.MustCompile(`^Between\s+\d+.*\d+\s+[A-Z]{2,4}$`)
+)
+
 // AwardData represents extracted Michelin award information for a restaurant.
 type AwardData struct {
 	Distinction   string
@@ -124,32 +132,32 @@ func extractPrice(doc *goquery.Document) string {
 			candidate = strings.TrimSpace(candidate[:idx])
 		}
 
-		normalized := strings.Join(strings.Fields(candidate), " ")
-		trimmed := strings.TrimSpace(normalized)
+		// Normalize whitespace (collapse multiple spaces, trim)
+		candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
 
 		// Accept if only currency symbols (e.g., "$$$$", "€€€€")
-		if regexp.MustCompile(`^[€$£¥₩₽₹]+$`).MatchString(trimmed) {
-			result = trimmed
+		if currencyRegex.MatchString(candidate) {
+			result = candidate
 			return false
 		}
 		// Accept if price + currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
-		if m := regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`).FindString(trimmed); m != "" {
+		if m := priceCodeRegex.FindString(candidate); m != "" {
 			result = m
 			return false
 		}
 		// Accept if price range or number (e.g., "155 - 380", "300 - 2,000")
-		if regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`).MatchString(trimmed) {
-			result = trimmed
+		if priceRangeRegex.MatchString(candidate) {
+			result = candidate
 			return false
 		}
 		// Accept if "Over X" or "Under X" (e.g., "Over 75 USD")
-		if regexp.MustCompile(`^(Over|Under)\s+\d+`).MatchString(trimmed) {
-			result = trimmed
+		if overUnderRegex.MatchString(candidate) {
+			result = candidate
 			return false
 		}
 		// Accept if "Between X and Y [CURRENCY]" (e.g., "Between 350 and 500 HKD")
-		if regexp.MustCompile(`^Between\s+\d+.*\d+\s+[A-Z]{2,4}$`).MatchString(trimmed) {
-			result = trimmed
+		if betweenRegex.MatchString(candidate) {
+			result = candidate
 			return false
 		}
 
@@ -204,12 +212,14 @@ extractDateFromJSONLD extracts the published date from JSON-LD script tags.
 Example:
 
 	<script type="application/ld+json">
+
 	{
 	  "@type": "Restaurant",
 	  "review": {
 	    "datePublished": "2021-01-25T05:32"
 	  }
 	}
+
 	</script>
 
 The function will extract and return "2021-01-25T05:32".
