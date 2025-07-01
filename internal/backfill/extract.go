@@ -17,6 +17,8 @@ var (
 	priceRangeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`)
 	overUnderRegex  = regexp.MustCompile(`^(Over|Under)\s+\d+`)
 	betweenRegex    = regexp.MustCompile(`^Between\s+\d+.*\d+\s+[A-Z]{2,4}$`)
+	toRangeRegex    = regexp.MustCompile(`^\d+\s+to\s+\d+\s+[A-Z]{2,4}$`)
+	lessThanRegex   = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
 )
 
 // AwardData represents extracted Michelin award information for a restaurant.
@@ -157,6 +159,16 @@ func extractPrice(doc *goquery.Document) string {
 		}
 		// Accept if "Between X and Y [CURRENCY]" (e.g., "Between 350 and 500 HKD")
 		if betweenRegex.MatchString(candidate) {
+			result = candidate
+			return false
+		}
+		// Accept if "X to Y [CURRENCY]" (e.g., "500 to 1500 TWD")
+		if toRangeRegex.MatchString(candidate) {
+			result = candidate
+			return false
+		}
+		// Accept if "Less than X [CURRENCY]" (e.g., "Less than 200 THB")
+		if lessThanRegex.MatchString(candidate) {
 			result = candidate
 			return false
 		}
