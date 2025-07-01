@@ -208,10 +208,8 @@ func findScript(doc *goquery.Document, condition func(string) bool) string {
 	return result
 }
 
-/*
-extractOriginalURL extracts the original URL from a Wayback Machine snapshot URL.
-It uses the last occurrence of "id_/" as the marker and returns the cleaned URL.
-*/
+// extractOriginalURL extracts the original URL from a Wayback Machine snapshot URL
+// using the last occurrence of "id_/" as the marker and returns the cleaned URL.
 func extractOriginalURL(snapshotURL string) string {
 	const idMarker = "id_/"
 	i := strings.LastIndex(snapshotURL, idMarker)

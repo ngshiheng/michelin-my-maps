@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -208,7 +209,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 				"error":          err,
 				"restaurant_url": restaurantURL,
 				"url":            r.Request.URL.String(),
-			}).Error("no restaurant found for URL")
+			}).Warn("no restaurant found for URL")
 			return
 		}
 
@@ -277,7 +278,6 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 				attempt = a
 			}
 		}
-		shouldRetry := r.StatusCode != http.StatusForbidden && attempt < b.config.MaxRetry
 
 		fields := log.Fields{
 			"attempt":     attempt,
@@ -286,20 +286,37 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 			"url":         r.Request.URL.String(),
 		}
 
+		// We don't retry 403 Forbidden errors, as they indicate restricted access and retries won't help.
+		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
+		switch r.StatusCode {
+		case http.StatusForbidden:
+			log.WithFields(fields).Debug("request forbidden, skipping retry")
+			return
+		case http.StatusNotFound:
+			log.WithFields(fields).Debug("request not found, skipping retry")
+			return
+		}
+
+		// Do not retry if already visited.
+		if strings.Contains(err.Error(), "already visited") {
+			log.WithFields(fields).Debug("request already visited, skipping retry")
+			return
+		}
+
+		shouldRetry := attempt < b.config.MaxRetry
 		if shouldRetry {
 			if err := b.client.ClearCache(r.Request); err != nil {
-				log.WithFields(log.Fields{
-					"url":   r.Request.URL.String(),
-					"error": err,
-				}).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("failed to clear cache for request")
 			}
+
 			backoff := time.Duration(attempt) * b.config.Delay
-			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
 			time.Sleep(backoff)
+			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
+
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Warnf("request failed after %d attempts, giving up", attempt)
+			log.WithFields(fields).Errorf("request failed after %d attempts, giving up", attempt)
 		}
 	}
 }
