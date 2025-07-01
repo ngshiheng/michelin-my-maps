@@ -231,8 +231,6 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	detailCollector.OnError(s.createErrorHandler())
 }
 
-/* removed duplicate import block */
-
 // createErrorHandler creates a reusable error handler for collectors with retry logic.
 func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
