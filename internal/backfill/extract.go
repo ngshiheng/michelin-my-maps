@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	currencyRegex   = regexp.MustCompile(`^[€$£¥₩₽₹]+$`)
+	currencyRegex   = regexp.MustCompile(`^[€$£¥₩₽₹฿₺]+$`)
 	priceCodeRegex  = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`)
 	priceRangeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`)
 	overUnderRegex  = regexp.MustCompile(`^(Over|Under)\s+\d+`)

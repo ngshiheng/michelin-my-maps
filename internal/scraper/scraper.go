@@ -3,7 +3,6 @@ package scraper
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -38,7 +37,7 @@ func DefaultConfig() *Config {
 		MaxRetry:       3,
 		MaxURLs:        30_000,
 		RandomDelay:    2 * time.Second,
-		ThreadCount:    3,
+		ThreadCount:    1,
 	}
 }
 
@@ -246,17 +245,6 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			"error":       err,
 			"status_code": r.StatusCode,
 			"url":         r.Request.URL.String(),
-		}
-
-		// We don't retry 403 Forbidden errors, as they indicate restricted access and retries won't help.
-		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
-		switch r.StatusCode {
-		case http.StatusForbidden:
-			log.WithFields(fields).Debug("request forbidden, skipping retry")
-			return
-		case http.StatusNotFound:
-			log.WithFields(fields).Debug("request not found, skipping retry")
-			return
 		}
 
 		// Do not retry if already visited.
