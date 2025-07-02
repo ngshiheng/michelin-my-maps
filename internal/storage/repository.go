@@ -32,4 +32,5 @@ type RestaurantData struct {
 	Price                 string
 	FacilitiesAndServices string
 	GreenStar             bool
+	WaybackURL            string
 }

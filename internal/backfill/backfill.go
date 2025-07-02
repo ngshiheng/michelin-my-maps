@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -79,24 +80,19 @@ func New() (*Scraper, error) {
 
 // Run runs the backfill workflow for all restaurants or a specific URL.
 func (b *Scraper) Run(ctx context.Context, urlFilter string) error {
-	sqliteRepo, ok := b.repository.(*storage.SQLiteRepository)
-	if !ok {
-		return fmt.Errorf("repository does not support listing restaurants")
-	}
-
 	var (
 		restaurants []models.Restaurant
 		err         error
 	)
 
 	if urlFilter != "" {
-		restaurant, err := sqliteRepo.FindRestaurantByURL(ctx, urlFilter)
+		restaurant, err := b.repository.FindRestaurantByURL(ctx, urlFilter)
 		if err != nil {
 			return fmt.Errorf("failed to find restaurant by URL: %w", err)
 		}
 		restaurants = append(restaurants, *restaurant)
 	} else {
-		restaurants, err = sqliteRepo.ListAllRestaurantsWithURL()
+		restaurants, err = b.repository.ListAllRestaurantsWithURL()
 		if err != nil {
 			return fmt.Errorf("failed to list restaurants: %w", err)
 		}
@@ -163,9 +159,9 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 			err := detailCollector.Visit(snapshotURL)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"url":          url,
-					"snapshot_url": snapshotURL,
 					"error":        err,
+					"snapshot_url": snapshotURL,
+					"url":          url,
 				}).Debug("failed to visit snapshot URL")
 				continue
 			}
@@ -175,6 +171,7 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 		log.WithFields(log.Fields{
 			"url":       url,
 			"snapshots": snapCount,
+			"cdx_api":   r.Request.URL.String(),
 		}).Info("processed Wayback snapshot URLs")
 	})
 
@@ -200,27 +197,20 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		html := r.Body
 		if html == nil {
 			log.WithFields(log.Fields{
-				"url": r.Request.URL.String(),
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("no HTML body for snapshot")
 			return
 		}
 
 		restaurantURL := extractOriginalURL(r.Request.URL.String())
-		sqliteRepo, ok := b.repository.(*storage.SQLiteRepository)
-		if !ok {
-			log.WithFields(log.Fields{
-				"url": r.Request.URL.String(),
-			}).Error("repository does not support FindRestaurantByURL")
-			return
-		}
 
-		restaurant, err := sqliteRepo.FindRestaurantByURL(ctx, restaurantURL)
+		restaurant, err := b.repository.FindRestaurantByURL(ctx, restaurantURL)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error":          err,
-				"restaurant_url": restaurantURL,
-				"url":            r.Request.URL.String(),
-			}).Error("no restaurant found for URL")
+				"error":        err,
+				"snapshot_url": r.Request.URL.String(),
+				"url":          restaurantURL,
+			}).Warn("no restaurant found for URL")
 			return
 		}
 
@@ -228,8 +218,8 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error": err,
-				"url":   r.Request.URL.String(),
+				"error":        err,
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("failed to parse award data from HTML")
 			return
 		}
@@ -238,8 +228,8 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		price := parser.MapPrice(data.Price)
 		if price == "" {
 			log.WithFields(log.Fields{
-				"price": price,
-				"url":   r.Request.URL.String(),
+				"price":        price,
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("skipping award: price is empty")
 			return
 		}
@@ -248,7 +238,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		if year == 0 {
 			log.WithFields(log.Fields{
 				"publishedDate": data.PublishedDate,
-				"url":           r.Request.URL.String(),
+				"snapshot_url":  r.Request.URL.String(),
 			}).Error("skipping award: invalid or missing year")
 			return
 		}
@@ -259,23 +249,25 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			Price:        price,
 			GreenStar:    data.GreenStar,
 			Year:         year,
+			WaybackURL:   r.Request.URL.String(),
 		}
 
 		err = b.repository.SaveAward(ctx, award)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error": err,
-				"url":   r.Request.URL.String(),
+				"error":        err,
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("failed to upsert award")
 			return
 		}
 
 		log.WithFields(log.Fields{
-			"distinction": distinction,
-			"name":        restaurant.Name,
-			"price":       price,
-			"url":         r.Request.URL.String(),
-			"year":        year,
+			"distinction":  distinction,
+			"name":         restaurant.Name,
+			"price":        price,
+			"snapshot_url": r.Request.URL.String(),
+			"url":          restaurant.URL,
+			"year":         year,
 		}).Info("upserted restaurant award")
 	})
 }
@@ -289,7 +281,6 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 				attempt = a
 			}
 		}
-		shouldRetry := r.StatusCode != http.StatusForbidden && attempt < b.config.MaxRetry
 
 		fields := log.Fields{
 			"attempt":     attempt,
@@ -298,20 +289,37 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 			"url":         r.Request.URL.String(),
 		}
 
+		// We don't retry 403 Forbidden errors, as they indicate restricted access and retries won't help.
+		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
+		switch r.StatusCode {
+		case http.StatusForbidden:
+			log.WithFields(fields).Debug("request forbidden, skipping retry")
+			return
+		case http.StatusNotFound:
+			log.WithFields(fields).Debug("request not found, skipping retry")
+			return
+		}
+
+		// Do not retry if already visited.
+		if strings.Contains(err.Error(), "already visited") {
+			log.WithFields(fields).Debug("request already visited, skipping retry")
+			return
+		}
+
+		shouldRetry := attempt < b.config.MaxRetry
 		if shouldRetry {
 			if err := b.client.ClearCache(r.Request); err != nil {
-				log.WithFields(log.Fields{
-					"url":   r.Request.URL.String(),
-					"error": err,
-				}).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("failed to clear cache for request")
 			}
+
 			backoff := time.Duration(attempt) * b.config.Delay
-			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
 			time.Sleep(backoff)
+			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
+
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Warnf("request failed after %d attempts, giving up", attempt)
+			log.WithFields(fields).Errorf("request failed after %d attempts, giving up", attempt)
 		}
 	}
 }

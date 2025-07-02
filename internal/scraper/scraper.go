@@ -3,6 +3,7 @@ package scraper
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -36,7 +37,7 @@ func DefaultConfig() *Config {
 		MaxRetry:       3,
 		MaxURLs:        30_000,
 		RandomDelay:    2 * time.Second,
-		ThreadCount:    3,
+		ThreadCount:    1,
 	}
 }
 
@@ -144,8 +145,6 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 		log.WithFields(log.Fields{"url": r.Request.URL.String()}).Debug("listing page parsed")
 	})
 
-	collector.OnError(s.createErrorHandler())
-
 	// Extract restaurant URLs from the main page and visit them
 	collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
 		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
@@ -175,6 +174,8 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 		}).Debug("queueing next page")
 		e.Request.Visit(e.Attr("href"))
 	})
+
+	collector.OnError(s.createErrorHandler())
 }
 
 func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector, q *queue.Queue) {
@@ -190,8 +191,6 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			"restaurant_id": r.Ctx.Get("restaurant_id"),
 		}).Debug("fetching restaurant detail")
 	})
-
-	detailCollector.OnError(s.createErrorHandler())
 
 	detailCollector.OnXML(restaurantAwardPublishedYearXPath, func(e *colly.XMLElement) {
 		jsonLD := e.Text
@@ -227,9 +226,11 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			}).Info("upserted restaurant award")
 		}
 	})
+
+	detailCollector.OnError(s.createErrorHandler())
 }
 
-// createErrorHandler creates a reusable error handler for collectors.
+// createErrorHandler creates a reusable error handler for collectors with retry logic.
 func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
@@ -238,7 +239,6 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 				attempt = a
 			}
 		}
-		shouldRetry := attempt < s.config.MaxRetry
 
 		fields := log.Fields{
 			"attempt":     attempt,
@@ -247,16 +247,22 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			"url":         r.Request.URL.String(),
 		}
 
+		// Do not retry if already visited.
+		if strings.Contains(err.Error(), "already visited") {
+			log.WithFields(fields).Debug("request already visited, skipping retry")
+			return
+		}
+
+		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(log.Fields{
-					"error": err,
-					"url":   r.Request.URL.String(),
-				}).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("failed to clear cache for request")
 			}
+
 			backoff := time.Duration(attempt) * s.config.Delay
 			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
 			time.Sleep(backoff)
+
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {

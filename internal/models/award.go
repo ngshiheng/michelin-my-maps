@@ -40,6 +40,8 @@ type RestaurantAward struct {
 	Price        string `gorm:"not null"`
 	GreenStar    bool
 
+	WaybackURL string `gorm:"column:wayback_url"`
+
 	CreatedAt time.Time `gorm:"type:datetime"`
 	UpdatedAt time.Time `gorm:"type:datetime"`
 }

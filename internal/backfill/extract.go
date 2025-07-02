@@ -3,11 +3,22 @@ package backfill
 import (
 	"bytes"
 	"encoding/json"
+	"net/url"
 	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
+)
+
+var (
+	currencyRegex   = regexp.MustCompile(`^[€$£¥₩₽₹฿₺]+$`)
+	priceCodeRegex  = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`)
+	priceRangeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`)
+	overUnderRegex  = regexp.MustCompile(`^(Over|Under)\s+\d+`)
+	betweenRegex    = regexp.MustCompile(`^Between\s+\d+.*\d+\s+[A-Z]{2,4}$`)
+	toRangeRegex    = regexp.MustCompile(`^\d+\s+to\s+\d+\s+[A-Z]{2,4}$`)
+	lessThanRegex   = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
 )
 
 // AwardData represents extracted Michelin award information for a restaurant.
@@ -60,7 +71,10 @@ func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
 	}
 
 	distinction := parser.ParseDLayerValue(scriptContent, "distinction")
-	price := parser.ParseDLayerValue(scriptContent, "price")
+	price := extractPrice(doc)
+	if price == "" {
+		price = parser.ParseDLayerValue(scriptContent, "price")
+	}
 	greenStar := parser.ParseDLayerValue(scriptContent, "greenstar")
 
 	if distinction == "" && price == "" {
@@ -93,26 +107,75 @@ func extractDistinction(doc *goquery.Document) string {
 }
 
 /*
-extractPrice returns the restaurant's price information from the HTML document
-using known selectors and normalization logic.
+extractPrice returns the restaurant's price information from the HTML document.
+It checks known selectors and also handles price info in service rows (e.g., "Over 75 USD").
 */
 func extractPrice(doc *goquery.Document) string {
-	selector := "li.restaurant-details__heading-price, li:has(span.mg-price), li:has(span.mg-euro-circle)"
+	selector := "li.restaurant-details__heading-price, li:has(span.mg-price), li:has(span.mg-euro-circle), div.data-sheet__block--text"
 	var result string
+
 	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
-		clone := s.Clone()
-		clone.Find("span").Remove()
-		text := strings.TrimSpace(clone.Text())
-		if idx := strings.Index(text, "•"); idx != -1 {
-			text = strings.TrimSpace(text[:idx])
+		var candidate string
+
+		var span = s.Find("span").First()
+		if span.Length() > 0 && strings.TrimSpace(span.Text()) != "" {
+			candidate = strings.TrimSpace(span.Text())
+		} else if span.Length() > 0 {
+			// If span exists but is empty, remove it and use the remaining text
+			clone := s.Clone()
+			clone.Find("span").Remove()
+			candidate = strings.TrimSpace(clone.Text())
+		} else {
+			candidate = strings.TrimSpace(s.Text())
 		}
-		normalized := strings.Join(strings.Fields(text), " ")
-		if normalized != "" {
-			result = normalized
+
+		// Only consider text before "·" or "•"
+		if idx := strings.IndexAny(candidate, "·•"); idx != -1 {
+			candidate = strings.TrimSpace(candidate[:idx])
+		}
+
+		// Normalize whitespace (collapse multiple spaces, trim)
+		candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
+
+		// Accept if only currency symbols (e.g., "$$$$", "€€€€")
+		if currencyRegex.MatchString(candidate) {
+			result = candidate
 			return false
 		}
+		// Accept if price + currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
+		if m := priceCodeRegex.FindString(candidate); m != "" {
+			result = m
+			return false
+		}
+		// Accept if price range or number (e.g., "155 - 380", "300 - 2,000")
+		if priceRangeRegex.MatchString(candidate) {
+			result = candidate
+			return false
+		}
+		// Accept if "Over X" or "Under X" (e.g., "Over 75 USD")
+		if overUnderRegex.MatchString(candidate) {
+			result = candidate
+			return false
+		}
+		// Accept if "Between X and Y [CURRENCY]" (e.g., "Between 350 and 500 HKD")
+		if betweenRegex.MatchString(candidate) {
+			result = candidate
+			return false
+		}
+		// Accept if "X to Y [CURRENCY]" (e.g., "500 to 1500 TWD")
+		if toRangeRegex.MatchString(candidate) {
+			result = candidate
+			return false
+		}
+		// Accept if "Less than X [CURRENCY]" (e.g., "Less than 200 THB")
+		if lessThanRegex.MatchString(candidate) {
+			result = candidate
+			return false
+		}
+
 		return true
 	})
+
 	return result
 }
 
@@ -161,12 +224,14 @@ extractDateFromJSONLD extracts the published date from JSON-LD script tags.
 Example:
 
 	<script type="application/ld+json">
+
 	{
 	  "@type": "Restaurant",
 	  "review": {
 	    "datePublished": "2021-01-25T05:32"
 	  }
 	}
+
 	</script>
 
 The function will extract and return "2021-01-25T05:32".
@@ -207,29 +272,27 @@ func findScript(doc *goquery.Document, condition func(string) bool) string {
 	return result
 }
 
-// extractOriginalURL extracts the original URL from a Wayback Machine snapshot URL.
+// extractOriginalURL extracts the original URL from a Wayback Machine snapshot URL
+// using the last occurrence of "id_/" as the marker and returns the cleaned URL.
 func extractOriginalURL(snapshotURL string) string {
 	const idMarker = "id_/"
-	if pos := len(snapshotURL) - len(idMarker); pos >= 0 {
-		if i := findLastIndex(snapshotURL, idMarker); i != -1 {
-			return snapshotURL[i+len(idMarker):]
-		}
+	i := strings.LastIndex(snapshotURL, idMarker)
+	if i == -1 {
+		return ""
 	}
-	return ""
-}
 
-// findLastIndex returns the last index of substr in s, or -1 if not found.
-func findLastIndex(s, substr string) int {
-	last := -1
-	for i := 0; ; {
-		j := i + len(substr)
-		if j > len(s) {
-			break
-		}
-		if s[i:j] == substr {
-			last = i
-		}
-		i++
+	raw := snapshotURL[i+len(idMarker):]
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
 	}
-	return last
+
+	u.Scheme = strings.ToLower(u.Scheme)
+	u.Host = strings.ToLower(u.Host)
+	u.RawQuery = ""
+
+	if u.Path != "/" {
+		u.Path = strings.TrimSuffix(u.Path, "/")
+	}
+	return u.String()
 }
