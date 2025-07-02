@@ -197,7 +197,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		html := r.Body
 		if html == nil {
 			log.WithFields(log.Fields{
-				"url": r.Request.URL.String(),
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("no HTML body for snapshot")
 			return
 		}
@@ -218,8 +218,8 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error": err,
-				"url":   r.Request.URL.String(),
+				"error":        err,
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("failed to parse award data from HTML")
 			return
 		}
@@ -228,8 +228,8 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		price := parser.MapPrice(data.Price)
 		if price == "" {
 			log.WithFields(log.Fields{
-				"price": price,
-				"url":   r.Request.URL.String(),
+				"price":        price,
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("skipping award: price is empty")
 			return
 		}
@@ -238,7 +238,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		if year == 0 {
 			log.WithFields(log.Fields{
 				"publishedDate": data.PublishedDate,
-				"url":           r.Request.URL.String(),
+				"snapshot_url":  r.Request.URL.String(),
 			}).Error("skipping award: invalid or missing year")
 			return
 		}
@@ -249,23 +249,25 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			Price:        price,
 			GreenStar:    data.GreenStar,
 			Year:         year,
+			WaybackURL:   r.Request.URL.String(),
 		}
 
 		err = b.repository.SaveAward(ctx, award)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error": err,
-				"url":   r.Request.URL.String(),
+				"error":        err,
+				"snapshot_url": r.Request.URL.String(),
 			}).Error("failed to upsert award")
 			return
 		}
 
 		log.WithFields(log.Fields{
-			"distinction": distinction,
-			"name":        restaurant.Name,
-			"price":       price,
-			"url":         r.Request.URL.String(),
-			"year":        year,
+			"distinction":  distinction,
+			"name":         restaurant.Name,
+			"price":        price,
+			"snapshot_url": r.Request.URL.String(),
+			"url":          restaurant.URL,
+			"year":         year,
 		}).Info("upserted restaurant award")
 	})
 }
