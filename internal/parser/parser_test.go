@@ -57,6 +57,7 @@ func TestParseDistinction(t *testing.T) {
 		Got      string
 		Expected string
 	}{
+		{"Three MICHELIN Stars: Exceptional cuisine, worth a special journey!", "3 Stars"},
 		{"Two Stars: Excellent cooking", "2 Stars"},
 		{"One Star: High quality cooking", "1 Star"},
 		{"Three Stars: Exceptional cuisine", "3 Stars"},

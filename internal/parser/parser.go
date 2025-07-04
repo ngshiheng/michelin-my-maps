@@ -92,9 +92,9 @@ func ParseDistinction(distinction string) string {
 }
 
 var (
-	re3Stars      = regexp.MustCompile(`(?i)\b(three|3)\s*stars?\b`)
-	re2Stars      = regexp.MustCompile(`(?i)\b(two|2)\s*stars?\b`)
-	re1Star       = regexp.MustCompile(`(?i)\b(one|1)\s*star\b`)
+	re3Stars      = regexp.MustCompile(`(?i)\b(three|3)\b.*?\bstars?\b`)
+	re2Stars      = regexp.MustCompile(`(?i)\b(two|2)\b.*?\bstars?\b`)
+	re1Star       = regexp.MustCompile(`(?i)\b(one|1)\b.*?\bstar\b`)
 	reBibGourmand = regexp.MustCompile(`(?i)\bbib\b`)
 	reSelected    = regexp.MustCompile(`(?i)\bselected\s*restaurants?\b|\bplate\b`)
 )

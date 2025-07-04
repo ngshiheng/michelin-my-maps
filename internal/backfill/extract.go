@@ -77,7 +77,7 @@ func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
 	}
 	greenStar := parser.ParseDLayerValue(scriptContent, "greenstar")
 
-	if distinction == "" && price == "" {
+	if distinction == "" || price == "" {
 		return false
 	}
 
@@ -93,17 +93,25 @@ extractDistinction returns the restaurant's distinction (e.g., Michelin Star, Bi
 from the HTML document using known selectors and parsing logic.
 */
 func extractDistinction(doc *goquery.Document) string {
-	selector := "ul.restaurant-details__classification--list li, div.restaurant__classification p.flex-fill"
-	var result string
-	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
-		text := strings.TrimSpace(s.Text())
-		if parsed := parser.ParseDistinction(text); parsed != "" {
-			result = parsed
-			return false
+	selectors := []string{
+		"ul.restaurant-details__classification--list li",
+		"div.restaurant__classification p.flex-fill",
+	}
+	for _, selector := range selectors {
+		var result string
+		doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
+			text := strings.TrimSpace(s.Text())
+			if text != "" {
+				result = text
+				return false
+			}
+			return true
+		})
+		if result != "" {
+			return result
 		}
-		return true
-	})
-	return result
+	}
+	return ""
 }
 
 /*
