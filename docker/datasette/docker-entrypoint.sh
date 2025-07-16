@@ -22,4 +22,4 @@ else
 fi
 
 # Start Datasette
-exec datasette "$DB_FILE" --metadata /docker/datasette/metadata.json --host 0.0.0.0 --port 8001 --setting allow_csv_stream off --setting allow_download off
+exec datasette -i "$DB_FILE" --metadata /docker/datasette/metadata.json --host 0.0.0.0 --port 8001 --setting allow_download off --setting allow_csv_stream off --setting max_csv_mb 0
