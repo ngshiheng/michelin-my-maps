@@ -11,6 +11,12 @@
         "datasette-cluster-map": {
             "latitude_column": "latitude",
             "longitude_column": "longitude"
+        },
+        "datasette-block-robots": {
+            "allow_only_index": true
+        },
+        "datasette-google-analytics": {
+            "tracking_id": "G-VMRWWSG9KS"
         }
     },
     "databases": {

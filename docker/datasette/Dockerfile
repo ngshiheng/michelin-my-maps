@@ -2,6 +2,10 @@ FROM datasetteproject/datasette
 
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
+RUN pip install datasette-cluster-map \
+    datasette-block-robots \
+    datasette-google-analytics
+
 # Install mc (Minio client)
 RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
     -o /usr/local/bin/mc \
