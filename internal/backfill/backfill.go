@@ -193,33 +193,25 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 	detailCollector.OnError(b.createErrorHandler())
 
-	detailCollector.OnResponse(func(r *colly.Response) {
-		html := r.Body
-		if html == nil {
-			log.WithFields(log.Fields{
-				"snapshot_url": r.Request.URL.String(),
-			}).Error("no HTML body for snapshot")
-			return
-		}
-
-		restaurantURL := extractOriginalURL(r.Request.URL.String())
+	detailCollector.OnXML("html", func(e *colly.XMLElement) {
+		restaurantURL := extractOriginalURL(e.Request.URL.String())
 
 		restaurant, err := b.repository.FindRestaurantByURL(ctx, restaurantURL)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error":        err,
-				"snapshot_url": r.Request.URL.String(),
+				"snapshot_url": e.Request.URL.String(),
 				"url":          restaurantURL,
 			}).Warn("no restaurant found for URL")
 			return
 		}
 
-		data, err := extractRestaurantAwardData(html)
+		data, err := extractRestaurantAwardData(e)
 
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error":        err,
-				"snapshot_url": r.Request.URL.String(),
+				"snapshot_url": e.Request.URL.String(),
 			}).Error("failed to parse award data from HTML")
 			return
 		}
@@ -229,7 +221,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		if price == "" {
 			log.WithFields(log.Fields{
 				"price":        price,
-				"snapshot_url": r.Request.URL.String(),
+				"snapshot_url": e.Request.URL.String(),
 			}).Error("skipping award: price is empty")
 			return
 		}
@@ -238,7 +230,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		if year == 0 {
 			log.WithFields(log.Fields{
 				"publishedDate": data.PublishedDate,
-				"snapshot_url":  r.Request.URL.String(),
+				"snapshot_url":  e.Request.URL.String(),
 			}).Error("skipping award: invalid or missing year")
 			return
 		}
@@ -249,14 +241,14 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			Price:        price,
 			GreenStar:    data.GreenStar,
 			Year:         year,
-			WaybackURL:   r.Request.URL.String(),
+			WaybackURL:   e.Request.URL.String(),
 		}
 
 		err = b.repository.SaveAward(ctx, award)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error":        err,
-				"snapshot_url": r.Request.URL.String(),
+				"snapshot_url": e.Request.URL.String(),
 			}).Error("failed to upsert award")
 			return
 		}
@@ -265,7 +257,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			"distinction":  distinction,
 			"name":         restaurant.Name,
 			"price":        price,
-			"snapshot_url": r.Request.URL.String(),
+			"snapshot_url": e.Request.URL.String(),
 			"url":          restaurant.URL,
 			"year":         year,
 		}).Info("upserted restaurant award")

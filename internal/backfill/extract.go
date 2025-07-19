@@ -1,13 +1,12 @@
 package backfill
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/url"
 	"regexp"
 	"strings"
 
-	"github.com/PuerkitoBio/goquery"
+	"github.com/gocolly/colly/v2"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
 )
 
@@ -29,29 +28,24 @@ type AwardData struct {
 	PublishedDate string
 }
 
-// extractRestaurantAwardData parses the provided HTML and returns Michelin award data for a restaurant.
-func extractRestaurantAwardData(html []byte) (*AwardData, error) {
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
-	if err != nil {
-		return nil, err
-	}
-
+// extractRestaurantAwardData parses the provided XMLElement and returns Michelin award data for a restaurant.
+func extractRestaurantAwardData(e *colly.XMLElement) (*AwardData, error) {
 	data := &AwardData{}
 
-	data.PublishedDate = extractPublishedDate(doc)
+	data.PublishedDate = extractPublishedDate(e)
 
 	// Try dLayer first (highest priority for newer pages; 2020+)
-	if extractFromDLayer(doc, data) && data.PublishedDate != "" {
+	if extractFromDLayer(e, data) && data.PublishedDate != "" {
 		return data, nil
 	}
 
 	// Fallback to individual extractors
 	if data.Distinction == "" {
-		data.Distinction = extractDistinction(doc)
+		data.Distinction = extractDistinction(e)
 	}
 
 	if data.Price == "" {
-		data.Price = extractPrice(doc)
+		data.Price = extractPrice(e)
 	}
 
 	return data, nil
@@ -61,8 +55,8 @@ func extractRestaurantAwardData(html []byte) (*AwardData, error) {
 extractFromDLayer attempts to populate AwardData fields (Distinction, Price, GreenStar)
 from the dLayer script tag in the HTML document. Returns true if extraction was successful.
 */
-func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
-	scriptContent := findScript(doc, func(text string) bool {
+func extractFromDLayer(e *colly.XMLElement, data *AwardData) bool {
+	scriptContent := findScript(e, func(text string) bool {
 		return strings.Contains(text, "dLayer") && strings.Contains(text, "distinction")
 	})
 
@@ -71,7 +65,7 @@ func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
 	}
 
 	distinction := parser.ParseDLayerValue(scriptContent, "distinction")
-	price := extractPrice(doc)
+	price := extractPrice(e)
 	if price == "" {
 		price = parser.ParseDLayerValue(scriptContent, "price")
 	}
@@ -82,7 +76,7 @@ func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
 	}
 
 	data.Distinction = distinction
-	data.Price = strings.ReplaceAll(price, "\\u002c", ",") // Handle unicode escape for commas
+	data.Price = strings.ReplaceAll(price, `\"`, `"`) // Handle unicode escape for commas
 	data.GreenStar = strings.EqualFold(greenStar, "True")
 
 	return true
@@ -90,108 +84,95 @@ func extractFromDLayer(doc *goquery.Document, data *AwardData) bool {
 
 /*
 extractDistinction returns the restaurant's distinction (e.g., Michelin Star, Bib Gourmand)
-from the HTML document using known selectors and parsing logic.
+from the XML element using known XPath selectors and parsing logic.
 */
-func extractDistinction(doc *goquery.Document) string {
-	selectors := []string{
-		"ul.restaurant-details__classification--list li",
-		"div.restaurant__classification p.flex-fill",
+func extractDistinction(e *colly.XMLElement) string {
+	xpaths := []string{
+		awardDistinctionXPath1,
+		awardDistinctionXPath2,
 	}
-	for _, selector := range selectors {
-		var result string
-		doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
-			text := strings.TrimSpace(s.Text())
+
+	for _, xpath := range xpaths {
+		texts := e.ChildTexts(xpath)
+		for _, text := range texts {
+			text = strings.TrimSpace(text)
 			if text != "" {
-				result = text
-				return false
+				return text
 			}
-			return true
-		})
-		if result != "" {
-			return result
 		}
 	}
 	return ""
 }
 
 /*
-extractPrice returns the restaurant's price information from the HTML document.
-It checks known selectors and also handles price info in service rows (e.g., "Over 75 USD").
+extractPrice returns the restaurant's price information from the XML element.
+It checks known XPath selectors and also handles price info in service rows (e.g., "Over 75 USD").
 */
-func extractPrice(doc *goquery.Document) string {
-	selector := "li.restaurant-details__heading-price, li:has(span.mg-price), li:has(span.mg-euro-circle), div.data-sheet__block--text"
-	var result string
+func extractPrice(e *colly.XMLElement) string {
+	xpaths := []string{
+		awardPriceXPath1,
+		awardPriceXPath2,
+		awardPriceXPath3,
+	}
 
-	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
-		var candidate string
+	for _, xpath := range xpaths {
+		texts := e.ChildTexts(xpath)
+		for _, text := range texts {
+			candidate := strings.TrimSpace(text)
 
-		var span = s.Find("span").First()
-		if span.Length() > 0 && strings.TrimSpace(span.Text()) != "" {
-			candidate = strings.TrimSpace(span.Text())
-		} else if span.Length() > 0 {
-			// If span exists but is empty, remove it and use the remaining text
-			clone := s.Clone()
-			clone.Find("span").Remove()
-			candidate = strings.TrimSpace(clone.Text())
-		} else {
-			candidate = strings.TrimSpace(s.Text())
-		}
+			// Check if there's a span within this element and extract its text
+			spanTexts := e.ChildTexts(xpath + awardPriceSpanXPath)
+			if len(spanTexts) > 0 && strings.TrimSpace(spanTexts[0]) != "" {
+				candidate = strings.TrimSpace(spanTexts[0])
+			}
 
-		// Only consider text before "·" or "•"
-		if idx := strings.IndexAny(candidate, "·•"); idx != -1 {
-			candidate = strings.TrimSpace(candidate[:idx])
-		}
+			// Only consider text before "·" or "•"
+			if idx := strings.IndexAny(candidate, "·•"); idx != -1 {
+				candidate = strings.TrimSpace(candidate[:idx])
+			}
 
-		// Normalize whitespace (collapse multiple spaces, trim)
-		candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
+			// Normalize whitespace (collapse multiple spaces, trim)
+			candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
 
-		// Accept if only currency symbols (e.g., "$$$$", "€€€€")
-		if currencyRegex.MatchString(candidate) {
-			result = candidate
-			return false
+			// Accept if only currency symbols (e.g., "$$$$", "€€€€")
+			if currencyRegex.MatchString(candidate) {
+				return candidate
+			}
+			// Accept if price + currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
+			if m := priceCodeRegex.FindString(candidate); m != "" {
+				return m
+			}
+			// Accept if price range or number (e.g., "155 - 380", "300 - 2,000")
+			if priceRangeRegex.MatchString(candidate) {
+				return candidate
+			}
+			// Accept if "Over X" or "Under X" (e.g., "Over 75 USD")
+			if overUnderRegex.MatchString(candidate) {
+				return candidate
+			}
+			// Accept if "Between X and Y [CURRENCY]" (e.g., "Between 350 and 500 HKD")
+			if betweenRegex.MatchString(candidate) {
+				return candidate
+			}
+			// Accept if "X to Y [CURRENCY]" (e.g., "500 to 1500 TWD")
+			if toRangeRegex.MatchString(candidate) {
+				return candidate
+			}
+			// Accept if "Less than X [CURRENCY]" (e.g., "Less than 200 THB")
+			if lessThanRegex.MatchString(candidate) {
+				return candidate
+			}
 		}
-		// Accept if price + currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
-		if m := priceCodeRegex.FindString(candidate); m != "" {
-			result = m
-			return false
-		}
-		// Accept if price range or number (e.g., "155 - 380", "300 - 2,000")
-		if priceRangeRegex.MatchString(candidate) {
-			result = candidate
-			return false
-		}
-		// Accept if "Over X" or "Under X" (e.g., "Over 75 USD")
-		if overUnderRegex.MatchString(candidate) {
-			result = candidate
-			return false
-		}
-		// Accept if "Between X and Y [CURRENCY]" (e.g., "Between 350 and 500 HKD")
-		if betweenRegex.MatchString(candidate) {
-			result = candidate
-			return false
-		}
-		// Accept if "X to Y [CURRENCY]" (e.g., "500 to 1500 TWD")
-		if toRangeRegex.MatchString(candidate) {
-			result = candidate
-			return false
-		}
-		// Accept if "Less than X [CURRENCY]" (e.g., "Less than 200 THB")
-		if lessThanRegex.MatchString(candidate) {
-			result = candidate
-			return false
-		}
+	}
 
-		return true
-	})
-
-	return result
+	return ""
 }
 
-// extractPublishedDate returns the published date of the Michelin award from the HTML document.
+// extractPublishedDate returns the published date of the Michelin award from the XML element.
 // It first tries to extract the date from JSON-LD, then falls back to known text patterns.
-func extractPublishedDate(doc *goquery.Document) string {
+func extractPublishedDate(e *colly.XMLElement) string {
 	// Try JSON-LD first (2021+ layout)
-	if date := extractDateFromJSONLD(doc); date != "" {
+	if date := extractDateFromJSONLD(e); date != "" {
 		return date
 	}
 
@@ -201,29 +182,35 @@ func extractPublishedDate(doc *goquery.Document) string {
 		regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`),      // ISO date format
 	}
 
-	selector := "div.restaurant-details__heading--label-title, div.label-text, meta[name=\"description\"]"
-	var result string
-	doc.Find(selector).EachWithBreak(func(i int, s *goquery.Selection) bool {
-		var text string
-		if goquery.NodeName(s) == "meta" {
-			content, exists := s.Attr("content")
-			if !exists {
-				return true
-			}
-			text = strings.TrimSpace(content)
-		} else {
-			text = strings.TrimSpace(s.Text())
-		}
+	xpaths := []string{
+		awardDateXPath1,
+		awardDateXPath2,
+	}
 
-		for _, pattern := range datePatterns {
-			if matches := pattern.FindStringSubmatch(text); len(matches) > 1 {
-				result = matches[1]
-				return false
+	// Check date XPaths
+	for _, xpath := range xpaths {
+		texts := e.ChildTexts(xpath)
+		for _, text := range texts {
+			text = strings.TrimSpace(text)
+			for _, pattern := range datePatterns {
+				if matches := pattern.FindStringSubmatch(text); len(matches) > 1 {
+					return matches[1]
+				}
 			}
 		}
-		return true
-	})
-	return result
+	}
+
+	// Check meta description
+	metaContent := e.ChildAttr(awardDateMetaXPath, "content")
+	if metaContent != "" {
+		for _, pattern := range datePatterns {
+			if matches := pattern.FindStringSubmatch(metaContent); len(matches) > 1 {
+				return matches[1]
+			}
+		}
+	}
+
+	return ""
 }
 
 /*
@@ -231,7 +218,7 @@ extractDateFromJSONLD extracts the published date from JSON-LD script tags.
 
 Example:
 
-	<script type="application/ld+json">
+<script type="application/ld+json">
 
 	{
 	  "@type": "Restaurant",
@@ -240,12 +227,12 @@ Example:
 	  }
 	}
 
-	</script>
+</script>
 
 The function will extract and return "2021-01-25T05:32".
 */
-func extractDateFromJSONLD(doc *goquery.Document) string {
-	jsonLD := findScript(doc, func(text string) bool {
+func extractDateFromJSONLD(e *colly.XMLElement) string {
+	jsonLD := findScript(e, func(text string) bool {
 		return strings.Contains(text, `"@type":"Restaurant"`)
 	})
 
@@ -267,17 +254,14 @@ func extractDateFromJSONLD(doc *goquery.Document) string {
 }
 
 // findScript searches for a <script> tag whose content matches the given condition.
-func findScript(doc *goquery.Document, condition func(string) bool) string {
-	var result string
-	doc.Find("script").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		text := s.Text()
-		if condition(text) {
-			result = text
-			return false
+func findScript(e *colly.XMLElement, condition func(string) bool) string {
+	scripts := e.ChildTexts(awardScriptXPath)
+	for _, script := range scripts {
+		if condition(script) {
+			return script
 		}
-		return true
-	})
-	return result
+	}
+	return ""
 }
 
 // extractOriginalURL extracts the original URL from a Wayback Machine snapshot URL
