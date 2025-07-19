@@ -84,7 +84,7 @@ func TestRestaurantListExtraction(t *testing.T) {
 
 	c.OnXML(restaurantXPath, func(e *colly.XMLElement) {
 		// Extract URL
-		url := e.ChildAttr(restaurantDetailUrlXPath, "href")
+		url := e.ChildAttr(restaurantDetailURLXPath, "href")
 		if url != "" {
 			extractedURLs = append(extractedURLs, url)
 		}

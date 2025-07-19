@@ -12,7 +12,7 @@ import (
 // extractRestaurantData extracts restaurant data from the XML element.
 func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantData {
 	url := e.Request.URL.String()
-	websiteUrl := e.ChildAttr(restaurantWebsiteUrlXPath, "href")
+	websiteURL := e.ChildAttr(restaurantWebsiteURLXPath, "href")
 	name := e.ChildText(restaurantNameXPath)
 
 	address := e.ChildText(restaurantAddressXPath)
@@ -53,7 +53,7 @@ func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantD
 		Longitude:             e.Request.Ctx.Get("longitude"),
 		Cuisine:               cuisine,
 		PhoneNumber:           formattedPhoneNumber,
-		WebsiteURL:            websiteUrl,
+		WebsiteURL:            websiteURL,
 		Distinction:           parser.ParseDistinction(distinction),
 		Description:           parser.TrimWhiteSpaces(description),
 		Price:                 price,

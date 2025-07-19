@@ -206,15 +206,7 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		data, err := extractRestaurantAwardData(e)
-
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error":        err,
-				"snapshot_url": e.Request.URL.String(),
-			}).Error("failed to parse award data from HTML")
-			return
-		}
+		data := b.extractRestaurantAwardData(e)
 
 		distinction := parser.ParseDistinction(data.Distinction)
 		price := parser.MapPrice(data.Price)

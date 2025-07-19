@@ -34,3 +34,11 @@ type RestaurantData struct {
 	GreenStar             bool
 	WaybackURL            string
 }
+
+// RestaurantAwardData holds the Michelin award information for a restaurant.
+type RestaurantAwardData struct {
+	Distinction   string
+	GreenStar     bool
+	Price         string
+	PublishedDate string
+}

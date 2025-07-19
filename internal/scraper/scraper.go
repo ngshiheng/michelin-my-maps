@@ -147,7 +147,7 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 
 	// Extract restaurant URLs from the main page and visit them
 	collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
-		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
+		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailURLXPath, "href"))
 
 		location := e.ChildText(restaurantLocationXPath)
 		longitude := e.Attr("data-lng")
