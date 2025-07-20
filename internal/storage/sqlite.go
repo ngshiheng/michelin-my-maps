@@ -78,18 +78,57 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 	}).Create(restaurant).Error
 }
 
-// SaveAward saves a restaurant award to the database.
+/*
+SaveAward saves a restaurant award to the database with strict provenance protection:
+  - If no award exists for (restaurant_id, year), insert as new.
+  - If an award exists and wayback_url is empty, update fields as needed.
+  - If an award exists and wayback_url is non-empty, do not update any fields.
+    If the incoming data differs, log a warning.
+*/
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
-	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "restaurant_id"}, {Name: "year"}},
-		DoUpdates: clause.Assignments(map[string]interface{}{
-			"distinction": award.Distinction,
-			"price":       award.Price,
-			"green_star":  award.GreenStar,
-			"wayback_url": gorm.Expr("CASE WHEN wayback_url IS NULL OR wayback_url = '' THEN EXCLUDED.wayback_url ELSE wayback_url END"),
-			"updated_at":  time.Now().UTC(),
-		}),
-	}).Create(award).Error
+	awardsEqual := func(a, b *models.RestaurantAward) bool {
+		return a.Distinction == b.Distinction &&
+			a.Price == b.Price &&
+			a.GreenStar == b.GreenStar
+	}
+
+	var existing models.RestaurantAward
+	err := r.db.WithContext(ctx).
+		Where("restaurant_id = ? AND year = ?", award.RestaurantID, award.Year).
+		First(&existing).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return r.db.WithContext(ctx).Create(award).Error
+		}
+		return err
+	}
+
+	if existing.WaybackURL == "" {
+		if !awardsEqual(&existing, award) {
+			// FIXME: ideally we should determine if the existing award is more accurate or not
+			log.WithFields(log.Fields{
+				"restaurant_id": existing.RestaurantID,
+				"year":          existing.Year,
+				"existing": map[string]any{
+					"distinction": existing.Distinction,
+					"price":       existing.Price,
+					"green_star":  existing.GreenStar,
+					"wayback_url": existing.WaybackURL,
+				},
+				"incoming": map[string]any{
+					"distinction": award.Distinction,
+					"price":       award.Price,
+					"green_star":  award.GreenStar,
+					"wayback_url": award.WaybackURL,
+				},
+			}).Warn("attempted overwrite of award; update skipped due to provenance protection.")
+			return nil
+		}
+	}
+
+	existing.WaybackURL = award.WaybackURL
+	return r.db.WithContext(ctx).Save(&existing).Error
 }
 
 func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) (*models.Restaurant, error) {
