@@ -9,7 +9,7 @@ import (
 // These patterns handle various price formats found on Michelin Guide pages.
 var (
 	// currencyRegex matches pure currency symbols (e.g., "$$$$", "€€€€")
-	currencyRegex = regexp.MustCompile(`^[€$£¥₩₽₹฿₺﷼]+$₫`)
+	currencyRegex = regexp.MustCompile(`^[€$£¥₩₽₹฿₺﷼₫]+$`)
 
 	// priceCodeRegex matches price with currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
 	priceCodeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`)
@@ -65,6 +65,7 @@ func ValidatePriceText(text string) string {
 // validateCurrencySymbols checks if text contains only currency symbols.
 // Original HTML data examples: "$$$$", "€€€€", "£££", "¥¥¥"
 func validateCurrencySymbols(text string) string {
+
 	if currencyRegex.MatchString(text) {
 		return text
 	}
