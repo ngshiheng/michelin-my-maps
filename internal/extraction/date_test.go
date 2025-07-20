@@ -49,40 +49,59 @@ func TestParseYearFromAnyFormat(t *testing.T) {
 }
 
 func TestParsePublishedYear(t *testing.T) {
-	jsonLD := `{"review":{"datePublished":"2023-01-25"}}`
-	year, err := ParsePublishedYear(jsonLD)
-	if err != nil {
-		t.Fatalf("ParsePublishedYear() unexpected error: %v", err)
+	tests := []struct {
+		name     string
+		jsonLD   string
+		expected int
+	}{
+		{
+			name:     "review.datePublished full date",
+			jsonLD:   `{"review":{"datePublished":"2023-01-25"}}`,
+			expected: 2023,
+		},
+		{
+			name:     "review.datePublished year only",
+			jsonLD:   `{"review":{"datePublished":"2019"}}`,
+			expected: 2019,
+		},
+		{
+			name:     "review.datePublished invalid",
+			jsonLD:   `{"review":{"datePublished":"not-a-date"}}`,
+			expected: 0,
+		},
+		{
+			name:     "missing review",
+			jsonLD:   `{}`,
+			expected: 0,
+		},
+		{
+			name:     "award.dateAwarded as 4-digit year",
+			jsonLD:   `{"award":{"dateAwarded":"2022"}}`,
+			expected: 2022,
+		},
+		{
+			name:     "award.dateAwarded as ISO date",
+			jsonLD:   `{"award":{"dateAwarded":"2021-07-15"}}`,
+			expected: 2021,
+		},
+		{
+			name:     "award prioritized over review",
+			jsonLD:   `{"award":{"dateAwarded":"2020"},"review":{"datePublished":"2019"}}`,
+			expected: 2020,
+		},
+		{
+			name:     "award invalid, fallback to review",
+			jsonLD:   `{"award":{"dateAwarded":"not-a-date"},"review":{"datePublished":"2018"}}`,
+			expected: 2018,
+		},
 	}
-	if year != 2023 {
-		t.Errorf("ParsePublishedYear() = %d; want 2023", year)
-	}
-
-	jsonLD = `{"review":{"datePublished":"2019"}}`
-	year, err = ParsePublishedYear(jsonLD)
-	if err != nil {
-		t.Fatalf("ParsePublishedYear() unexpected error: %v", err)
-	}
-	if year != 2019 {
-		t.Errorf("ParsePublishedYear() = %d; want 2019", year)
-	}
-
-	jsonLD = `{"review":{"datePublished":"not-a-date"}}`
-	year, err = ParsePublishedYear(jsonLD)
-	if err != nil {
-		t.Fatalf("ParsePublishedYear() unexpected error: %v", err)
-	}
-	if year != 0 {
-		t.Errorf("ParsePublishedYear() = %d; want 0 for invalid date", year)
-	}
-
-	jsonLD = `{}`
-	year, err = ParsePublishedYear(jsonLD)
-	if err != nil {
-		t.Fatalf("ParsePublishedYear() unexpected error: %v", err)
-	}
-	if year != 0 {
-		t.Errorf("ParsePublishedYear() = %d; want 0 for missing review", year)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			year := ParsePublishedYear(tt.jsonLD)
+			if year != tt.expected {
+				t.Errorf("ParsePublishedYear(%s) = %d; want %d", tt.name, year, tt.expected)
+			}
+		})
 	}
 }
 
