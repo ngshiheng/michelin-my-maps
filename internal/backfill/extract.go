@@ -3,22 +3,11 @@ package backfill
 import (
 	"encoding/json"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/extraction"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
-)
-
-var (
-	currencyRegex   = regexp.MustCompile(`^[€$£¥₩₽₹฿₺]+$`)
-	priceCodeRegex  = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`)
-	priceRangeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`)
-	overUnderRegex  = regexp.MustCompile(`^(Over|Under)\s+\d+`)
-	betweenRegex    = regexp.MustCompile(`^Between\s+\d+.*\d+\s+[A-Z]{2,4}$`)
-	toRangeRegex    = regexp.MustCompile(`^\d+\s+to\s+\d+\s+[A-Z]{2,4}$`)
-	lessThanRegex   = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
 )
 
 // extractRestaurantAwardData parses the provided XMLElement and returns Michelin award data for a restaurant.
@@ -53,28 +42,41 @@ func (s *Scraper) extractRestaurantAwardData(e *colly.XMLElement) storage.Restau
 // extractFromDLayer attempts to populate storage.RestaurantAwardData fields (Distinction, Price, GreenStar)
 // from the dLayer script tag in the HTML document. Returns true if extraction was successful.
 func extractFromDLayer(e *colly.XMLElement, data *storage.RestaurantAwardData) bool {
-	scriptContent := findScript(e, func(text string) bool {
-		return strings.Contains(text, "dLayer") && strings.Contains(text, "distinction")
-	})
-
+	scriptContent := findDLayerScript(e)
 	if scriptContent == "" {
 		return false
 	}
 
-	distinction := parser.ParseDLayerValue(scriptContent, "distinction")
+	return populateDataFromDLayer(scriptContent, e, data)
+}
+
+// findDLayerScript searches for a dLayer script containing restaurant distinction data.
+func findDLayerScript(e *colly.XMLElement) string {
+	return findScript(e, func(text string) bool {
+		return strings.Contains(text, dLayerDataMarker) && strings.Contains(text, dLayerDistinctionKey)
+	})
+}
+
+// populateDataFromDLayer extracts and populates restaurant data from dLayer script content.
+func populateDataFromDLayer(scriptContent string, e *colly.XMLElement, data *storage.RestaurantAwardData) bool {
+	distinction := extraction.ParseDLayerValue(scriptContent, dLayerDistinctionKey)
+
+	// Try extracting price from HTML first, fallback to dLayer
 	price := extractPrice(e)
 	if price == "" {
-		price = parser.ParseDLayerValue(scriptContent, "price")
+		price = extraction.ParseDLayerValue(scriptContent, "price")
 	}
-	greenStar := parser.ParseDLayerValue(scriptContent, "greenstar")
 
+	greenStar := extraction.ParseDLayerValue(scriptContent, "greenstar")
+
+	// Require both distinction and price for successful extraction
 	if distinction == "" || price == "" {
 		return false
 	}
 
 	data.Distinction = distinction
-	data.Price = strings.ReplaceAll(price, `\"`, `"`) // Handle unicode escape for commas
-	data.GreenStar = strings.EqualFold(greenStar, "True")
+	data.Price = extraction.CleanPriceValue(price)
+	data.GreenStar = extraction.ParseGreenStarValue(greenStar)
 
 	return true
 }
@@ -83,64 +85,18 @@ func extractFromDLayer(e *colly.XMLElement, data *storage.RestaurantAwardData) b
 // from the XML element using known XPath selectors and parsing logic.
 func extractDistinction(e *colly.XMLElement) string {
 	texts := e.ChildTexts(awardDistinctionXPath)
-	for _, text := range texts {
-		text = strings.TrimSpace(text)
-		if text != "" {
-			return text
-		}
-	}
-	return ""
+	return extraction.ExtractTextFromElements(texts)
 }
 
 // extractPrice returns the restaurant's price information from the XML element.
-// It checks known XPath selectors and also handles price info in service rows (e.g., "Over 75 USD").
+// It checks known XPath selectors and validates price formats using regex patterns.
 func extractPrice(e *colly.XMLElement) string {
-	// Use the combined XPath for efficiency
 	texts := e.ChildTexts(awardPriceXPath)
 	for _, text := range texts {
-		candidate := strings.TrimSpace(text)
-
-		candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
-
-		// Only consider text before "·" or "•"
-		if idx := strings.IndexAny(candidate, "·•"); idx != -1 {
-			candidate = strings.TrimSpace(candidate[:idx])
-		}
-
-		if candidate == "" {
-			continue
-		}
-
-		// Accept if only currency symbols (e.g., "$$$$", "€€€€")
-		if currencyRegex.MatchString(candidate) {
-			return candidate
-		}
-		// Accept if price + currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
-		if m := priceCodeRegex.FindString(candidate); m != "" {
-			return m
-		}
-		// Accept if price range or number (e.g., "155 - 380", "300 - 2,000")
-		if priceRangeRegex.MatchString(candidate) {
-			return candidate
-		}
-		// Accept if "Over X" or "Under X" (e.g., "Over 75 USD")
-		if overUnderRegex.MatchString(candidate) {
-			return candidate
-		}
-		// Accept if "Between X and Y [CURRENCY]" (e.g., "Between 350 and 500 HKD")
-		if betweenRegex.MatchString(candidate) {
-			return candidate
-		}
-		// Accept if "X to Y [CURRENCY]" (e.g., "500 to 1500 TWD")
-		if toRangeRegex.MatchString(candidate) {
-			return candidate
-		}
-		// Accept if "Less than X [CURRENCY]" (e.g., "Less than 200 THB")
-		if lessThanRegex.MatchString(candidate) {
-			return candidate
+		if price := extraction.ValidatePriceText(text); price != "" {
+			return price
 		}
 	}
-
 	return ""
 }
 
@@ -152,32 +108,32 @@ func extractPublishedDate(e *colly.XMLElement) string {
 		return date
 	}
 
-	datePatterns := []*regexp.Regexp{
-		regexp.MustCompile(`(\d{4})\s+MICHELIN Guide`), // e.g. "2023 MICHELIN Guide"
-		regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`), // e.g. "MICHELIN Guide ... 2023"
-		regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`),      // ISO date format
+	// Try extracting from XPath text content
+	if date := extractDateFromTexts(e); date != "" {
+		return date
 	}
 
+	// Check meta description as fallback
+	return extractDateFromMetaContent(e)
+}
+
+// extractDateFromTexts extracts date from XPath text content using predefined patterns.
+func extractDateFromTexts(e *colly.XMLElement) string {
 	texts := e.ChildTexts(awardDateXPath)
 	for _, text := range texts {
-		text = strings.TrimSpace(text)
-		for _, pattern := range datePatterns {
-			if matches := pattern.FindStringSubmatch(text); len(matches) > 1 {
-				return matches[1]
-			}
+		if date := extraction.ParseDateFromText(strings.TrimSpace(text)); date != "" {
+			return date
 		}
 	}
+	return ""
+}
 
-	// Check meta description
+// extractDateFromMetaContent extracts date from meta description content.
+func extractDateFromMetaContent(e *colly.XMLElement) string {
 	metaContent := e.ChildAttr(awardDateMetaXPath, "content")
 	if metaContent != "" {
-		for _, pattern := range datePatterns {
-			if matches := pattern.FindStringSubmatch(metaContent); len(matches) > 1 {
-				return matches[1]
-			}
-		}
+		return extraction.ParseDateFromText(metaContent)
 	}
-
 	return ""
 }
 
@@ -185,25 +141,19 @@ func extractPublishedDate(e *colly.XMLElement) string {
 // Example JSON-LD format: {"@type": "Restaurant", "review": {"datePublished": "2021-01-25T05:32"}}
 // Returns the datePublished value, e.g., "2021-01-25T05:32".
 func extractDateFromJSONLD(e *colly.XMLElement) string {
-	jsonLD := findScript(e, func(text string) bool {
-		return strings.Contains(text, `"@type":"Restaurant"`)
-	})
-
+	jsonLD := findJSONLDScript(e)
 	if jsonLD == "" {
 		return ""
 	}
 
-	var ld map[string]any
-	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
-		return ""
-	}
+	return parseJSONLDDate(jsonLD)
+}
 
-	if review, ok := ld["review"].(map[string]any); ok {
-		if date, ok := review["datePublished"].(string); ok {
-			return date
-		}
-	}
-	return ""
+// findJSONLDScript searches for a JSON-LD script containing restaurant data.
+func findJSONLDScript(e *colly.XMLElement) string {
+	return findScript(e, func(text string) bool {
+		return strings.Contains(text, jsonLDRestaurantType)
+	})
 }
 
 // findScript searches for a <script> tag whose content matches the given condition.
@@ -217,27 +167,54 @@ func findScript(e *colly.XMLElement, condition func(string) bool) string {
 	return ""
 }
 
+// parseJSONLDDate parses the datePublished field from JSON-LD content.
+func parseJSONLDDate(jsonLD string) string {
+	var ld map[string]any
+	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
+		return ""
+	}
+
+	if review, ok := ld["review"].(map[string]any); ok {
+		if date, ok := review["datePublished"].(string); ok {
+			return date
+		}
+	}
+	return ""
+}
+
 // extractOriginalURL extracts the original URL from a Wayback Machine snapshot URL
-// using the last occurrence of "id_/" as the marker and returns the cleaned URL.
+// using the last occurrence of waybackIDMarker as the separator and returns the cleaned URL.
+// Returns empty string if the URL is invalid or doesn't contain the required marker.
 func extractOriginalURL(snapshotURL string) string {
-	const idMarker = "id_/"
-	i := strings.LastIndex(snapshotURL, idMarker)
+	if snapshotURL == "" {
+		return ""
+	}
+
+	i := strings.LastIndex(snapshotURL, waybackIDMarker)
 	if i == -1 {
 		return ""
 	}
 
-	raw := snapshotURL[i+len(idMarker):]
-	u, err := url.Parse(raw)
+	rawURL := snapshotURL[i+len(waybackIDMarker):]
+	return normalizeURL(rawURL)
+}
+
+// normalizeURL parses and normalizes a URL by converting scheme and host to lowercase,
+// removing query parameters, and cleaning up the path.
+func normalizeURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
 	if err != nil {
-		return raw
+		return rawURL // Return original if parsing fails
 	}
 
 	u.Scheme = strings.ToLower(u.Scheme)
 	u.Host = strings.ToLower(u.Host)
 	u.RawQuery = ""
 
+	// Clean up path: remove trailing slash except for root path
 	if u.Path != "/" {
 		u.Path = strings.TrimSuffix(u.Path, "/")
 	}
+
 	return u.String()
 }

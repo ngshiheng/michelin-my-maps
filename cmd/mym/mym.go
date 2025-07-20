@@ -118,11 +118,11 @@ func handleScrape(args []string) error {
 
 	log.Info("starting scrape command")
 	ctx := context.Background()
-	s, err := scraper.New()
+	app, err := scraper.New()
 	if err != nil {
 		return fmt.Errorf("failed to create scraper: %w", err)
 	}
-	return s.Run(ctx)
+	return app.Run(ctx)
 }
 
 // handleBackfill handles the 'backfill' subcommand
@@ -137,21 +137,22 @@ func handleBackfill(args []string) error {
 		return err
 	}
 
-	urlFilter := backfillCmd.Arg(0)
 	// TODO: allow multiple URLs to be passed in
+	urlFilter := backfillCmd.Arg(0)
 
 	log.Info("starting backfill command")
 	ctx := context.Background()
-	bs, err := backfill.New()
+	app, err := backfill.New()
 	if err != nil {
 		return fmt.Errorf("failed to create backfill scraper: %w", err)
 	}
-	return bs.Run(ctx, urlFilter)
+	return app.Run(ctx, urlFilter)
 }
 
 func main() {
-	os.Setenv("TZ", "UTC")
+	os.Setenv("TZ", time.UTC.String())
 	time.Local = time.UTC
+
 	if err := run(); err != nil {
 		log.Fatalf("Error: %v", err)
 	}

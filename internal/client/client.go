@@ -1,4 +1,4 @@
-package webclient
+package client
 
 import (
 	"crypto/sha1"
@@ -14,25 +14,27 @@ import (
 	"github.com/gocolly/colly/v2/queue"
 )
 
-// Config defines the minimal config needed for webClient.
+// Config defines the minimal config needed for Colly.
 type Config struct {
-	CachePath      string
 	AllowedDomains []string
+	CachePath      string
+	DatabasePath   string
 	Delay          time.Duration
+	MaxRetry       int
+	MaxURLs        int
 	RandomDelay    time.Duration
 	ThreadCount    int
-	MaxURLs        int
 }
 
-// webClient provides HTTP client functionality for web scraping.
-type WebClient struct {
+// Colly provides HTTP client functionality for web scraping.
+type Colly struct {
 	collector *colly.Collector
 	queue     *queue.Queue
 	config    *Config
 }
 
 // New creates a new web client instance.
-func New(cfg *Config) (*WebClient, error) {
+func New(cfg *Config) (*Colly, error) {
 	cacheDir := filepath.Join(cfg.CachePath)
 
 	c := colly.NewCollector(
@@ -56,25 +58,20 @@ func New(cfg *Config) (*WebClient, error) {
 		return nil, err
 	}
 
-	return &WebClient{
+	return &Colly{
 		collector: c,
 		queue:     q,
 		config:    cfg,
 	}, nil
 }
 
-// GetQueue returns the queue for managing URLs.
-func (w *WebClient) GetQueue() *queue.Queue {
-	return w.queue
-}
-
 // GetCollector returns the colly collector for direct access.
-func (w *WebClient) GetCollector() *colly.Collector {
+func (w *Colly) GetCollector() *colly.Collector {
 	return w.collector
 }
 
-// CreateDetailCollector creates a cloned collector for detail page scraping.
-func (w *WebClient) CreateDetailCollector() *colly.Collector {
+// GetDetailCollector creates a cloned collector for detail page scraping.
+func (w *Colly) GetDetailCollector() *colly.Collector {
 	dc := w.collector.Clone()
 	extensions.RandomUserAgent(dc)
 	extensions.Referer(dc)
@@ -82,7 +79,7 @@ func (w *WebClient) CreateDetailCollector() *colly.Collector {
 }
 
 // ClearCache removes the cache file for a given colly.Request.
-func (w *WebClient) ClearCache(r *colly.Request) error {
+func (w *Colly) ClearCache(r *colly.Request) error {
 	url := r.URL.String()
 	sum := sha1.Sum([]byte(url))
 	hash := hex.EncodeToString(sum[:])
@@ -97,12 +94,12 @@ func (w *WebClient) ClearCache(r *colly.Request) error {
 	return nil
 }
 
-// AddURL adds a URL to the scraping queue.
-func (w *WebClient) AddURL(url string) {
+// EnqueueURL adds a URL to the queue for processing.
+func (w *Colly) EnqueueURL(url string) {
 	w.queue.AddURL(url)
 }
 
 // Run starts the web scraping process.
-func (w *WebClient) Run() {
+func (w *Colly) Run() {
 	w.queue.Run(w.collector)
 }

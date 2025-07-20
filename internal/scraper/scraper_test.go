@@ -24,7 +24,7 @@ func TestRestaurantDetailExtraction(t *testing.T) {
 	server := createTestServer(htmlContent)
 	defer server.Close()
 
-	cfg := DefaultConfig()
+	cfg := defaultConfig()
 	scraper := &Scraper{config: cfg}
 
 	c := colly.NewCollector()

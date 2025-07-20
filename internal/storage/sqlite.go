@@ -78,28 +78,17 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 	}).Create(restaurant).Error
 }
 
-/*
-SaveAward upserts an award for (restaurant_id, year).
-If a record exists, it updates distinction, price, greenStar, and updated_at.
-*/
+// SaveAward saves a restaurant award to the database.
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
-	var existing models.RestaurantAward
-	err := r.db.WithContext(ctx).Where("restaurant_id = ? AND year = ?", award.RestaurantID, award.Year).First(&existing).Error
-	if err == nil {
-		// Existing row found
-		if existing.WaybackURL == "" && award.WaybackURL != "" {
-			// Existing is from scrape, incoming is from backfill: skip update
-			log.WithFields(log.Fields{
-				"restaurant_id": award.RestaurantID,
-				"year":          award.Year,
-			}).Debug("skipping backfill overwrite of fresher scrape data")
-			return nil
-		}
-	}
-	// If not found or not a scrape/backfill conflict, proceed with upsert
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "restaurant_id"}, {Name: "year"}},
-		DoUpdates: clause.AssignmentColumns([]string{"distinction", "price", "green_star", "wayback_url", "updated_at"}),
+		Columns: []clause.Column{{Name: "restaurant_id"}, {Name: "year"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"distinction": award.Distinction,
+			"price":       award.Price,
+			"green_star":  award.GreenStar,
+			"wayback_url": gorm.Expr("CASE WHEN wayback_url IS NULL OR wayback_url = '' THEN EXCLUDED.wayback_url ELSE wayback_url END"),
+			"updated_at":  time.Now().UTC(),
+		}),
 	}).Create(award).Error
 }
 
@@ -155,14 +144,19 @@ func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data R
 		Distinction:  data.Distinction,
 		Price:        data.Price,
 		GreenStar:    data.GreenStar,
-		WaybackURL:   data.WaybackURL,
 	}
 	return r.SaveAward(ctx, award)
 }
 
-// Keep only one ListAllRestaurantsWithURL implementation
-func (r *SQLiteRepository) ListAllRestaurantsWithURL() ([]models.Restaurant, error) {
+// ListAllRestaurantsWithURL retrieves all restaurants that have a non-empty URL.
+func (r *SQLiteRepository) ListAllRestaurantsWithURL(ctx context.Context) ([]models.Restaurant, error) {
 	var restaurants []models.Restaurant
-	err := r.db.Where("url != ''").Find(&restaurants).Error
-	return restaurants, err
+	err := r.db.WithContext(ctx).Where("url != ''").Find(&restaurants).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to list restaurants with URL: %w", err)
+	}
+	log.WithFields(log.Fields{
+		"count": len(restaurants),
+	}).Debug("retrieved all restaurants with URL")
+	return restaurants, nil
 }

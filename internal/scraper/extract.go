@@ -1,10 +1,8 @@
 package scraper
 
 import (
-	"strings"
-
 	"github.com/gocolly/colly/v2"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/extraction"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,17 +14,17 @@ func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantD
 	name := e.ChildText(restaurantNameXPath)
 
 	address := e.ChildText(restaurantAddressXPath)
-	address = strings.ReplaceAll(address, "\n", " ")
+	address = extraction.NormalizeAddress(address)
 
 	description := e.ChildText(restaurantDescriptionXPath)
 	distinction := e.ChildText(restaurantDistinctionXPath)
 	greenStar := e.ChildText(restaurantGreenStarXPath)
 
 	priceAndCuisine := e.ChildText(restaurantPriceAndCuisineXPath)
-	price, cuisine := parser.SplitUnpack(priceAndCuisine, "·")
+	price, cuisine := extraction.SplitUnpack(priceAndCuisine, "·")
 
 	phoneNumber := e.ChildAttr(restaurantPhoneNumberXPath, "href")
-	formattedPhoneNumber := parser.ParsePhoneNumber(phoneNumber)
+	formattedPhoneNumber := extraction.ParsePhoneNumber(phoneNumber)
 	if formattedPhoneNumber == "" {
 		log.WithFields(log.Fields{
 			"phone_number": phoneNumber,
@@ -36,28 +34,23 @@ func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantD
 
 	facilitiesAndServices := e.ChildTexts(restaurantFacilitiesAndServicesXPath)
 
-	var year int
-	if v := e.Request.Ctx.GetAny("publishedYear"); v != nil {
-		if y, ok := v.(int); ok {
-			year = y
-		}
-	}
+	contextData := extraction.ExtractContextData(e.Request.Ctx)
 
 	return storage.RestaurantData{
 		URL:                   url,
-		Year:                  year,
+		Year:                  contextData.Year,
 		Name:                  name,
 		Address:               address,
-		Location:              e.Request.Ctx.Get("location"),
-		Latitude:              e.Request.Ctx.Get("latitude"),
-		Longitude:             e.Request.Ctx.Get("longitude"),
+		Location:              contextData.Location,
+		Latitude:              contextData.Latitude,
+		Longitude:             contextData.Longitude,
 		Cuisine:               cuisine,
 		PhoneNumber:           formattedPhoneNumber,
 		WebsiteURL:            websiteURL,
-		Distinction:           parser.ParseDistinction(distinction),
-		Description:           parser.TrimWhiteSpaces(description),
+		Distinction:           extraction.ParseDistinction(distinction),
+		Description:           extraction.TrimWhiteSpaces(description),
 		Price:                 price,
-		FacilitiesAndServices: strings.Join(facilitiesAndServices, ","),
-		GreenStar:             parser.ParseGreenStar(greenStar),
+		FacilitiesAndServices: extraction.JoinFacilities(facilitiesAndServices),
+		GreenStar:             extraction.ParseGreenStarValue(greenStar),
 	}
 }
