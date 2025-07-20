@@ -40,5 +40,5 @@ type RestaurantAwardData struct {
 	Distinction   string
 	GreenStar     bool
 	Price         string
-	PublishedDate string
+	PublishedDate int
 }

@@ -212,7 +212,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		year := extraction.ParseYearFromAnyFormat(data.PublishedDate)
+		year := data.PublishedDate
 		if year == 0 {
 			log.WithFields(log.Fields{
 				"publishedDate": data.PublishedDate,

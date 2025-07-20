@@ -30,7 +30,7 @@ func (s *Scraper) extractRestaurantAwardData(e *colly.XMLElement) storage.Restau
 	data.PublishedDate = extractPublishedDate(e)
 
 	// Try dLayer first (highest priority for newer pages; 2020+)
-	if extractFromDLayer(e, &data) && data.PublishedDate != "" {
+	if extractFromDLayer(e, &data) && data.PublishedDate != 0 {
 		return data
 	}
 
@@ -113,21 +113,21 @@ func extractPrice(e *colly.XMLElement) string {
 	return ""
 }
 
-// extractPublishedDate returns the published date of the Michelin award from the XML element.
-// It first tries to extract the date from JSON-LD, then falls back to known text patterns.
-func extractPublishedDate(e *colly.XMLElement) string {
+// extractPublishedDate returns the published year of the Michelin award from the XML element.
+// It first tries to extract the year from JSON-LD, then falls back to known text patterns.
+func extractPublishedDate(e *colly.XMLElement) int {
 	// Try JSON-LD first (2021+ layout)
-	if date := extractDateFromJSONLD(e); date != "" {
-		return date
+	if year := extraction.ParsePublishedYear(findJSONLDScript(e)); year != 0 {
+		return year
 	}
 
 	// Try extracting from XPath text content
-	if date := extractDateFromTexts(e); date != "" {
-		return date
+	if year := extraction.ParseYearFromAnyFormat(extractDateFromTexts(e)); year != 0 {
+		return year
 	}
 
 	// Check meta description as fallback
-	return extractDateFromMetaContent(e)
+	return extraction.ParseYearFromAnyFormat(extractDateFromMetaContent(e))
 }
 
 // extractDateFromTexts extracts date from XPath text content using predefined patterns.
@@ -148,18 +148,6 @@ func extractDateFromMetaContent(e *colly.XMLElement) string {
 		return extraction.ParseDateFromText(metaContent)
 	}
 	return ""
-}
-
-// extractDateFromJSONLD extracts the published date from JSON-LD script tags.
-// Example JSON-LD format: {"@type": "Restaurant", "review": {"datePublished": "2021-01-25T05:32"}}
-// Returns the datePublished value, e.g., "2021-01-25T05:32".
-func extractDateFromJSONLD(e *colly.XMLElement) string {
-	jsonLD := findJSONLDScript(e)
-	if jsonLD == "" {
-		return ""
-	}
-
-	return parseJSONLDDate(jsonLD)
 }
 
 // findJSONLDScript searches for a JSON-LD script containing restaurant data.
