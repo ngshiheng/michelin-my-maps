@@ -1,7 +1,6 @@
 package backfill
 
 import (
-	"encoding/json"
 	"net/url"
 	"strings"
 
@@ -117,17 +116,20 @@ func extractPrice(e *colly.XMLElement) string {
 // It first tries to extract the year from JSON-LD, then falls back to known text patterns.
 func extractPublishedDate(e *colly.XMLElement) int {
 	// Try JSON-LD first (2021+ layout)
-	if year := extraction.ParsePublishedYear(findJSONLDScript(e)); year != 0 {
+	json := findJSONLDScript(e)
+	if year := extraction.ParsePublishedYear(json); year != 0 {
 		return year
 	}
 
 	// Try extracting from XPath text content
-	if year := extraction.ParseYearFromAnyFormat(extractDateFromTexts(e)); year != 0 {
+	genericDate := extractDateFromTexts(e)
+	if year := extraction.ParseYearFromAnyFormat(genericDate); year != 0 {
 		return year
 	}
 
 	// Check meta description as fallback
-	return extraction.ParseYearFromAnyFormat(extractDateFromMetaContent(e))
+	metaDate := extractDateFromMetaContent(e)
+	return extraction.ParseYearFromAnyFormat(metaDate)
 }
 
 // extractDateFromTexts extracts date from XPath text content using predefined patterns.
@@ -163,21 +165,6 @@ func findScript(e *colly.XMLElement, condition func(string) bool) string {
 	for _, script := range scripts {
 		if condition(script) {
 			return script
-		}
-	}
-	return ""
-}
-
-// parseJSONLDDate parses the datePublished field from JSON-LD content.
-func parseJSONLDDate(jsonLD string) string {
-	var ld map[string]any
-	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
-		return ""
-	}
-
-	if review, ok := ld["review"].(map[string]any); ok {
-		if date, ok := review["datePublished"].(string); ok {
-			return date
 		}
 	}
 	return ""
