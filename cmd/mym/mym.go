@@ -20,6 +20,11 @@ const (
 	helpShortFlag    = "-h"
 )
 
+const (
+	commandScrape   = "scrape"
+	commandBackfill = "backfill"
+)
+
 // run contains the main application logic
 func run() error {
 	if len(os.Args) < 2 {
@@ -45,12 +50,12 @@ func handleCommand(arg []string) error {
 	command := arg[1]
 
 	switch command {
-	case "scrape":
+	case commandScrape:
 		return handleScrape(arg[2:])
-	case "backfill":
+	case commandBackfill:
 		return handleBackfill(arg[2:])
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: \"%s\"\n\n", command)
+		fmt.Fprintf(os.Stderr, "unknown command: \"%s\"\n\n", command)
 		printUsage()
 		return nil
 	}
@@ -60,7 +65,7 @@ func handleCommand(arg []string) error {
 func printVersion() {
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
-		fmt.Println("Unable to determine version information.")
+		fmt.Println("unable to determine version information.")
 		return
 	}
 
@@ -69,12 +74,12 @@ func printVersion() {
 		version = buildInfo.Main.Version
 	}
 
-	fmt.Printf("Version: %s\n", version)
+	fmt.Printf("version: %s\n", version)
 }
 
 // printUsage prints the custom usage message
 func printUsage() {
-	fmt.Printf("Usage: %s <command> [options]\n\n", os.Args[0])
+	fmt.Printf("usage: %s <command> [options]\n\n", os.Args[0])
 	fmt.Println("<command>")
 	fmt.Println("  scrape     scrape latest restaurant data.")
 	fmt.Println("  backfill   backfill restaurant data.")
@@ -98,9 +103,9 @@ func setupLogging(levelStr string) error {
 	return nil
 }
 
-// handleScrape handles the 'scrape' subcommand with its own flag set
+// handleScrape handles the 'scrape' subcommand
 func handleScrape(args []string) error {
-	scrapeCmd := flag.NewFlagSet("scrape", flag.ExitOnError)
+	scrapeCmd := flag.NewFlagSet(commandScrape, flag.ExitOnError)
 	logLevel := scrapeCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
 
 	if err := scrapeCmd.Parse(args); err != nil {
@@ -113,24 +118,18 @@ func handleScrape(args []string) error {
 
 	log.Info("starting scrape command")
 	ctx := context.Background()
-	app, err := scraper.New()
+	s, err := scraper.New()
 	if err != nil {
 		return fmt.Errorf("failed to create scraper: %w", err)
 	}
-
-	if err := app.Run(ctx); err != nil {
-		return fmt.Errorf("failed to run scraper: %w", err)
-	}
-
-	return nil
+	return s.Run(ctx)
 }
 
-// handleBackfill handles the 'backfill' subcommand with its own flag set
+// handleBackfill handles the 'backfill' subcommand
 func handleBackfill(args []string) error {
-	backfillCmd := flag.NewFlagSet("backfill", flag.ExitOnError)
+	backfillCmd := flag.NewFlagSet(commandBackfill, flag.ExitOnError)
 	logLevel := backfillCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
 
-	// Parse flags, remaining args may include [url]
 	if err := backfillCmd.Parse(args); err != nil {
 		return err
 	}
@@ -138,13 +137,10 @@ func handleBackfill(args []string) error {
 		return err
 	}
 
-	log.Info("starting backfill command")
-	var urlFilter string
-	rest := backfillCmd.Args()
-	if len(rest) > 0 {
-		urlFilter = rest[0]
-	}
+	urlFilter := backfillCmd.Arg(0)
+	// TODO: allow multiple URLs to be passed in
 
+	log.Info("starting backfill command")
 	ctx := context.Background()
 	bs, err := backfill.New()
 	if err != nil {
