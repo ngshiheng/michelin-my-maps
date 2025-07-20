@@ -13,38 +13,44 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	versionLongFlag  = "--version"
+	versionShortFlag = "-v"
+	helpLongFlag     = "--help"
+	helpShortFlag    = "-h"
+)
+
 // run contains the main application logic
 func run() error {
-	// Handle global flags first (before subcommands)
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "--version", "-version":
-			printVersion()
-			return nil
-		case "--help", "-help":
-			printUsage()
-			return nil
-		}
-	}
-
-	// Check if we have at least one argument (the subcommand)
 	if len(os.Args) < 2 {
 		printUsage()
 		return nil
 	}
 
-	// Get the subcommand
-	command := os.Args[1]
-	commandArgs := os.Args[2:]
+	arg := os.Args[1]
+	switch arg {
+	case versionLongFlag, versionShortFlag:
+		printVersion()
+		return nil
+	case helpLongFlag, helpShortFlag:
+		printUsage()
+		return nil
+	default:
+		return handleCommand(os.Args)
+	}
+}
 
-	// Handle subcommands
+// handleCommand processes the main command and its subcommands
+func handleCommand(arg []string) error {
+	command := arg[1]
+
 	switch command {
 	case "scrape":
-		return handleScrape(commandArgs)
+		return handleScrape(arg[2:])
 	case "backfill":
-		return handleBackfill(commandArgs)
+		return handleBackfill(arg[2:])
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
+		fmt.Fprintf(os.Stderr, "Unknown command: \"%s\"\n\n", command)
 		printUsage()
 		return nil
 	}
@@ -69,17 +75,14 @@ func printVersion() {
 // printUsage prints the custom usage message
 func printUsage() {
 	fmt.Printf("Usage: %s <command> [options]\n\n", os.Args[0])
-	fmt.Println("Commands:")
-	fmt.Println("  scrape     Scrape data")
-	fmt.Println("  backfill   Backfill data")
+	fmt.Println("<command>")
+	fmt.Println("  scrape     scrape latest restaurant data.")
+	fmt.Println("  backfill   backfill restaurant data.")
 	fmt.Println("")
-	fmt.Println("Options:")
-	fmt.Println("  -log <level>   Set log level (default: info)")
-	fmt.Println("  -help          Show help")
-	fmt.Println("  -version       Show version")
-	fmt.Println("")
-	fmt.Println("Backfill:")
-	fmt.Println("  [url]          (optional) Michelin restaurant URL to backfill")
+	fmt.Println("[options]")
+	fmt.Println("  -log <level>   set log level. (default: info)")
+	fmt.Println("  -help          show help.")
+	fmt.Println("  -version       show version.")
 	fmt.Println("")
 }
 
