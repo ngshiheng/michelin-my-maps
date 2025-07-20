@@ -64,15 +64,14 @@ func New() (*Scraper, error) {
 	return s, nil
 }
 
-// Run crawls Michelin Guide restaurant information from the configured URLs.
-func (s *Scraper) Run(ctx context.Context) error {
+// RunAll crawls Michelin Guide restaurant information from the configured URLs.
+func (s *Scraper) RunAll(ctx context.Context) error {
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
 
 	s.setupHandlers(collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	// TODO: add support for command line arguments to specify URLs
 	michelinGuideURLs := map[string]string{
 		models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
 		models.TwoStars:            "https://guide.michelin.com/en/restaurants/2-stars-michelin",
@@ -89,6 +88,23 @@ func (s *Scraper) Run(ctx context.Context) error {
 
 	// TODO: add summary of results
 	log.Info("scraping completed")
+	return nil
+}
+
+// Run scrapes a single restaurant detail page and upserts the data.
+// FIXME: we need to parse location longitude and latitude from the page.
+func (s *Scraper) Run(ctx context.Context, url string) error {
+	detailCollector := s.client.GetDetailCollector()
+	s.setupDetailHandlers(ctx, detailCollector)
+
+	log.WithField("url", url).Info("scraping single restaurant")
+	err := detailCollector.Visit(url)
+	if err != nil {
+		log.WithError(err).Error("failed to visit restaurant URL")
+		return err
+	}
+	detailCollector.Wait()
+	log.Info("single restaurant scraping completed")
 	return nil
 }
 

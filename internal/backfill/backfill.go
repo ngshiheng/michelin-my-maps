@@ -66,31 +66,15 @@ func New() (*Scraper, error) {
 	return s, nil
 }
 
-// Run runs the backfill workflow for all restaurants or a specific URL.
-func (s *Scraper) Run(ctx context.Context, urlFilter string) error {
-	var (
-		restaurants []models.Restaurant
-		err         error
-	)
-
-	// TODO: allow backfilling of multiple URLs at once
-	backfillOneURL := strings.TrimSpace(urlFilter) != ""
-	if backfillOneURL {
-		restaurant, err := s.repository.FindRestaurantByURL(ctx, urlFilter)
-		if err != nil {
-			return fmt.Errorf("failed to find restaurant by URL: %w", err)
-		}
-		restaurants = append(restaurants, *restaurant)
-	} else {
-		restaurants, err = s.repository.ListAllRestaurantsWithURL(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to list restaurants: %w", err)
-		}
+// RunAll runs the backfill workflow for all restaurants.
+func (s *Scraper) RunAll(ctx context.Context) error {
+	restaurants, err := s.repository.ListAllRestaurantsWithURL(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list restaurants: %w", err)
 	}
 
 	log.WithFields(log.Fields{
 		"count": len(restaurants),
-		"url":   urlFilter,
 	}).Debug("starting backfill for restaurants")
 
 	collector := s.client.GetCollector()
@@ -108,6 +92,32 @@ func (s *Scraper) Run(ctx context.Context, urlFilter string) error {
 
 	// TODO: add summary of results
 	log.Info("backfilling completed")
+	return nil
+}
+
+// Run runs the backfill workflow for a single restaurant URL.
+func (s *Scraper) Run(ctx context.Context, url string) error {
+	restaurant, err := s.repository.FindRestaurantByURL(ctx, url)
+	if err != nil {
+		return fmt.Errorf("failed to find restaurant by URL: %w", err)
+	}
+
+	log.WithFields(log.Fields{
+		"url": url,
+	}).Info("starting backfill for single restaurant")
+
+	collector := s.client.GetCollector()
+	detailCollector := s.client.GetDetailCollector()
+
+	s.setupHandlers(collector, detailCollector)
+	s.setupDetailHandlers(ctx, detailCollector)
+
+	api := "https://web.archive.org/cdx/search/cdx?url=" + restaurant.URL + "&output=json&fl=timestamp,original"
+	s.client.EnqueueURL(api)
+
+	s.client.Run()
+
+	log.Info("single restaurant backfill completed")
 	return nil
 }
 

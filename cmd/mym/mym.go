@@ -81,8 +81,8 @@ func printVersion() {
 func printUsage() {
 	fmt.Printf("usage: %s <command> [options]\n\n", os.Args[0])
 	fmt.Println("<command>")
-	fmt.Println("  scrape     scrape latest restaurant data.")
-	fmt.Println("  backfill   backfill restaurant data.")
+	fmt.Println("  scrape     scrape latest restaurant data or a single restaurant if <url> is provided.")
+	fmt.Println("  backfill   backfill restaurant data or a single restaurant if <url> is provided.")
 	fmt.Println("")
 	fmt.Println("[options]")
 	fmt.Println("  -log <level>   set log level. (default: info)")
@@ -116,13 +116,19 @@ func handleScrape(args []string) error {
 		return err
 	}
 
-	log.Info("starting scrape command")
-	ctx := context.Background()
+	urlArg := scrapeCmd.Arg(0)
+
 	app, err := scraper.New()
 	if err != nil {
 		return fmt.Errorf("failed to create scraper: %w", err)
 	}
-	return app.Run(ctx)
+
+	log.Info("starting scrape command")
+	ctx := context.Background()
+	if urlArg != "" {
+		return app.Run(ctx, urlArg)
+	}
+	return app.RunAll(ctx)
 }
 
 // handleBackfill handles the 'backfill' subcommand
@@ -137,16 +143,19 @@ func handleBackfill(args []string) error {
 		return err
 	}
 
-	// TODO: allow multiple URLs to be passed in
-	urlFilter := backfillCmd.Arg(0)
+	urlArg := backfillCmd.Arg(0)
 
-	log.Info("starting backfill command")
-	ctx := context.Background()
 	app, err := backfill.New()
 	if err != nil {
 		return fmt.Errorf("failed to create backfill scraper: %w", err)
 	}
-	return app.Run(ctx, urlFilter)
+
+	log.Info("starting backfill command")
+	ctx := context.Background()
+	if urlArg != "" {
+		return app.Run(ctx, urlArg)
+	}
+	return app.RunAll(ctx)
 }
 
 func main() {
