@@ -106,23 +106,24 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 
 	if existing.WaybackURL == "" {
 		if !awardsEqual(&existing, award) {
-			// FIXME: ideally we should determine if the existing award is more accurate or not
+			diff := map[string]string{}
+			if existing.Distinction != award.Distinction {
+				diff["distinction"] = fmt.Sprintf("%v → %v", existing.Distinction, award.Distinction)
+			}
+			if existing.Price != award.Price {
+				diff["price"] = fmt.Sprintf("%v → %v", existing.Price, award.Price)
+			}
+			if existing.GreenStar != award.GreenStar {
+				diff["green_star"] = fmt.Sprintf("%v → %v", existing.GreenStar, award.GreenStar)
+			}
+			if existing.WaybackURL != award.WaybackURL {
+				diff["wayback_url"] = fmt.Sprintf("%v → %v", existing.WaybackURL, award.WaybackURL)
+			}
 			log.WithFields(log.Fields{
 				"restaurant_id": existing.RestaurantID,
 				"year":          existing.Year,
-				"existing": map[string]any{
-					"distinction": existing.Distinction,
-					"price":       existing.Price,
-					"green_star":  existing.GreenStar,
-					"wayback_url": existing.WaybackURL,
-				},
-				"incoming": map[string]any{
-					"distinction": award.Distinction,
-					"price":       award.Price,
-					"green_star":  award.GreenStar,
-					"wayback_url": award.WaybackURL,
-				},
-			}).Warn("attempted overwrite of award; update skipped due to provenance protection.")
+				"diff":          diff,
+			}).Warn("attempted overwrite of award; update skipped due to provenance protection")
 			return nil
 		}
 	}
