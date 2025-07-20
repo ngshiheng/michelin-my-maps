@@ -35,7 +35,7 @@ func TestRestaurantDetailExtraction(t *testing.T) {
 		e.Request.Ctx.Put("latitude", "1.304144")
 		e.Request.Ctx.Put("longitude", "103.83147")
 
-		extractedData = scraper.extractRestaurantData(e)
+		extractedData = scraper.extractData(e)
 	})
 
 	c.Visit(server.URL)
@@ -173,16 +173,41 @@ func TestScraperIntegration(t *testing.T) {
 		defer server.Close()
 
 		mockRepo := &MockRepository{}
-		mockRepo.On("UpsertRestaurantWithAward", context.Background(), mock.Anything).Return(nil)
+		mockRepo.On("SaveRestaurant", context.Background(), mock.Anything).Return(nil)
+		mockRepo.On("SaveAward", context.Background(), mock.AnythingOfType("*models.RestaurantAward")).Return(nil).Maybe()
 
 		scraper, _ := New()
 
 		// Test the detail page extraction workflow
 		c := colly.NewCollector()
 		c.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
-			data := scraper.extractRestaurantData(e)
-			err := mockRepo.UpsertRestaurantWithAward(context.Background(), data)
+			data := scraper.extractData(e)
+			restaurant := &models.Restaurant{
+				URL:                   data.URL,
+				Name:                  data.Name,
+				Description:           data.Description,
+				Address:               data.Address,
+				Location:              data.Location,
+				Latitude:              data.Latitude,
+				Longitude:             data.Longitude,
+				Cuisine:               data.Cuisine,
+				FacilitiesAndServices: data.FacilitiesAndServices,
+				PhoneNumber:           data.PhoneNumber,
+				WebsiteURL:            data.WebsiteURL,
+			}
+			err := mockRepo.SaveRestaurant(context.Background(), restaurant)
 			assert.NoError(t, err)
+			if data.Year > 0 {
+				award := &models.RestaurantAward{
+					RestaurantID: restaurant.ID,
+					Year:         data.Year,
+					Distinction:  data.Distinction,
+					Price:        data.Price,
+					GreenStar:    data.GreenStar,
+				}
+				err := mockRepo.SaveAward(context.Background(), award)
+				assert.NoError(t, err)
+			}
 		})
 
 		c.Visit(server.URL)
@@ -240,10 +265,5 @@ func (m *MockRepository) FindAwardByRestaurantAndYear(ctx context.Context, resta
 
 func (m *MockRepository) UpdateAward(ctx context.Context, award *models.RestaurantAward) error {
 	args := m.Called(ctx, award)
-	return args.Error(0)
-}
-
-func (m *MockRepository) UpsertRestaurantWithAward(ctx context.Context, restaurantData storage.RestaurantData) error {
-	args := m.Called(ctx, restaurantData)
 	return args.Error(0)
 }

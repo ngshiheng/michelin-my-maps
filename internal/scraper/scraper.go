@@ -190,22 +190,49 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 	// Extract details of each restaurant and save to database
 	detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
-		data := s.extractRestaurantData(e)
+		data := s.extractData(e)
 
-		if err := s.repository.UpsertRestaurantWithAward(ctx, data); err != nil {
+		restaurant := &models.Restaurant{
+			URL:                   data.URL,
+			Name:                  data.Name,
+			Description:           data.Description,
+			Address:               data.Address,
+			Location:              data.Location,
+			Latitude:              data.Latitude,
+			Longitude:             data.Longitude,
+			Cuisine:               data.Cuisine,
+			FacilitiesAndServices: data.FacilitiesAndServices,
+			PhoneNumber:           data.PhoneNumber,
+			WebsiteURL:            data.WebsiteURL,
+		}
+		if err := s.repository.SaveRestaurant(ctx, restaurant); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 				"url":   data.URL,
-			}).Error("failed to upsert restaurant award")
+			}).Error("failed to save restaurant")
 			return
 		}
 
+		award := &models.RestaurantAward{
+			RestaurantID: restaurant.ID,
+			Year:         data.Year,
+			Distinction:  data.Distinction,
+			Price:        data.Price,
+			GreenStar:    data.GreenStar,
+		}
+		if err := s.repository.SaveAward(ctx, award); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"url":   data.URL,
+			}).Error("failed to save restaurant award")
+			return
+		}
 		log.WithFields(log.Fields{
 			"distinction": data.Distinction,
 			"name":        data.Name,
 			"url":         data.URL,
 			"year":        data.Year,
-		}).Info("upserted restaurant award")
+		}).Info("saved restaurant and award")
 	})
 }
 

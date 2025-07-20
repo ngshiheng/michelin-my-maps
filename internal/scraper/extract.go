@@ -7,8 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// extractRestaurantData extracts restaurant data from the XML element.
-func (s *Scraper) extractRestaurantData(e *colly.XMLElement) storage.RestaurantData {
+// extractData parses the provided XMLElement and returns Michelin restaurant data.
+func (s *Scraper) extractData(e *colly.XMLElement) storage.RestaurantData {
 	url := e.Request.URL.String()
 	websiteURL := e.ChildAttr(restaurantWebsiteURLXPath, "href")
 	name := e.ChildText(restaurantNameXPath)

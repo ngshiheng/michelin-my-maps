@@ -210,7 +210,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			return
 		}
 
-		data := s.extractRestaurantAwardData(e)
+		data := s.extractData(e)
 
 		distinction := extraction.ParseDistinction(data.Distinction)
 		price := extraction.MapPrice(data.Price)

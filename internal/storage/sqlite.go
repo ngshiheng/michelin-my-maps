@@ -123,7 +123,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 				"restaurant_id": existing.RestaurantID,
 				"year":          existing.Year,
 				"diff":          diff,
-			}).Warn("attempted overwrite of award; update skipped due to provenance protection")
+			}).Warn("skipped attempted overwrite of award; update skipped due to provenance protection")
 			return nil
 		}
 	}
@@ -139,53 +139,6 @@ func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) 
 		return nil, err
 	}
 	return &restaurant, nil
-}
-
-/*
-UpsertRestaurantWithAward creates or updates a restaurant and its award for the explicit year provided in data.Year.
-If data.Year is zero or invalid, the award upsert is skipped and a warning is logged.
-*/
-func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data RestaurantData) error {
-	log.WithFields(log.Fields{
-		"url":         data.URL,
-		"distinction": data.Distinction,
-		"year":        data.Year,
-	}).Debug("processing restaurant data")
-
-	restaurant := models.Restaurant{
-		URL:                   data.URL,
-		Name:                  data.Name,
-		Description:           data.Description,
-		Address:               data.Address,
-		Location:              data.Location,
-		Latitude:              data.Latitude,
-		Longitude:             data.Longitude,
-		Cuisine:               data.Cuisine,
-		FacilitiesAndServices: data.FacilitiesAndServices,
-		PhoneNumber:           data.PhoneNumber,
-		WebsiteURL:            data.WebsiteURL,
-	}
-
-	if err := r.SaveRestaurant(ctx, &restaurant); err != nil {
-		return fmt.Errorf("failed to save restaurant: %w", err)
-	}
-
-	if data.Year <= 0 {
-		log.WithFields(log.Fields{
-			"url":  data.URL,
-			"note": "award year missing or invalid, skipping award upsert",
-		}).Warn("Skipping award upsert due to invalid year")
-		return nil
-	}
-
-	award := &models.RestaurantAward{
-		RestaurantID: restaurant.ID,
-		Year:         data.Year,
-		Distinction:  data.Distinction,
-		Price:        data.Price,
-		GreenStar:    data.GreenStar,
-	}
-	return r.SaveAward(ctx, award)
 }
 
 // ListAllRestaurantsWithURL retrieves all restaurants that have a non-empty URL.

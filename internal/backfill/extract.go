@@ -22,8 +22,8 @@ const (
 	dLayerDistinctionKey = "distinction"
 )
 
-// extractRestaurantAwardData parses the provided XMLElement and returns Michelin award data for a restaurant.
-func (s *Scraper) extractRestaurantAwardData(e *colly.XMLElement) storage.RestaurantAwardData {
+// extractData parses the provided XMLElement and returns Michelin award data for a restaurant.
+func (s *Scraper) extractData(e *colly.XMLElement) storage.RestaurantAwardData {
 	data := storage.RestaurantAwardData{}
 
 	data.PublishedDate = extractPublishedDate(e)

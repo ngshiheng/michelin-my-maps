@@ -12,7 +12,6 @@ type RestaurantRepository interface {
 	ListAllRestaurantsWithURL(ctx context.Context) ([]models.Restaurant, error)
 	SaveAward(ctx context.Context, award *models.RestaurantAward) error
 	SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error
-	UpsertRestaurantWithAward(ctx context.Context, restaurantData RestaurantData) error
 }
 
 // RestaurantData holds the scraped restaurant information.
