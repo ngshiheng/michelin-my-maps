@@ -8,18 +8,15 @@ import (
 	"time"
 )
 
-// Common date parsing patterns used across scraper and backfill modules
+// Date extraction patterns for parsing published dates from various HTML formats
 var (
-	// yearMichelinGuideRegex matches patterns found in HTML like:
-	// Original data: "2023 MICHELIN Guide", "2022 MICHELIN Guide Singapore", "2021 MICHELIN Guide Hong Kong"
+	// yearMichelinGuideRegex matches patterns like "2023 MICHELIN Guide"
 	yearMichelinGuideRegex = regexp.MustCompile(`(\d{4})\s+MICHELIN Guide`)
 
-	// michelinGuideYearRegex matches patterns found in HTML like:
-	// Original data: "MICHELIN Guide Singapore 2023", "MICHELIN Guide Great Britain & Ireland 2022"
+	// michelinGuideYearRegex matches patterns like "MICHELIN Guide ... 2023"
 	michelinGuideYearRegex = regexp.MustCompile(`MICHELIN Guide.*?(\d{4})`)
 
-	// isoDateRegex matches ISO date format found in JSON-LD or meta tags like:
-	// Original data: "2023-01-25", "2022-12-15", "2021-03-08"
+	// isoDateRegex matches ISO date format (e.g., "2023-01-25")
 	isoDateRegex = regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`)
 )
 
@@ -31,7 +28,6 @@ var commonDateLayouts = []string{
 }
 
 // ParseDateFromText attempts to parse a date from text using all known date patterns.
-// This consolidates the duplicate date parsing logic from backfill and parser modules.
 func ParseDateFromText(text string) string {
 	if text == "" {
 		return ""

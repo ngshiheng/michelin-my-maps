@@ -10,6 +10,19 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
 )
 
+// HTML parsing constants
+const (
+	// waybackIDMarker is the URL marker used by Wayback Machine to separate snapshot metadata from original URL
+	waybackIDMarker = "id_/"
+
+	// jsonLDRestaurantType is the JSON-LD type identifier for restaurant data
+	jsonLDRestaurantType = `"@type":"Restaurant"`
+
+	// dLayerMarkers are the required text markers for identifying dLayer script content
+	dLayerDataMarker     = "dLayer"
+	dLayerDistinctionKey = "distinction"
+)
+
 // extractRestaurantAwardData parses the provided XMLElement and returns Michelin award data for a restaurant.
 func (s *Scraper) extractRestaurantAwardData(e *colly.XMLElement) storage.RestaurantAwardData {
 	data := storage.RestaurantAwardData{}

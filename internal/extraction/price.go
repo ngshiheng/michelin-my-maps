@@ -8,32 +8,25 @@ import (
 // Shared price validation regex patterns for extracting price information from HTML text.
 // These patterns handle various price formats found on Michelin Guide pages.
 var (
-	// currencyRegex matches pure currency symbols found in HTML like:
-	// Original data: "$$$$" (US restaurants), "€€€€" (European restaurants), "£££" (UK restaurants)
+	// currencyRegex matches pure currency symbols (e.g., "$$$$", "€€€€")
 	currencyRegex = regexp.MustCompile(`^[€$£¥₩₽₹฿₺]+$`)
 
-	// priceCodeRegex matches price with currency code found in HTML like:
-	// Original data: "1,800 NOK" (Norway), "155 EUR" (Europe), "300 - 2,000 MOP" (Macau), "75-150 CHF" (Switzerland)
+	// priceCodeRegex matches price with currency code (e.g., "1,800 NOK", "155 EUR", "300 - 2,000 MOP")
 	priceCodeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]\s*[A-Z]{2,4}$`)
 
-	// priceRangeRegex matches numeric price ranges found in HTML like:
-	// Original data: "155 - 380" (numeric range), "300 - 2,000" (large range), "50-75" (compact range)
+	// priceRangeRegex matches numeric price ranges (e.g., "155 - 380", "300 - 2,000")
 	priceRangeRegex = regexp.MustCompile(`^[0-9][0-9,.\-\s]*[0-9]$`)
 
-	// overUnderRegex matches "Over X" or "Under X" patterns found in HTML like:
-	// Original data: "Over 75 USD" (expensive restaurants), "Under 200 SGD" (affordable options)
+	// overUnderRegex matches "Over X" or "Under X" patterns (e.g., "Over 75 USD")
 	overUnderRegex = regexp.MustCompile(`^(Over|Under)\s+\d+`)
 
-	// betweenRegex matches "Between X and Y [CURRENCY]" patterns found in HTML like:
-	// Original data: "Between 350 and 500 HKD" (Hong Kong), "Between 50 and 100 EUR" (Europe)
+	// betweenRegex matches "Between X and Y [CURRENCY]" patterns (e.g., "Between 350 and 500 HKD")
 	betweenRegex = regexp.MustCompile(`^Between\s+\d+.*\d+\s+[A-Z]{2,4}$`)
 
-	// toRangeRegex matches "X to Y [CURRENCY]" patterns found in HTML like:
-	// Original data: "500 to 1500 TWD" (Taiwan), "25 to 50 GBP" (UK), "100 to 300 AUD" (Australia)
+	// toRangeRegex matches "X to Y [CURRENCY]" patterns (e.g., "500 to 1500 TWD")
 	toRangeRegex = regexp.MustCompile(`^\d+\s+to\s+\d+\s+[A-Z]{2,4}$`)
 
-	// lessThanRegex matches "Less than X [CURRENCY]" patterns found in HTML like:
-	// Original data: "Less than 200 THB" (Thailand), "Less than 50.5 EUR" (budget European), "Less than 30 USD" (affordable US)
+	// lessThanRegex matches "Less than X [CURRENCY]" patterns (e.g., "Less than 200 THB")
 	lessThanRegex = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
 )
 

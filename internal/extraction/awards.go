@@ -17,7 +17,6 @@ var (
 )
 
 // ParseGreenStarValue converts string representation to boolean for GreenStar field.
-// Consolidates logic used in both scraper and backfill modules.
 func ParseGreenStarValue(greenStar string) bool {
 	return strings.EqualFold(greenStar, "True") ||
 		strings.EqualFold(greenStar, "michelin green star")
