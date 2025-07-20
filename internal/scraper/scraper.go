@@ -167,10 +167,9 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 	detailCollector.OnXML(restaurantAwardPublishedYearXPath, func(e *colly.XMLElement) {
 		jsonLD := e.Text
-		year, err := extraction.ParsePublishedYear(jsonLD)
-		if err == nil && year > 0 {
-			e.Request.Ctx.Put("publishedYear", year)
-		}
+		year := extraction.ParsePublishedYear(jsonLD)
+		e.Request.Ctx.Put("publishedYear", year)
+
 	})
 
 	// Extract details of each restaurant and save to database

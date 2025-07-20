@@ -83,45 +83,60 @@ func ParseYearFromAnyFormat(publishedDate string) int {
 	return 0
 }
 
-// ParsePublishedYear extracts the year from a Michelin Guide JSON-LD script.
-func ParsePublishedYear(jsonLD string) (int, error) {
+/*
+ParsePublishedYear extracts the year from a Michelin Guide JSON-LD script.
+It prioritizes extracting from award.dateAwarded if present and valid,
+otherwise falls back to review.datePublished.
+*/
+func ParsePublishedYear(jsonLD string) int {
 	if jsonLD == "" {
-		return 0, nil
+		return 0
 	}
 
 	var ld map[string]any
 	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
-		return 0, err
+		return 0
 	}
 
-	review, ok := ld["review"].(map[string]any)
-	if !ok {
-		return 0, nil
+	parseYear := func(s string) (int, bool) {
+		// Try as 4-digit year
+		fourDigitYear := len(s) == 4 && strings.TrimSpace(s) != ""
+		if fourDigitYear {
+			if year, err := strconv.Atoi(s); err == nil && validateYear(year) {
+				return year, true
+			}
+		}
+		// Try as date with known layouts
+		for _, layout := range commonDateLayouts {
+			if t, err := time.Parse(layout, s); err == nil {
+				year := t.Year()
+				if validateYear(year) {
+					return year, true
+				}
+			}
+		}
+		return 0, false
 	}
 
-	pd, ok := review["datePublished"].(string)
-	if !ok || pd == "" {
-		return 0, nil
-	}
-
-	// Use the shared date layouts
-	for _, layout := range commonDateLayouts {
-		if t, err := time.Parse(layout, pd); err == nil {
-			year := t.Year()
-			if validateYear(year) {
-				return year, nil
+	// 1. Try award.dateAwarded first
+	if award, ok := ld["award"].(map[string]any); ok {
+		if dateAwarded, ok := award["dateAwarded"].(string); ok && dateAwarded != "" {
+			if year, ok := parseYear(dateAwarded); ok {
+				return year
 			}
 		}
 	}
 
-	// Fallback: try parsing as 4-digit year string
-	if len(pd) == 4 {
-		if year, err := strconv.Atoi(pd); err == nil && validateYear(year) {
-			return year, nil
+	// 2. Fallback to review.datePublished
+	if review, ok := ld["review"].(map[string]any); ok {
+		if pd, ok := review["datePublished"].(string); ok && pd != "" {
+			if year, ok := parseYear(pd); ok {
+				return year
+			}
 		}
 	}
 
-	return 0, nil
+	return 0
 }
 
 // validateYear checks if a year value is reasonable for Michelin Guide data.
