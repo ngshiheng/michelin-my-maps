@@ -17,7 +17,6 @@ func NormalizeAddress(address string) string {
 }
 
 // TrimWhiteSpaces removes various whitespace characters including line breaks and multiple spaces.
-// This function consolidates logic from parser.TrimWhiteSpaces.
 func TrimWhiteSpaces(str string) string {
 	if str == "" {
 		return ""

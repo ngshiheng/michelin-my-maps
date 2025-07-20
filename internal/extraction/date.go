@@ -52,7 +52,6 @@ func ParseDateFromText(text string) string {
 }
 
 // ParseYearFromAnyFormat extracts year from various date string formats.
-// This enhances and consolidates parser.ParseYear with additional parsing logic.
 func ParseYearFromAnyFormat(publishedDate string) int {
 	if publishedDate == "" {
 		return 0
@@ -85,7 +84,6 @@ func ParseYearFromAnyFormat(publishedDate string) int {
 }
 
 // ParsePublishedYear extracts the year from a Michelin Guide JSON-LD script.
-// This consolidates the logic from parser.ParsePublishedYear.
 func ParsePublishedYear(jsonLD string) (int, error) {
 	if jsonLD == "" {
 		return 0, nil
