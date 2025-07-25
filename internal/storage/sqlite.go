@@ -125,7 +125,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 				"restaurant_id": existing.RestaurantID,
 				"year":          existing.Year,
 				"diff":          diff,
-			}).Warn("overriding existing award with authoritative Wayback data")
+			}).Warn("award updated: authoritative Wayback")
 		}
 		// Overwrite all fields with authoritative Wayback data
 		id := existing.ID
@@ -154,7 +154,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					"restaurant_id": existing.RestaurantID,
 					"year":          existing.Year,
 					"diff":          diff,
-				}).Warn("overriding 'Selected Restaurant' Wayback data with more specific live scrape distinction")
+				}).Warn("award updated: Wayback → Live")
 				award.ID = existing.ID
 				return r.db.WithContext(ctx).Save(award).Error
 			} else {
@@ -162,7 +162,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					"restaurant_id": existing.RestaurantID,
 					"year":          existing.Year,
 					"diff":          diff,
-				}).Error("conflicting live scrape and authoritative Wayback data; NOT overriding")
+				}).Error("award conflict: Wayback vs Live (not overridden)")
 			}
 		}
 		return nil
