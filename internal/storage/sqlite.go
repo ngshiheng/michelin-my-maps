@@ -78,13 +78,7 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 	}).Create(restaurant).Error
 }
 
-/*
-SaveAward saves a restaurant award to the database with strict provenance protection:
-  - If no award exists for (restaurant_id, year), insert as new.
-  - If an award exists and wayback_url is empty, update fields as needed.
-  - If an award exists and wayback_url is non-empty, do not update any fields.
-    If the incoming data differs, log a warning.
-*/
+// SaveAward saves or updates a restaurant award in the database.
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
 	awardsEqual := func(a, b *models.RestaurantAward) bool {
 		return a.Distinction == b.Distinction &&
@@ -104,7 +98,19 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 		return err
 	}
 
-	if existing.WaybackURL == "" {
+	// Both are live scrape: upsert
+	if existing.WaybackURL == "" && award.WaybackURL == "" {
+		if awardsEqual(&existing, award) {
+			return nil
+		}
+
+		// Set ID to update the existing row, not insert
+		award.ID = existing.ID
+		return r.db.WithContext(ctx).Save(award).Error
+	}
+
+	// Incoming is authoritative Wayback, always override existing
+	if award.WaybackURL != "" {
 		if !awardsEqual(&existing, award) {
 			diff := map[string]string{}
 			if existing.Distinction != award.Distinction {
@@ -116,20 +122,38 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			if existing.GreenStar != award.GreenStar {
 				diff["green_star"] = fmt.Sprintf("%v → %v", existing.GreenStar, award.GreenStar)
 			}
-			if existing.WaybackURL != award.WaybackURL {
-				diff["wayback_url"] = fmt.Sprintf("%v → %v", existing.WaybackURL, award.WaybackURL)
+			log.WithFields(log.Fields{
+				"restaurant_id": existing.RestaurantID,
+				"year":          existing.Year,
+				"diff":          diff,
+			}).Warn("overriding existing award with authoritative Wayback data")
+		}
+		fmt.Println("overriding existing award with authoritative Wayback data")
+		return r.db.WithContext(ctx).Save(existing).Error
+	}
+
+	// Existing is Wayback, incoming is live scrape
+	if existing.WaybackURL != "" && award.WaybackURL == "" {
+		if !awardsEqual(&existing, award) {
+			diff := map[string]string{}
+			if existing.Distinction != award.Distinction {
+				diff["distinction"] = fmt.Sprintf("%v → %v", existing.Distinction, award.Distinction)
+			}
+			if existing.Price != award.Price {
+				diff["price"] = fmt.Sprintf("%v → %v", existing.Price, award.Price)
+			}
+			if existing.GreenStar != award.GreenStar {
+				diff["green_star"] = fmt.Sprintf("%v → %v", existing.GreenStar, award.GreenStar)
 			}
 			log.WithFields(log.Fields{
 				"restaurant_id": existing.RestaurantID,
 				"year":          existing.Year,
 				"diff":          diff,
-			}).Warn("skipped attempted overwrite of award; update skipped due to provenance protection")
-			return nil
+			}).Error("conflicting live scrape and authoritative Wayback data; NOT overriding")
 		}
+		return nil
 	}
-
-	existing.WaybackURL = award.WaybackURL
-	return r.db.WithContext(ctx).Save(&existing).Error
+	return nil
 }
 
 func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) (*models.Restaurant, error) {
