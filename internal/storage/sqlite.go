@@ -128,7 +128,9 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			}).Warn("overriding existing award with authoritative Wayback data")
 		}
 		// Overwrite all fields with authoritative Wayback data
+		id := existing.ID
 		existing = *award
+		existing.ID = id
 		return r.db.WithContext(ctx).Save(&existing).Error
 	}
 
