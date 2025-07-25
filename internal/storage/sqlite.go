@@ -98,15 +98,14 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 		return err
 	}
 
-	// Both are live scrape: upsert
+	// Both are live scrape: upsert only if changed
 	if existing.WaybackURL == "" && award.WaybackURL == "" {
 		if awardsEqual(&existing, award) {
 			return nil
 		}
-
 		// Set ID to update the existing row, not insert
 		award.ID = existing.ID
-		return r.db.WithContext(ctx).Save(award).Error
+		return r.db.WithContext(ctx).Save(&award).Error
 	}
 
 	// Incoming is authoritative Wayback, always override existing
@@ -128,8 +127,9 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 				"diff":          diff,
 			}).Warn("overriding existing award with authoritative Wayback data")
 		}
-		fmt.Println("overriding existing award with authoritative Wayback data")
-		return r.db.WithContext(ctx).Save(existing).Error
+		// Overwrite all fields with authoritative Wayback data
+		existing = *award
+		return r.db.WithContext(ctx).Save(&existing).Error
 	}
 
 	// Existing is Wayback, incoming is live scrape
