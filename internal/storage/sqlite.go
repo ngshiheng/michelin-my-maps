@@ -147,11 +147,23 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			if existing.GreenStar != award.GreenStar {
 				diff["green_star"] = fmt.Sprintf("%v → %v", existing.GreenStar, award.GreenStar)
 			}
-			log.WithFields(log.Fields{
-				"restaurant_id": existing.RestaurantID,
-				"year":          existing.Year,
-				"diff":          diff,
-			}).Error("conflicting live scrape and authoritative Wayback data; NOT overriding")
+
+			shouldOverride := existing.Distinction == models.SelectedRestaurants && award.Distinction != models.SelectedRestaurants
+			if shouldOverride {
+				log.WithFields(log.Fields{
+					"restaurant_id": existing.RestaurantID,
+					"year":          existing.Year,
+					"diff":          diff,
+				}).Warn("overriding 'Selected Restaurant' Wayback data with more specific live scrape distinction")
+				award.ID = existing.ID
+				return r.db.WithContext(ctx).Save(award).Error
+			} else {
+				log.WithFields(log.Fields{
+					"restaurant_id": existing.RestaurantID,
+					"year":          existing.Year,
+					"diff":          diff,
+				}).Error("conflicting live scrape and authoritative Wayback data; NOT overriding")
+			}
 		}
 		return nil
 	}
