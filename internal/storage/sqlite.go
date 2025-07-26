@@ -103,9 +103,17 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 		if awardsEqual(&existing, award) {
 			return nil
 		}
-		// Set ID to update the existing row, not insert
-		award.ID = existing.ID
-		return r.db.WithContext(ctx).Save(&award).Error
+
+		updates := map[string]any{
+			"distinction": award.Distinction,
+			"price":       award.Price,
+			"green_star":  award.GreenStar,
+			"wayback_url": award.WaybackURL,
+			"year":        award.Year,
+		}
+		return r.db.WithContext(ctx).
+			Model(&existing).
+			Updates(updates).Error
 	}
 
 	// Incoming is authoritative Wayback, always override existing
@@ -127,11 +135,18 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 				"diff":          diff,
 			}).Warn("update award from Wayback")
 		}
-		// Overwrite all fields with authoritative Wayback data
-		id := existing.ID
-		existing = *award
-		existing.ID = id
-		return r.db.WithContext(ctx).Save(&existing).Error
+
+		updates := map[string]any{
+			"distinction": award.Distinction,
+			"price":       award.Price,
+			"green_star":  award.GreenStar,
+			"wayback_url": award.WaybackURL,
+			"year":        award.Year,
+		}
+
+		return r.db.WithContext(ctx).
+			Model(&existing).
+			Updates(updates).Error
 	}
 
 	// Existing is Wayback, incoming is live scrape
@@ -150,19 +165,32 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 
 			shouldOverride := existing.Distinction == models.SelectedRestaurants && award.Distinction != models.SelectedRestaurants
 			if shouldOverride {
-				log.WithFields(log.Fields{
-					"restaurant_id": existing.RestaurantID,
-					"year":          existing.Year,
-					"diff":          diff,
-				}).Warn("update award from Wayback to Live")
-				award.ID = existing.ID
-				return r.db.WithContext(ctx).Save(award).Error
+				if _, ok := diff["distinction"]; ok {
+					diff["distinction"] = fmt.Sprintf("%v → %v", existing.Distinction, award.Distinction)
+					log.WithFields(log.Fields{
+						"restaurant_id": existing.RestaurantID,
+						"year":          existing.Year,
+						"diff":          diff,
+					}).Warn("update award distinction from Wayback to Live")
+				}
+
+				updates := map[string]any{
+					"distinction": award.Distinction,
+					"price":       award.Price,
+					"green_star":  award.GreenStar,
+					"wayback_url": award.WaybackURL,
+					"year":        award.Year,
+				}
+
+				return r.db.WithContext(ctx).
+					Model(&existing).
+					Updates(updates).Error
 			} else {
 				log.WithFields(log.Fields{
 					"restaurant_id": existing.RestaurantID,
 					"year":          existing.Year,
 					"diff":          diff,
-				}).Warn("award conflict: Wayback vs Live (not overridden)")
+				}).Debug("award conflict: Wayback vs Live (not overridden)")
 			}
 		}
 		return nil
