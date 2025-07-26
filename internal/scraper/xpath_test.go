@@ -56,7 +56,7 @@ func TestXPathSelectors(t *testing.T) {
 		{
 			name:         "detail website selector",
 			htmlFile:     "restaurant_detail.html",
-			xpath:        restaurantWebsiteUrlXPath,
+			xpath:        restaurantWebsiteURLXPath,
 			expectCount:  1,
 			expectAttr:   "href",
 			expectValues: []string{"https://www.lesamis.com.sg/"},
@@ -107,7 +107,7 @@ func TestXPathSelectors(t *testing.T) {
 		{
 			name:         "list detail links selector",
 			htmlFile:     "restaurant_list.html",
-			xpath:        restaurantDetailUrlXPath,
+			xpath:        restaurantDetailURLXPath,
 			expectCount:  24,
 			expectAttr:   "href",
 			expectValues: []string{"restaurant"}, // Should contain 'restaurant' in URLs

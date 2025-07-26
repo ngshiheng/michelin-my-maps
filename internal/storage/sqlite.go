@@ -60,12 +60,12 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 	return &SQLiteRepository{db: db}, nil
 }
 
-// SaveRestaurant saves a restaurant to the database.
+// SaveRestaurant saves or updates a restaurant in the database.
+// If the restaurant already exists (identified by URL), it updates the existing record.
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
 	log.WithFields(log.Fields{
-		"id":  restaurant.ID,
 		"url": restaurant.URL,
-	}).Debug("upserting restaurant")
+	}).Debug("upsert restaurant")
 
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "url"}},
@@ -78,29 +78,127 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 	}).Create(restaurant).Error
 }
 
-/*
-SaveAward upserts an award for (restaurant_id, year).
-If a record exists, it updates distinction, price, greenStar, and updated_at.
-*/
+// SaveAward saves or updates a restaurant award in the database.
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
+	awardsEqual := func(a, b *models.RestaurantAward) bool {
+		return a.Distinction == b.Distinction &&
+			a.Price == b.Price &&
+			a.GreenStar == b.GreenStar
+	}
+
 	var existing models.RestaurantAward
-	err := r.db.WithContext(ctx).Where("restaurant_id = ? AND year = ?", award.RestaurantID, award.Year).First(&existing).Error
-	if err == nil {
-		// Existing row found
-		if existing.WaybackURL == "" && award.WaybackURL != "" {
-			// Existing is from scrape, incoming is from backfill: skip update
-			log.WithFields(log.Fields{
-				"restaurant_id": award.RestaurantID,
-				"year":          award.Year,
-			}).Debug("skipping backfill overwrite of fresher scrape data")
+	err := r.db.WithContext(ctx).
+		Where("restaurant_id = ? AND year = ?", award.RestaurantID, award.Year).
+		First(&existing).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return r.db.WithContext(ctx).Create(award).Error
+		}
+		return err
+	}
+
+	// Scenario 1: Both live scrape
+	if existing.WaybackURL == "" && award.WaybackURL == "" {
+		if awardsEqual(&existing, award) {
 			return nil
 		}
+
+		updates := map[string]any{
+			"distinction": award.Distinction,
+			"price":       award.Price,
+			"green_star":  award.GreenStar,
+			"wayback_url": award.WaybackURL,
+			"year":        award.Year,
+		}
+		return r.db.WithContext(ctx).
+			Model(&existing).
+			Updates(updates).Error
 	}
-	// If not found or not a scrape/backfill conflict, proceed with upsert
-	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "restaurant_id"}, {Name: "year"}},
-		DoUpdates: clause.AssignmentColumns([]string{"distinction", "price", "green_star", "wayback_url", "updated_at"}),
-	}).Create(award).Error
+
+	// Scenario 2: Incoming Wayback (authoritative),
+	if award.WaybackURL != "" {
+		if !awardsEqual(&existing, award) {
+			diff := map[string]string{}
+			if existing.Distinction != award.Distinction {
+				diff["distinction"] = fmt.Sprintf("%v → %v", existing.Distinction, award.Distinction)
+			}
+			if existing.Price != award.Price {
+				diff["price"] = fmt.Sprintf("%v → %v", existing.Price, award.Price)
+			}
+			if existing.GreenStar != award.GreenStar {
+				diff["green_star"] = fmt.Sprintf("%v → %v", existing.GreenStar, award.GreenStar)
+			}
+
+			if _, ok := diff["distinction"]; ok {
+				log.WithFields(log.Fields{
+					"restaurant_id": existing.RestaurantID,
+					"year":          existing.Year,
+					"diff":          diff,
+				}).Warn("update award from Wayback")
+			}
+		}
+
+		updates := map[string]any{
+			"distinction": award.Distinction,
+			"price":       award.Price,
+			"green_star":  award.GreenStar,
+			"wayback_url": award.WaybackURL,
+			"year":        award.Year,
+		}
+
+		return r.db.WithContext(ctx).
+			Model(&existing).
+			Updates(updates).Error
+	}
+
+	// Scenario 3: Existing Wayback, incoming live scrape
+	if existing.WaybackURL != "" && award.WaybackURL == "" {
+		if !awardsEqual(&existing, award) {
+			diff := map[string]string{}
+			if existing.Distinction != award.Distinction {
+				diff["distinction"] = fmt.Sprintf("%v → %v", existing.Distinction, award.Distinction)
+			}
+			if existing.Price != award.Price {
+				diff["price"] = fmt.Sprintf("%v → %v", existing.Price, award.Price)
+			}
+			if existing.GreenStar != award.GreenStar {
+				diff["green_star"] = fmt.Sprintf("%v → %v", existing.GreenStar, award.GreenStar)
+			}
+
+			shouldOverride := existing.Distinction == models.SelectedRestaurants && award.Distinction != models.SelectedRestaurants
+			if shouldOverride {
+				if _, ok := diff["distinction"]; ok {
+					diff["distinction"] = fmt.Sprintf("%v → %v", existing.Distinction, award.Distinction)
+					log.WithFields(log.Fields{
+						"restaurant_id": existing.RestaurantID,
+						"year":          existing.Year,
+						"diff":          diff,
+					}).Warn("update award distinction from Wayback to Live")
+				}
+
+				updates := map[string]any{
+					"distinction": award.Distinction,
+					"price":       award.Price,
+					"green_star":  award.GreenStar,
+					"wayback_url": award.WaybackURL,
+					"year":        award.Year,
+				}
+
+				return r.db.WithContext(ctx).
+					Model(&existing).
+					Updates(updates).Error
+			} else {
+				log.WithFields(log.Fields{
+					"restaurant_id": existing.RestaurantID,
+					"year":          existing.Year,
+					"diff":          diff,
+				}).Debug("award conflict: Wayback vs Live (not overridden)")
+			}
+		}
+		return nil
+	}
+	return nil
 }
 
 func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) (*models.Restaurant, error) {
@@ -112,57 +210,15 @@ func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) 
 	return &restaurant, nil
 }
 
-/*
-UpsertRestaurantWithAward creates or updates a restaurant and its award for the explicit year provided in data.Year.
-If data.Year is zero or invalid, the award upsert is skipped and a warning is logged.
-*/
-func (r *SQLiteRepository) UpsertRestaurantWithAward(ctx context.Context, data RestaurantData) error {
-	log.WithFields(log.Fields{
-		"url":         data.URL,
-		"distinction": data.Distinction,
-		"year":        data.Year,
-	}).Debug("processing restaurant data")
-
-	restaurant := models.Restaurant{
-		URL:                   data.URL,
-		Name:                  data.Name,
-		Description:           data.Description,
-		Address:               data.Address,
-		Location:              data.Location,
-		Latitude:              data.Latitude,
-		Longitude:             data.Longitude,
-		Cuisine:               data.Cuisine,
-		FacilitiesAndServices: data.FacilitiesAndServices,
-		PhoneNumber:           data.PhoneNumber,
-		WebsiteURL:            data.WebsiteURL,
-	}
-
-	if err := r.SaveRestaurant(ctx, &restaurant); err != nil {
-		return fmt.Errorf("failed to save restaurant: %w", err)
-	}
-
-	if data.Year <= 0 {
-		log.WithFields(log.Fields{
-			"url":  data.URL,
-			"note": "award year missing or invalid, skipping award upsert",
-		}).Warn("Skipping award upsert due to invalid year")
-		return nil
-	}
-
-	award := &models.RestaurantAward{
-		RestaurantID: restaurant.ID,
-		Year:         data.Year,
-		Distinction:  data.Distinction,
-		Price:        data.Price,
-		GreenStar:    data.GreenStar,
-		WaybackURL:   data.WaybackURL,
-	}
-	return r.SaveAward(ctx, award)
-}
-
-// Keep only one ListAllRestaurantsWithURL implementation
-func (r *SQLiteRepository) ListAllRestaurantsWithURL() ([]models.Restaurant, error) {
+// ListAllRestaurantsWithURL retrieves all restaurants that have a non-empty URL.
+func (r *SQLiteRepository) ListAllRestaurantsWithURL(ctx context.Context) ([]models.Restaurant, error) {
 	var restaurants []models.Restaurant
-	err := r.db.Where("url != ''").Find(&restaurants).Error
-	return restaurants, err
+	err := r.db.WithContext(ctx).Where("url != ''").Find(&restaurants).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to list restaurants with URL: %w", err)
+	}
+	log.WithFields(log.Fields{
+		"count": len(restaurants),
+	}).Debug("retrieve all restaurants with URL")
+	return restaurants, nil
 }

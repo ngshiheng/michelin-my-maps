@@ -9,28 +9,16 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/client"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/extraction"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/webclient"
 	log "github.com/sirupsen/logrus"
 )
 
-// Config holds configuration for the backfill process.
-type Config struct {
-	AllowedDomains []string
-	CachePath      string
-	DatabasePath   string
-	Delay          time.Duration
-	MaxRetry       int
-	MaxURLs        int
-	RandomDelay    time.Duration
-	ThreadCount    int
-}
-
-// DefaultConfig returns a default config for Wayback backfill.
-func DefaultConfig() *Config {
-	return &Config{
+// defaultConfig returns a default config for Wayback backfill.
+func defaultConfig() *client.Config {
+	return &client.Config{
 		AllowedDomains: []string{"web.archive.org"},
 		CachePath:      "cache/wayback",
 		DatabasePath:   "data/michelin.db",
@@ -44,21 +32,21 @@ func DefaultConfig() *Config {
 
 // Scraper orchestrates the Wayback backfill process.
 type Scraper struct {
-	config     *Config
+	client     *client.Colly
+	config     *client.Config
 	repository storage.RestaurantRepository
-	client     *webclient.WebClient
 }
 
 // New creates a new Scraper with default config and repository.
 func New() (*Scraper, error) {
-	cfg := DefaultConfig()
+	cfg := defaultConfig()
 
 	repo, err := storage.NewSQLiteRepository(cfg.DatabasePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
-	wc, err := webclient.New(&webclient.Config{
+	cl, err := client.New(&client.Config{
 		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
 		Delay:          cfg.Delay,
@@ -67,59 +55,75 @@ func New() (*Scraper, error) {
 		MaxURLs:        cfg.MaxURLs,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create web client: %w", err)
+		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 
 	s := &Scraper{
-		client:     wc,
+		client:     cl,
 		config:     cfg,
 		repository: repo,
 	}
 	return s, nil
 }
 
-// Run runs the backfill workflow for all restaurants or a specific URL.
-func (b *Scraper) Run(ctx context.Context, urlFilter string) error {
-	var (
-		restaurants []models.Restaurant
-		err         error
-	)
-
-	if urlFilter != "" {
-		restaurant, err := b.repository.FindRestaurantByURL(ctx, urlFilter)
-		if err != nil {
-			return fmt.Errorf("failed to find restaurant by URL: %w", err)
-		}
-		restaurants = append(restaurants, *restaurant)
-	} else {
-		restaurants, err = b.repository.ListAllRestaurantsWithURL()
-		if err != nil {
-			return fmt.Errorf("failed to list restaurants: %w", err)
-		}
+// RunAll runs the backfill workflow for all restaurants.
+func (s *Scraper) RunAll(ctx context.Context) error {
+	restaurants, err := s.repository.ListAllRestaurantsWithURL(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list restaurants: %w", err)
 	}
 
-	log.WithFields(log.Fields{"count": len(restaurants)}).Info("restaurants to backfill")
+	log.WithFields(log.Fields{
+		"count": len(restaurants),
+	}).Info("start backfill for restaurants")
 
-	collector := b.client.GetCollector()
-	detailCollector := b.client.CreateDetailCollector()
+	collector := s.client.GetCollector()
+	detailCollector := s.client.GetDetailCollector()
 
-	mainQueue := b.client.GetQueue()
-
-	b.setupMainHandlers(collector, detailCollector)
-	b.setupDetailHandlers(ctx, detailCollector)
+	s.setupHandlers(collector, detailCollector)
+	s.setupDetailHandlers(ctx, detailCollector)
 
 	for _, r := range restaurants {
 		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
-		mainQueue.AddURL(api)
+		s.client.EnqueueURL(api)
 	}
 
-	log.Info("collecting Wayback snapshots for restaurants")
-	mainQueue.Run(collector)
-	log.Info("backfill completed")
+	s.client.Run()
+
+	// TODO: add summary of results
+	log.Info("complete backfill")
 	return nil
 }
 
-func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
+// Run runs the backfill workflow for a single restaurant URL.
+func (s *Scraper) Run(ctx context.Context, url string) error {
+	restaurant, err := s.repository.FindRestaurantByURL(ctx, url)
+	if err != nil {
+		return fmt.Errorf("failed to find restaurant by URL: %w", err)
+	}
+
+	log.WithFields(log.Fields{
+		"url": url,
+	}).Info("start backfill for restaurant")
+
+	collector := s.client.GetCollector()
+	detailCollector := s.client.GetDetailCollector()
+
+	s.setupHandlers(collector, detailCollector)
+	s.setupDetailHandlers(ctx, detailCollector)
+
+	api := "https://web.archive.org/cdx/search/cdx?url=" + restaurant.URL + "&output=json&fl=timestamp,original"
+	s.client.EnqueueURL(api)
+
+	s.client.Run()
+
+	log.Info("complete single restaurant backfill")
+	return nil
+}
+
+func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
+	collector.OnError(s.createErrorHandler())
+
 	collector.OnResponse(func(r *colly.Response) {
 		url := r.Request.URL.Query().Get("url")
 
@@ -129,7 +133,7 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 				"url":     url,
 				"cdx_api": r.Request.URL.String(),
 				"error":   err,
-			}).Warn("failed to parse CDX API response")
+			}).Warn("fail to parse CDX API response")
 			return
 		}
 
@@ -137,12 +141,12 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 			log.WithFields(log.Fields{
 				"url":     url,
 				"cdx_api": r.Request.URL.String(),
-			}).Debug("no snapshot rows found")
+			}).Debug("no snapshots found")
 			return
 		}
 
-		const minTimestampLen = 14
-		snapCount := 0
+		minTimestampLen := 14
+		snapshotCount := 0
 		for i, row := range rows {
 			if i == 0 || len(row) == 0 {
 				continue // skip header or malformed
@@ -159,26 +163,26 @@ func (b *Scraper) setupMainHandlers(collector *colly.Collector, detailCollector 
 			err := detailCollector.Visit(snapshotURL)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"error":        err,
-					"snapshot_url": snapshotURL,
-					"url":          url,
-				}).Debug("failed to visit snapshot URL")
+					"error":       err,
+					"wayback_url": snapshotURL,
+					"url":         url,
+				}).Debug("fail to visit snapshot URL")
 				continue
 			}
-			snapCount++
+			snapshotCount++
 		}
 
 		log.WithFields(log.Fields{
-			"url":       url,
-			"snapshots": snapCount,
-			"cdx_api":   r.Request.URL.String(),
-		}).Info("processed Wayback snapshot URLs")
+			"cdx_api":     r.Request.URL.String(),
+			"snapshots":   snapshotCount,
+			"status_code": r.StatusCode,
+		}).Info("process CDX API")
 	})
-
-	collector.OnError(b.createErrorHandler())
 }
 
-func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
+func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
+	detailCollector.OnError(s.createErrorHandler())
+
 	detailCollector.OnRequest(func(r *colly.Request) {
 		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
@@ -188,92 +192,74 @@ func (b *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		log.WithFields(log.Fields{
 			"attempt": attempt,
 			"url":     r.URL.String(),
-		}).Debug("fetching Wayback snapshot")
+		}).Debug("fetch Wayback snapshot")
 	})
 
-	detailCollector.OnError(b.createErrorHandler())
+	detailCollector.OnXML("html", func(e *colly.XMLElement) {
+		restaurantURL := extractOriginalURL(e.Request.URL.String())
 
-	detailCollector.OnResponse(func(r *colly.Response) {
-		html := r.Body
-		if html == nil {
-			log.WithFields(log.Fields{
-				"snapshot_url": r.Request.URL.String(),
-			}).Error("no HTML body for snapshot")
-			return
-		}
-
-		restaurantURL := extractOriginalURL(r.Request.URL.String())
-
-		restaurant, err := b.repository.FindRestaurantByURL(ctx, restaurantURL)
+		restaurant, err := s.repository.FindRestaurantByURL(ctx, restaurantURL)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error":        err,
-				"snapshot_url": r.Request.URL.String(),
-				"url":          restaurantURL,
-			}).Warn("no restaurant found for URL")
+				"error":       err,
+				"wayback_url": e.Request.URL.String(),
+				"url":         restaurantURL,
+			}).Error("no restaurant found for URL")
 			return
 		}
 
-		data, err := extractRestaurantAwardData(html)
+		data := s.extractData(e)
 
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error":        err,
-				"snapshot_url": r.Request.URL.String(),
-			}).Error("failed to parse award data from HTML")
-			return
-		}
-
-		distinction := parser.ParseDistinction(data.Distinction)
-		price := parser.MapPrice(data.Price)
+		distinction := extraction.ParseDistinction(data.Distinction)
+		price := extraction.MapPrice(data.Price)
 		if price == "" {
 			log.WithFields(log.Fields{
-				"price":        price,
-				"snapshot_url": r.Request.URL.String(),
-			}).Error("skipping award: price is empty")
+				"price":       price,
+				"wayback_url": e.Request.URL.String(),
+			}).Error("skip award: empty price")
 			return
 		}
 
-		year := parser.ParseYear(data.PublishedDate)
+		year := data.PublishedDate
 		if year == 0 {
 			log.WithFields(log.Fields{
 				"publishedDate": data.PublishedDate,
-				"snapshot_url":  r.Request.URL.String(),
-			}).Error("skipping award: invalid or missing year")
+				"wayback_url":   e.Request.URL.String(),
+			}).Error("skip award: invalid or missing year")
 			return
 		}
 
 		award := &models.RestaurantAward{
 			RestaurantID: restaurant.ID,
 			Distinction:  distinction,
-			Price:        price,
 			GreenStar:    data.GreenStar,
+			Price:        price,
+			WaybackURL:   e.Request.URL.String(),
 			Year:         year,
-			WaybackURL:   r.Request.URL.String(),
 		}
 
-		err = b.repository.SaveAward(ctx, award)
+		err = s.repository.SaveAward(ctx, award)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"error":        err,
-				"snapshot_url": r.Request.URL.String(),
-			}).Error("failed to upsert award")
+				"error":       err,
+				"wayback_url": e.Request.URL.String(),
+			}).Error("fail to save restaurant award")
 			return
 		}
 
 		log.WithFields(log.Fields{
-			"distinction":  distinction,
-			"name":         restaurant.Name,
-			"price":        price,
-			"snapshot_url": r.Request.URL.String(),
-			"url":          restaurant.URL,
-			"year":         year,
-		}).Info("upserted restaurant award")
+			"distinction": distinction,
+			"name":        restaurant.Name,
+			"price":       price,
+			"url":         restaurant.URL,
+			"wayback_url": e.Request.URL.String(),
+			"year":        year,
+		}).Debug("save restaurant award")
 	})
 }
 
 // createErrorHandler creates a reusable error handler for collectors with retry logic.
-func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
+func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
 		if v := r.Ctx.GetAny("attempt"); v != nil {
@@ -293,33 +279,33 @@ func (b *Scraper) createErrorHandler() func(*colly.Response, error) {
 		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
 		switch r.StatusCode {
 		case http.StatusForbidden:
-			log.WithFields(fields).Debug("request forbidden, skipping retry")
+			log.WithFields(fields).Debug("request forbidden, skip retry")
 			return
 		case http.StatusNotFound:
-			log.WithFields(fields).Debug("request not found, skipping retry")
+			log.WithFields(fields).Debug("request not found, skip retry")
 			return
 		}
 
 		// Do not retry if already visited.
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithFields(fields).Debug("request already visited, skipping retry")
+			log.WithFields(fields).Debug("already visited, skip retry")
 			return
 		}
 
-		shouldRetry := attempt < b.config.MaxRetry
+		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
-			if err := b.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache for request")
+			if err := s.client.ClearCache(r.Request); err != nil {
+				log.WithFields(fields).Error("fail to clear cache for request")
 			}
 
-			backoff := time.Duration(attempt) * b.config.Delay
+			backoff := time.Duration(attempt) * s.config.Delay
 			time.Sleep(backoff)
-			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
+			log.WithFields(fields).Warnf("fail request, retry after %v", backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("request failed after %d attempts, giving up", attempt)
+			log.WithFields(fields).Errorf("fail request after %d attempts", attempt)
 		}
 	}
 }

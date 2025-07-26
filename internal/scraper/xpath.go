@@ -5,7 +5,7 @@ const (
 	// E.g.: https://guide.michelin.com/en/restaurants/3-stars-michelin/
 	nextPageArrowButtonXPath = "//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']"
 	restaurantXPath          = "//div[contains(@class, 'card__menu selection-card')]"
-	restaurantDetailUrlXPath = "//a[@class='link']"
+	restaurantDetailURLXPath = "//a[@class='link']"
 	restaurantLocationXPath  = "//div[@class='card__menu-footer--score pl-text']"
 
 	// Individual restaurant detail page.
@@ -22,5 +22,5 @@ const (
 	restaurantNameXPath                  = "//*[@class='data-sheet__title']"
 	restaurantPhoneNumberXPath           = "//a[@data-event='CTA_tel']"
 	restaurantPriceAndCuisineXPath       = "//*[contains(@class, 'data-sheet__block--text')][2]"
-	restaurantWebsiteUrlXPath            = "//a[@data-event='CTA_website']"
+	restaurantWebsiteURLXPath            = "//a[@data-event='CTA_website']"
 )

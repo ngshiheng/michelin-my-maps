@@ -1,12 +1,12 @@
 {
-    "title": "Global MICHELIN Guide Award History & Analytics",
-    "description": "Explore a comprehensive, research-grade database of MICHELIN Guide restaurants worldwide. Includes complete award histories, provenance tracking, and analytics-ready data for mapping, research, and trend analysis from 2019 onward.",
+    "title": "Michelin Guide Awards Historical Dataset (2019–Present)",
+    "description": "Explore a comprehensive, research-grade database of The Michelin Guide restaurants worldwide. Includes complete award histories, provenance tracking, and analytics-ready data for mapping, research, and trend analysis from 2019 onward.",
     "license": "MIT",
     "license_url": "https://github.com/ngshiheng/michelin-my-maps/blob/main/LICENSE",
-    "source": "MICHELIN Guide",
+    "source": "The Michelin Guides",
     "source_url": "https://guide.michelin.com/en/restaurants",
     "about": "michelin-my-maps",
-    "about_url": "https://github.com/ngshiheng/michelin-my-maps",
+    "about_url": "https://jerrynsh.com/building-what-michelin-wouldnt-its-awards-history/",
     "plugins": {
         "datasette-cluster-map": {
             "latitude_column": "latitude",
@@ -37,21 +37,21 @@
                     }
                 },
                 "award_history": {
-                    "sql": "SELECT r.name, r.location, r.cuisine, COALESCE(NULLIF(ra.wayback_url,''), r.url ) as 'url', ra.year, ra.distinction, ra.price, ra.green_star FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN r.name = SUBSTR(:name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) AND (:start_year IS NULL OR :start_year = '' OR ra.year >= :start_year) AND (:end_year IS NULL OR :end_year = '' OR ra.year <= :end_year) ORDER BY r.name, ra.year DESC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
+                    "sql": "SELECT r.name, r.location, r.cuisine, COALESCE(NULLIF(ra.wayback_url,''), r.url ) as 'url', ra.distinction, ra.price, ra.year, ra.green_star FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN r.name = SUBSTR(:name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) AND (:start_year IS NULL OR :start_year = '' OR ra.year >= :start_year) AND (:end_year IS NULL OR :end_year = '' OR ra.year <= :end_year) ORDER BY r.name, ra.year DESC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
                     "title": "Track Award History",
                     "description": "Analyze the full award timeline for any restaurant. Filter by name (supports exact match with prefix '='), location, cuisine, distinction, start year, end year. Sorted by name and year. Default limit: 50.",
                     "params": ["name", "location", "cuisine", "distinction", "start_year", "end_year", "limit"]
                 },
                 "michelin_star_streaks": {
-                    "sql": "SELECT r.name, r.location, r.url, ra.distinction, ra.price, MIN(ra.year) as start_year, MAX(ra.year) as end_year, COUNT(*) as streak_length FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.distinction IN ('3 Stars', '2 Stars', '1 Star') AND (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN r.name = SUBSTR(:name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) AND (:start_year IS NULL OR :start_year = '' OR ra.year >= :start_year) AND (:end_year IS NULL OR :end_year = '' OR ra.year <= :end_year) GROUP BY r.id, ra.distinction HAVING streak_length >= 2 ORDER BY streak_length DESC, ra.distinction DESC, r.name LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
+                    "sql": "SELECT r.name, r.location, r.cuisine, r.url, ra.distinction, ra.price, MIN(ra.year) as start_year, MAX(ra.year) as end_year, COUNT(*) as streak_length FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.distinction IN ('3 Stars', '2 Stars', '1 Star') AND (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN r.name = SUBSTR(:name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) AND (:start_year IS NULL OR :start_year = '' OR ra.year >= :start_year) AND (:end_year IS NULL OR :end_year = '' OR ra.year <= :end_year) GROUP BY r.id, ra.distinction HAVING streak_length >= 2 ORDER BY streak_length DESC, ra.distinction DESC, r.name LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
                     "title": "Analyze Star Streaks",
-                    "description": "Discover restaurants with the longest consecutive years at each MICHELIN Star level. Filter by name (supports exact match with prefix '='), location, cuisine, distinction, start year, end year. Sorted by streak length and distinction. Default limit: 50.",
+                    "description": "Discover restaurants with the longest consecutive years at each Michelin Star level. Filter by name (supports exact match with prefix '='), location, cuisine, distinction, start year, end year. Sorted by streak length and distinction. Default limit: 50.",
                     "params": ["name", "location", "cuisine", "distinction", "start_year", "end_year", "limit"]
                 },
                 "award_change": {
                     "sql": "SELECT r.name, r.location, r.url, COUNT(*) as award_changes FROM (SELECT r.id, ra.year, ra.distinction, LAG(ra.distinction) OVER (PARTITION BY r.id ORDER BY ra.year) AS prev_distinction FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id) t JOIN restaurants r ON t.id = r.id WHERE t.prev_distinction IS NOT NULL AND t.distinction != t.prev_distinction AND (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN r.name = SUBSTR(:name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) GROUP BY r.id ORDER BY award_changes DESC, r.name LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 20 ELSE :limit END",
                     "title": "Award Change Leaders",
-                    "description": "See which restaurants have experienced the most changes in MICHELIN distinction. Filter by name (supports exact match with prefix '='), location, cuisine. Sorted by number of changes. Default limit: 20.",
+                    "description": "See which restaurants have experienced the most changes in Michelin distinction. Filter by name (supports exact match with prefix '='), location, cuisine. Sorted by number of changes. Default limit: 20.",
                     "params": ["name", "location", "cuisine", "limit"]
                 },
                 "cuisine_breakdown": {
@@ -81,7 +81,7 @@
                 "green_star_trends": {
                     "sql": "SELECT ra.year, COUNT(*) as green_star_count FROM restaurant_awards ra WHERE ra.green_star = 1 AND (:start_year IS NULL OR :start_year = '' OR ra.year >= :start_year) AND (:end_year IS NULL OR :end_year = '' OR ra.year <= :end_year) GROUP BY ra.year ORDER BY ra.year",
                     "title": "Green Star Trends",
-                    "description": "Track the rise of MICHELIN Green Stars over time. Filter by start year, end year. Sorted by year.",
+                    "description": "Track the rise of Michelin Green Stars over time. Filter by start year, end year. Sorted by year.",
                     "params": ["start_year", "end_year"]
                 }
             },
@@ -90,7 +90,7 @@
                     "sort": "updated_at",
                     "sortable_columns": ["name", "location", "cuisine", "created_at", "updated_at"],
                     "facets": ["location", "cuisine"],
-                    "description_html": "Core dataset of MICHELIN Guide restaurants with comprehensive information including location, cuisine type, facilities, and contact details.",
+                    "description_html": "Core dataset of Michelin Guide restaurants with comprehensive information including location, cuisine type, facilities, and contact details.",
                     "plugins": {
                         "datasette-cluster-map": {
                             "latitude_column": "latitude",
@@ -98,17 +98,17 @@
                         }
                     },
                     "columns": {
-                        "id": "Unique identifier for the restaurant",
+                        "id": "Internal unique identifier for the restaurant",
                         "address": "Address of the restaurant",
                         "cuisine": "Type of cuisines served at the restaurant",
-                        "description": "MICHELIN Guide description of the restaurant",
+                        "description": "Michelin Guide description of the restaurant",
                         "facilities_and_services": "Facilities and services offered at the restaurant",
                         "location": "Location of the restaurant",
                         "latitude": "Latitude coordinates of the restaurant",
                         "longitude": "Longitude coordinates of the restaurant",
                         "name": "Name of the restaurant",
                         "phone_number": "Contact phone number of the restaurant",
-                        "url": "MICHELIN Guide URL of the restaurant's listing",
+                        "url": "Michelin Guide URL of the restaurant's listing",
                         "website_url": "URL of the restaurant's official website",
                         "created_at": "Timestamp when the restaurant record was created",
                         "updated_at": "Timestamp when the restaurant record was last updated"
@@ -118,14 +118,14 @@
                     "sort": "updated_at",
                     "sortable_columns": ["year", "distinction", "price", "green_star", "created_at", "updated_at"],
                     "facets": ["year", "distinction", "price", "green_star"],
-                    "description_html": "Historical dataset of MICHELIN awards including stars, Bib Gourmand designations, price ranges, and Green Star sustainability awards by year.",
+                    "description_html": "Historical dataset of Michelin awards including stars, Bib Gourmand designations, price ranges, and Green Star sustainability awards by year.",
                     "columns": {
-                        "id": "Unique identifier for the award record",
+                        "id": "Internal unique identifier for the award record",
                         "restaurant_id": "Foreign key reference to the restaurant",
                         "year": "Year when the award was given",
-                        "distinction": "Type of MICHELIN distinction (e.g., 3 Stars, 2 Stars, 1 Star, Bib Gourmand, Selected Restaurants)",
+                        "distinction": "Type of Michelin distinction (e.g., 3 Stars, 2 Stars, 1 Star, Bib Gourmand, Selected Restaurants)",
                         "price": "Price range of the restaurant for this award year (e.g., $, $$, $$$)",
-                        "green_star": "Boolean indicating whether the restaurant received a MICHELIN Green Star for sustainable gastronomy practices",
+                        "green_star": "Boolean indicating whether the restaurant received a Michelin Green Star for sustainable gastronomy practices",
                         "created_at": "Timestamp when the award record was created",
                         "updated_at": "Timestamp when the award record was last updated"
                     }

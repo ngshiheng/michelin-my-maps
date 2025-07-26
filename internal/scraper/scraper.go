@@ -7,29 +7,16 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/queue"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/client"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/extraction"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/parser"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/webclient"
 	log "github.com/sirupsen/logrus"
 )
 
-// Config holds configuration for the scraper process.
-type Config struct {
-	AllowedDomains []string
-	CachePath      string
-	DatabasePath   string
-	Delay          time.Duration
-	MaxRetry       int
-	MaxURLs        int
-	RandomDelay    time.Duration
-	ThreadCount    int
-}
-
-// DefaultConfig returns a default config for the scraper.
-func DefaultConfig() *Config {
-	return &Config{
+// defaultConfig returns a default config for the scraper.
+func defaultConfig() *client.Config {
+	return &client.Config{
 		AllowedDomains: []string{"guide.michelin.com"},
 		CachePath:      "cache/scrape",
 		DatabasePath:   "data/michelin.db",
@@ -41,24 +28,23 @@ func DefaultConfig() *Config {
 	}
 }
 
-// Scraper orchestrates the web scraping process.
+// Scraper orchestrates the scraping process.
 type Scraper struct {
-	config       *Config
-	client       *webclient.WebClient
-	repository   storage.RestaurantRepository
-	michelinURLs []models.GuideURL
+	client     *client.Colly
+	config     *client.Config
+	repository storage.RestaurantRepository
 }
 
 // New returns a new Scraper with default settings.
 func New() (*Scraper, error) {
-	cfg := DefaultConfig()
+	cfg := defaultConfig()
 
 	repo, err := storage.NewSQLiteRepository(cfg.DatabasePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
-	wc, err := webclient.New(&webclient.Config{
+	cl, err := client.New(&client.Config{
 		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
 		Delay:          cfg.Delay,
@@ -67,61 +53,63 @@ func New() (*Scraper, error) {
 		MaxURLs:        cfg.MaxURLs,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create web client: %w", err)
+		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 
 	s := &Scraper{
-		client:     wc,
+		client:     cl,
 		config:     cfg,
 		repository: repo,
 	}
-	s.initURLs()
 	return s, nil
 }
 
-// initURLs initializes the default start URLs for all award distinctions.
-func (s *Scraper) initURLs() {
-	allAwards := []string{
-		models.ThreeStars,
-		models.TwoStars,
-		models.OneStar,
-		models.BibGourmand,
-		models.SelectedRestaurants,
-	}
-
-	for _, distinction := range allAwards {
-		url, ok := models.DistinctionURL[distinction]
-		if !ok {
-			continue
-		}
-
-		michelinURL := models.GuideURL{
-			Distinction: distinction,
-			URL:         url,
-		}
-		s.michelinURLs = append(s.michelinURLs, michelinURL)
-	}
-}
-
-// Run crawls Michelin Guide restaurant information from the configured URLs.
-func (s *Scraper) Run(ctx context.Context) error {
-	queue := s.client.GetQueue()
+// RunAll crawls Michelin Guide restaurant information from the configured URLs.
+func (s *Scraper) RunAll(ctx context.Context) error {
 	collector := s.client.GetCollector()
-	detailCollector := s.client.CreateDetailCollector()
+	detailCollector := s.client.GetDetailCollector()
 
-	s.setupMainHandlers(ctx, collector, queue, detailCollector)
-	s.setupDetailHandlers(ctx, detailCollector, queue)
+	s.setupHandlers(collector, detailCollector)
+	s.setupDetailHandlers(ctx, detailCollector)
 
-	for _, url := range s.michelinURLs {
-		s.client.AddURL(url.URL)
+	michelinGuideURLs := map[string]string{
+		models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
+		models.TwoStars:            "https://guide.michelin.com/en/restaurants/2-stars-michelin",
+		models.OneStar:             "https://guide.michelin.com/en/restaurants/1-star-michelin",
+		models.BibGourmand:         "https://guide.michelin.com/en/restaurants/bib-gourmand",
+		models.SelectedRestaurants: "https://guide.michelin.com/en/restaurants/the-plate-michelin",
+	}
+
+	for _, url := range michelinGuideURLs {
+		s.client.EnqueueURL(url)
 	}
 
 	s.client.Run()
-	log.Info("scraping completed")
+
+	// TODO: add summary of results
+	log.Info("complete scraping")
 	return nil
 }
 
-func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collector, q *queue.Queue, detailCollector *colly.Collector) {
+// Run scrapes a single restaurant URL for its details.
+func (s *Scraper) Run(ctx context.Context, url string) error {
+	detailCollector := s.client.GetDetailCollector()
+	s.setupDetailHandlers(ctx, detailCollector)
+
+	log.WithField("url", url).Info("scrape restaurant")
+	err := detailCollector.Visit(url)
+	if err != nil {
+		log.WithError(err).Error("failed to visit restaurant URL")
+		return err
+	}
+	detailCollector.Wait()
+	log.Info("complete single restaurant scraping")
+	return nil
+}
+
+func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
+	collector.OnError(s.createErrorHandler())
+
 	collector.OnRequest(func(r *colly.Request) {
 		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
@@ -131,23 +119,19 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 		log.WithFields(log.Fields{
 			"url":     r.URL.String(),
 			"attempt": attempt,
-		}).Debug("fetching listing page")
+		}).Debug("fetch listing page")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
 		log.WithFields(log.Fields{
 			"url":         r.Request.URL.String(),
 			"status_code": r.StatusCode,
-		}).Debug("processing listing page")
+		}).Info("process listing page")
 	})
 
-	collector.OnScraped(func(r *colly.Response) {
-		log.WithFields(log.Fields{"url": r.Request.URL.String()}).Debug("listing page parsed")
-	})
-
-	// Extract restaurant URLs from the main page and visit them
+	// Extract restaurant URLs from the listing page and visit them
 	collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
-		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailUrlXPath, "href"))
+		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailURLXPath, "href"))
 
 		location := e.ChildText(restaurantLocationXPath)
 		longitude := e.Attr("data-lng")
@@ -162,7 +146,7 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 			"location":  location,
 			"longitude": longitude,
 			"latitude":  latitude,
-		}).Debug("queueing restaurant detail page")
+		}).Debug("queue restaurant detail page")
 
 		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
@@ -171,14 +155,14 @@ func (s *Scraper) setupMainHandlers(ctx context.Context, collector *colly.Collec
 	collector.OnXML(nextPageArrowButtonXPath, func(e *colly.XMLElement) {
 		log.WithFields(log.Fields{
 			"url": e.Attr("href"),
-		}).Debug("queueing next page")
+		}).Debug("queue next page")
 		e.Request.Visit(e.Attr("href"))
 	})
-
-	collector.OnError(s.createErrorHandler())
 }
 
-func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector, q *queue.Queue) {
+func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
+	detailCollector.OnError(s.createErrorHandler())
+
 	detailCollector.OnRequest(func(r *colly.Request) {
 		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
@@ -186,48 +170,63 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			attempt = 1
 		}
 		log.WithFields(log.Fields{
-			"attempt":       attempt,
-			"url":           r.URL.String(),
-			"restaurant_id": r.Ctx.Get("restaurant_id"),
-		}).Debug("fetching restaurant detail")
+			"attempt": attempt,
+			"url":     r.URL.String(),
+		}).Debug("fetch restaurant detail")
 	})
 
 	detailCollector.OnXML(restaurantAwardPublishedYearXPath, func(e *colly.XMLElement) {
 		jsonLD := e.Text
-		year, err := parser.ParsePublishedYearFromJSONLD(jsonLD)
-		if err == nil && year > 0 {
-			e.Request.Ctx.Put("jsonLD", jsonLD)
-			e.Request.Ctx.Put("publishedYear", year)
-		}
+		year := extraction.ParsePublishedYear(jsonLD)
+		e.Request.Ctx.Put("publishedYear", year)
+
 	})
 
-	// Extract details of each restaurant and save to database
 	detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
-		data := s.extractRestaurantData(e)
+		data := s.extractData(e)
 
-		log.WithFields(log.Fields{
-			"distinction":   data.Distinction,
-			"name":          data.Name,
-			"restaurant_id": e.Request.Ctx.Get("restaurant_id"),
-			"url":           data.URL,
-		}).Debug("restaurant detail extracted")
-
-		if err := s.repository.UpsertRestaurantWithAward(ctx, data); err != nil {
+		restaurant := &models.Restaurant{
+			URL:                   data.URL,
+			Name:                  data.Name,
+			Description:           data.Description,
+			Address:               data.Address,
+			Location:              data.Location,
+			Latitude:              data.Latitude,
+			Longitude:             data.Longitude,
+			Cuisine:               data.Cuisine,
+			FacilitiesAndServices: data.FacilitiesAndServices,
+			PhoneNumber:           data.PhoneNumber,
+			WebsiteURL:            data.WebsiteURL,
+		}
+		if err := s.repository.SaveRestaurant(ctx, restaurant); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 				"url":   data.URL,
-			}).Error("failed to upsert restaurant award")
-		} else {
-			log.WithFields(log.Fields{
-				"distinction": data.Distinction,
-				"name":        data.Name,
-				"url":         data.URL,
-				"year":        data.Year,
-			}).Info("upserted restaurant award")
+			}).Error("fail to save restaurant")
+			return
 		}
-	})
 
-	detailCollector.OnError(s.createErrorHandler())
+		award := &models.RestaurantAward{
+			RestaurantID: restaurant.ID,
+			Year:         data.Year,
+			Distinction:  data.Distinction,
+			Price:        data.Price,
+			GreenStar:    data.GreenStar,
+		}
+		if err := s.repository.SaveAward(ctx, award); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"url":   data.URL,
+			}).Error("fail to save restaurant award")
+			return
+		}
+		log.WithFields(log.Fields{
+			"distinction": data.Distinction,
+			"name":        data.Name,
+			"url":         data.URL,
+			"year":        data.Year,
+		}).Debug("save restaurant and award")
+	})
 }
 
 // createErrorHandler creates a reusable error handler for collectors with retry logic.
@@ -249,24 +248,24 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		// Do not retry if already visited.
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithFields(fields).Debug("request already visited, skipping retry")
+			log.WithFields(fields).Warn("already visited, skip retry")
 			return
 		}
 
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("fail to clear cache for request")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
+			log.WithFields(fields).Warnf("fail request, retry after %v", backoff)
 			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("request failed after %d attempts, giving up", attempt)
+			log.WithFields(fields).Errorf("fail request after %d attempts", attempt)
 		}
 	}
 }

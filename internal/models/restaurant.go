@@ -10,21 +10,19 @@ import (
 
 // Restaurant stores information about a restaurant on Michelin Guide.
 type Restaurant struct {
-	ID                    uint   `gorm:"primaryKey"`
-	URL                   string `gorm:"unique;not null;index"`
-	Name                  string `gorm:"index:idx_name"`
-	Description           string `gorm:"not null"`
-	Address               string `gorm:"not null"`
-	Location              string `gorm:"not null;index:idx_location"`
-	Latitude              string `gorm:"not null"`
-	Longitude             string `gorm:"not null"`
-	Cuisine               string `gorm:"not null"`
+	ID                    uint              `gorm:"primaryKey"`
+	URL                   string            `gorm:"unique;not null;index"`
+	Address               string            `gorm:"not null"`
+	Awards                []RestaurantAward `gorm:"foreignKey:RestaurantID"`
+	Cuisine               string            `gorm:"not null"`
+	Description           string            `gorm:"not null"`
+	FacilitiesAndServices string            // Comma-separated string
+	Latitude              string            `gorm:"not null"`
+	Location              string            `gorm:"not null;index:idx_location"`
+	Longitude             string            `gorm:"not null"`
+	Name                  string            `gorm:"index:idx_name"`
 	PhoneNumber           string
-	FacilitiesAndServices string // Comma-separated string
 	WebsiteURL            string
-
-	// Relationship
-	Awards []RestaurantAward `gorm:"foreignKey:RestaurantID"`
 
 	CreatedAt time.Time `gorm:"type:datetime"`
 	UpdatedAt time.Time `gorm:"type:datetime"`
