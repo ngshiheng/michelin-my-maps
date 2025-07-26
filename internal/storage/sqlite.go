@@ -129,11 +129,14 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			if existing.GreenStar != award.GreenStar {
 				diff["green_star"] = fmt.Sprintf("%v → %v", existing.GreenStar, award.GreenStar)
 			}
-			log.WithFields(log.Fields{
-				"restaurant_id": existing.RestaurantID,
-				"year":          existing.Year,
-				"diff":          diff,
-			}).Warn("update award from Wayback")
+
+			if _, ok := diff["distinction"]; ok {
+				log.WithFields(log.Fields{
+					"restaurant_id": existing.RestaurantID,
+					"year":          existing.Year,
+					"diff":          diff,
+				}).Warn("update award from Wayback")
+			}
 		}
 
 		updates := map[string]any{
