@@ -98,7 +98,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 		return err
 	}
 
-	// Both are live scrape: upsert only if changed
+	// Scenario 1: Both live scrape
 	if existing.WaybackURL == "" && award.WaybackURL == "" {
 		if awardsEqual(&existing, award) {
 			return nil
@@ -116,7 +116,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			Updates(updates).Error
 	}
 
-	// Incoming is authoritative Wayback, always override existing
+	// Scenario 2: Incoming Wayback (authoritative),
 	if award.WaybackURL != "" {
 		if !awardsEqual(&existing, award) {
 			diff := map[string]string{}
@@ -152,7 +152,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			Updates(updates).Error
 	}
 
-	// Existing is Wayback, incoming is live scrape
+	// Scenario 3: Existing Wayback, incoming live scrape
 	if existing.WaybackURL != "" && award.WaybackURL == "" {
 		if !awardsEqual(&existing, award) {
 			diff := map[string]string{}
