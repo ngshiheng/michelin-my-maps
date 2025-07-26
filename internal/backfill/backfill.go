@@ -75,7 +75,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 
 	log.WithFields(log.Fields{
 		"count": len(restaurants),
-	}).Debug("starting backfill for restaurants")
+	}).Info("start backfill for restaurants")
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
@@ -91,7 +91,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.client.Run()
 
 	// TODO: add summary of results
-	log.Info("backfilling completed")
+	log.Info("complete backfill")
 	return nil
 }
 
@@ -104,7 +104,7 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 
 	log.WithFields(log.Fields{
 		"url": url,
-	}).Info("starting backfill for single restaurant")
+	}).Info("start backfill for restaurant")
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
@@ -117,14 +117,13 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 
 	s.client.Run()
 
-	log.Info("single restaurant backfill completed")
+	log.Info("complete single restaurant backfill")
 	return nil
 }
 
 func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
 	collector.OnError(s.createErrorHandler())
 
-	// Extract CDX API response
 	collector.OnResponse(func(r *colly.Response) {
 		url := r.Request.URL.Query().Get("url")
 
@@ -134,7 +133,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 				"url":     url,
 				"cdx_api": r.Request.URL.String(),
 				"error":   err,
-			}).Warn("failed to parse CDX API response")
+			}).Warn("fail to parse CDX API response")
 			return
 		}
 
@@ -142,7 +141,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			log.WithFields(log.Fields{
 				"url":     url,
 				"cdx_api": r.Request.URL.String(),
-			}).Debug("no snapshot rows found")
+			}).Debug("no snapshots found")
 			return
 		}
 
@@ -167,19 +166,18 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 					"error":       err,
 					"wayback_url": snapshotURL,
 					"url":         url,
-				}).Debug("failed to visit snapshot URL")
+				}).Debug("fail to visit snapshot URL")
 				continue
 			}
 			snapshotCount++
 		}
 
 		log.WithFields(log.Fields{
-			"url":       url,
-			"snapshots": snapshotCount,
-			"cdx_api":   r.Request.URL.String(),
-		}).Info("processed Wayback snapshot URLs")
+			"cdx_api":     r.Request.URL.String(),
+			"snapshots":   snapshotCount,
+			"status_code": r.StatusCode,
+		}).Info("process CDX API")
 	})
-
 }
 
 func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
@@ -194,7 +192,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		log.WithFields(log.Fields{
 			"attempt": attempt,
 			"url":     r.URL.String(),
-		}).Debug("fetching Wayback snapshot")
+		}).Debug("fetch Wayback snapshot")
 	})
 
 	detailCollector.OnXML("html", func(e *colly.XMLElement) {
@@ -206,7 +204,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 				"error":       err,
 				"wayback_url": e.Request.URL.String(),
 				"url":         restaurantURL,
-			}).Warn("no restaurant found for URL")
+			}).Error("no restaurant found for URL")
 			return
 		}
 
@@ -218,7 +216,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"price":       price,
 				"wayback_url": e.Request.URL.String(),
-			}).Error("skipping award: price is empty")
+			}).Error("skip award: empty price")
 			return
 		}
 
@@ -227,7 +225,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"publishedDate": data.PublishedDate,
 				"wayback_url":   e.Request.URL.String(),
-			}).Error("skipping award: invalid or missing year")
+			}).Error("skip award: invalid or missing year")
 			return
 		}
 
@@ -245,7 +243,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"error":       err,
 				"wayback_url": e.Request.URL.String(),
-			}).Error("failed to upsert award")
+			}).Error("fail to save restaurant award")
 			return
 		}
 
@@ -253,10 +251,10 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			"distinction": distinction,
 			"name":        restaurant.Name,
 			"price":       price,
-			"wayback_url": e.Request.URL.String(),
 			"url":         restaurant.URL,
+			"wayback_url": e.Request.URL.String(),
 			"year":        year,
-		}).Info("upserted restaurant award")
+		}).Debug("save restaurant award")
 	})
 }
 
@@ -281,33 +279,33 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
 		switch r.StatusCode {
 		case http.StatusForbidden:
-			log.WithFields(fields).Debug("request forbidden, skipping retry")
+			log.WithFields(fields).Debug("request forbidden, skip retry")
 			return
 		case http.StatusNotFound:
-			log.WithFields(fields).Debug("request not found, skipping retry")
+			log.WithFields(fields).Debug("request not found, skip retry")
 			return
 		}
 
 		// Do not retry if already visited.
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithFields(fields).Debug("request already visited, skipping retry")
+			log.WithFields(fields).Debug("already visited, skip retry")
 			return
 		}
 
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("fail to clear cache for request")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
 			time.Sleep(backoff)
-			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
+			log.WithFields(fields).Warnf("fail request, retry after %v", backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("request failed after %d attempts, giving up", attempt)
+			log.WithFields(fields).Errorf("fail request after %d attempts", attempt)
 		}
 	}
 }

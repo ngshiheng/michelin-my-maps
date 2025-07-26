@@ -87,24 +87,23 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.client.Run()
 
 	// TODO: add summary of results
-	log.Info("scraping completed")
+	log.Info("complete scraping")
 	return nil
 }
 
-// Run scrapes a single restaurant detail page and upserts the data.
-// FIXME: we need to parse location longitude and latitude from the page.
+// Run scrapes a single restaurant URL for its details.
 func (s *Scraper) Run(ctx context.Context, url string) error {
 	detailCollector := s.client.GetDetailCollector()
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	log.WithField("url", url).Info("scraping single restaurant")
+	log.WithField("url", url).Info("scrape restaurant")
 	err := detailCollector.Visit(url)
 	if err != nil {
 		log.WithError(err).Error("failed to visit restaurant URL")
 		return err
 	}
 	detailCollector.Wait()
-	log.Info("single restaurant scraping completed")
+	log.Info("complete single restaurant scraping")
 	return nil
 }
 
@@ -120,18 +119,14 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		log.WithFields(log.Fields{
 			"url":     r.URL.String(),
 			"attempt": attempt,
-		}).Debug("fetching listing page")
+		}).Debug("fetch listing page")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
 		log.WithFields(log.Fields{
 			"url":         r.Request.URL.String(),
 			"status_code": r.StatusCode,
-		}).Debug("processing listing page")
-	})
-
-	collector.OnScraped(func(r *colly.Response) {
-		log.WithFields(log.Fields{"url": r.Request.URL.String()}).Debug("listing page parsed")
+		}).Info("process listing page")
 	})
 
 	// Extract restaurant URLs from the listing page and visit them
@@ -151,7 +146,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			"location":  location,
 			"longitude": longitude,
 			"latitude":  latitude,
-		}).Debug("queueing restaurant detail page")
+		}).Debug("queue restaurant detail page")
 
 		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
@@ -160,7 +155,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 	collector.OnXML(nextPageArrowButtonXPath, func(e *colly.XMLElement) {
 		log.WithFields(log.Fields{
 			"url": e.Attr("href"),
-		}).Debug("queueing next page")
+		}).Debug("queue next page")
 		e.Request.Visit(e.Attr("href"))
 	})
 }
@@ -175,10 +170,9 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			attempt = 1
 		}
 		log.WithFields(log.Fields{
-			"attempt":       attempt,
-			"url":           r.URL.String(),
-			"restaurant_id": r.Ctx.Get("restaurant_id"),
-		}).Debug("fetching restaurant detail")
+			"attempt": attempt,
+			"url":     r.URL.String(),
+		}).Debug("fetch restaurant detail")
 	})
 
 	detailCollector.OnXML(restaurantAwardPublishedYearXPath, func(e *colly.XMLElement) {
@@ -188,7 +182,6 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 	})
 
-	// Extract details of each restaurant and save to database
 	detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
 		data := s.extractData(e)
 
@@ -209,7 +202,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"error": err,
 				"url":   data.URL,
-			}).Error("failed to save restaurant")
+			}).Error("fail to save restaurant")
 			return
 		}
 
@@ -224,7 +217,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithFields(log.Fields{
 				"error": err,
 				"url":   data.URL,
-			}).Error("failed to save restaurant award")
+			}).Error("fail to save restaurant award")
 			return
 		}
 		log.WithFields(log.Fields{
@@ -232,7 +225,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			"name":        data.Name,
 			"url":         data.URL,
 			"year":        data.Year,
-		}).Info("saved restaurant and award")
+		}).Debug("save restaurant and award")
 	})
 }
 
@@ -255,24 +248,24 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		// Do not retry if already visited.
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithFields(fields).Debug("request already visited, skipping retry")
+			log.WithFields(fields).Warn("already visited, skip retry")
 			return
 		}
 
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("fail to clear cache for request")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).Warnf("request failed, retrying after %v", backoff)
+			log.WithFields(fields).Warnf("fail request, retry after %v", backoff)
 			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("request failed after %d attempts, giving up", attempt)
+			log.WithFields(fields).Errorf("fail request after %d attempts", attempt)
 		}
 	}
 }

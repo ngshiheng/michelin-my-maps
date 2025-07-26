@@ -60,12 +60,12 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 	return &SQLiteRepository{db: db}, nil
 }
 
-// SaveRestaurant saves a restaurant to the database.
+// SaveRestaurant saves or updates a restaurant in the database.
+// If the restaurant already exists (identified by URL), it updates the existing record.
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
 	log.WithFields(log.Fields{
-		"id":  restaurant.ID,
 		"url": restaurant.URL,
-	}).Debug("upserting restaurant")
+	}).Debug("upsert restaurant")
 
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "url"}},
@@ -125,7 +125,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 				"restaurant_id": existing.RestaurantID,
 				"year":          existing.Year,
 				"diff":          diff,
-			}).Warn("award updated: authoritative Wayback")
+			}).Warn("update award from Wayback")
 		}
 		// Overwrite all fields with authoritative Wayback data
 		id := existing.ID
@@ -154,7 +154,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					"restaurant_id": existing.RestaurantID,
 					"year":          existing.Year,
 					"diff":          diff,
-				}).Warn("award updated: Wayback → Live")
+				}).Warn("update award from Wayback to Live")
 				award.ID = existing.ID
 				return r.db.WithContext(ctx).Save(award).Error
 			} else {
@@ -162,7 +162,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					"restaurant_id": existing.RestaurantID,
 					"year":          existing.Year,
 					"diff":          diff,
-				}).Error("award conflict: Wayback vs Live (not overridden)")
+				}).Warn("award conflict: Wayback vs Live (not overridden)")
 			}
 		}
 		return nil
@@ -188,6 +188,6 @@ func (r *SQLiteRepository) ListAllRestaurantsWithURL(ctx context.Context) ([]mod
 	}
 	log.WithFields(log.Fields{
 		"count": len(restaurants),
-	}).Debug("retrieved all restaurants with URL")
+	}).Debug("retrieve all restaurants with URL")
 	return restaurants, nil
 }
