@@ -80,7 +80,7 @@ var RestaurantSelectors = map[string][]string{
 	"address": {
 		"//*[contains(@class,'data-sheet__block--text')][1]",
 		"//*[contains(@class,'restaurant-details__heading--address')]",
-		"//li[i[contains(@class,'fa-map-marker-alt')]]/text()[normalize-space()]",
+		"//li[*[contains(@class,'fa-map-marker-alt')]]/text()[normalize-space()]",
 	},
 	"priceAndCuisine": {
 		"//div[contains(@class,'data-sheet__block--text')][2]",
@@ -122,6 +122,7 @@ var AwardSelectors = map[string][]string{
 	},
 	"price": {
 		"//div[contains(@class,'data-sheet__block--text')][2]",                     // Modern
+		"//div[@class='col-lg-12']/p",                                              // ???
 		"//li[contains(@class,'restaurant-details__heading-price')]",               // Legacy
 		"//span[contains(@class,'mg-price') or contains(@class,'mg-euro-circle')]", // Price spans
 		"//div[contains(@class,'data-sheet__block--text')]",                        // Generic block text

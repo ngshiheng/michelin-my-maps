@@ -8,11 +8,11 @@ import (
 )
 
 // parseLocationFromAddress extracts location information from address string
+// return the last part as location (usually city/country)
+// FIXME: could be enhanced with more sophisticated parsing
 func parseLocationFromAddress(address string) string {
-	// Simple location extraction - could be enhanced with more sophisticated parsing
 	parts := strings.Split(address, ",")
 	if len(parts) >= 2 {
-		// Return the last part as location (usually city/country)
 		return strings.TrimSpace(parts[len(parts)-1])
 	}
 	return ""
