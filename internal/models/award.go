@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -19,7 +20,7 @@ const (
 // RestaurantAward stores award information for a restaurant in a specific year.
 type RestaurantAward struct {
 	ID           uint   `gorm:"primaryKey"`
-	WaybackURL   string `gorm:"column:wayback_url"`
+	WaybackURL   string `gorm:"column:wayback_url"` // "" for live scraping, URL for backfill
 	RestaurantID uint   `gorm:"not null;index:idx_restaurant_year;constraint:OnDelete:CASCADE;uniqueIndex:idx_restaurant_year_unique"`
 	Distinction  string `gorm:"not null;index:idx_distinction"`
 	GreenStar    bool
@@ -63,7 +64,7 @@ func (r *RestaurantAward) validate() error {
 	}
 	currentYear := time.Now().Year()
 	if r.Year < 1900 || r.Year > currentYear+1 {
-		return errors.New("year must be between 1900 and next year")
+		return fmt.Errorf("year must be between 1900 and %d", currentYear)
 	}
 	return nil
 }

@@ -123,7 +123,7 @@ var AwardSelectors = map[string][]string{
 	"price": {
 		"//div[contains(@class,'data-sheet__block--text')][2]",                     // Modern
 		"//div[@class='col-lg-12']/p",                                              // ???
-		"//li[contains(@class,'restaurant-details__heading-price')]",               // Legacy
+		"//*[contains(@class,'restaurant-details__heading-price')]",                // Legacy
 		"//span[contains(@class,'mg-price') or contains(@class,'mg-euro-circle')]", // Price spans
 		"//div[contains(@class,'data-sheet__block--text')]",                        // Generic block text
 	},

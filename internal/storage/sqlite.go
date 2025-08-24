@@ -51,7 +51,6 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 		}
 	}
 
-	// Auto-migrate the Restaurant and RestaurantAward models
 	if err := db.AutoMigrate(&models.Restaurant{}, &models.RestaurantAward{}); err != nil {
 		return nil, fmt.Errorf("failed to auto-migrate models: %w", err)
 	}
@@ -60,7 +59,6 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 }
 
 // SaveRestaurant saves or updates a restaurant in the database
-// If the restaurant already exists (identified by URL), it updates the existing record
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
 	log.WithFields(log.Fields{
 		"url": restaurant.URL,
@@ -105,10 +103,12 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 
 		updates := map[string]any{
 			"distinction": award.Distinction,
-			"price":       award.Price,
 			"green_star":  award.GreenStar,
 			"wayback_url": award.WaybackURL,
 			"year":        award.Year,
+		}
+		if award.Price != "" {
+			updates["price"] = award.Price
 		}
 		return r.db.WithContext(ctx).
 			Model(&existing).
@@ -140,10 +140,12 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 
 		updates := map[string]any{
 			"distinction": award.Distinction,
-			"price":       award.Price,
 			"green_star":  award.GreenStar,
 			"wayback_url": award.WaybackURL,
 			"year":        award.Year,
+		}
+		if award.Price != "" {
+			updates["price"] = award.Price
 		}
 
 		return r.db.WithContext(ctx).
@@ -178,7 +180,6 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 
 				updates := map[string]any{
 					"distinction": award.Distinction,
-					"price":       award.Price,
 					"green_star":  award.GreenStar,
 					"wayback_url": award.WaybackURL,
 					"year":        award.Year,

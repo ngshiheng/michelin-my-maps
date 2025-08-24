@@ -68,7 +68,7 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 		Distinction:  data.Distinction,
 		Price:        data.Price,
 		GreenStar:    data.GreenStar,
-		WaybackURL:   data.WaybackURL, // "" for live scraping, URL for backfill
+		WaybackURL:   data.WaybackURL,
 	}
 
 	if err := repo.SaveAward(ctx, award); err != nil {

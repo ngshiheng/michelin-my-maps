@@ -214,7 +214,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).Warnf("fail request, retry after %v", backoff)
+			log.WithFields(fields).Debugf("fail request, retry after %v", backoff)
 			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
