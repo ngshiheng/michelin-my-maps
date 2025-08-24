@@ -10,8 +10,7 @@ import (
 
 	"github.com/gocolly/colly/v2"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/client"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/extraction"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/handlers"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
 	log "github.com/sirupsen/logrus"
 )
@@ -30,14 +29,14 @@ func defaultConfig() *client.Config {
 	}
 }
 
-// Scraper orchestrates the Wayback backfill process.
+// Scraper orchestrates the Wayback backfill process
 type Scraper struct {
 	client     *client.Colly
 	config     *client.Config
 	repository storage.RestaurantRepository
 }
 
-// New creates a new Scraper with default config and repository.
+// New creates a new Scraper with default config and repository
 func New() (*Scraper, error) {
 	cfg := defaultConfig()
 
@@ -66,9 +65,9 @@ func New() (*Scraper, error) {
 	return s, nil
 }
 
-// RunAll runs the backfill workflow for all restaurants.
+// RunAll runs the backfill workflow for all restaurants
 func (s *Scraper) RunAll(ctx context.Context) error {
-	restaurants, err := s.repository.ListAllRestaurantsWithURL(ctx)
+	restaurants, err := s.repository.ListRestaurants(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to list restaurants: %w", err)
 	}
@@ -87,7 +86,6 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
 		s.client.EnqueueURL(api)
 	}
-
 	s.client.Run()
 
 	// TODO: add summary of results
@@ -95,16 +93,11 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	return nil
 }
 
-// Run runs the backfill workflow for a single restaurant URL.
+// Run runs the backfill workflow for a single restaurant URL
 func (s *Scraper) Run(ctx context.Context, url string) error {
-	restaurant, err := s.repository.FindRestaurantByURL(ctx, url)
-	if err != nil {
-		return fmt.Errorf("failed to find restaurant by URL: %w", err)
-	}
-
 	log.WithFields(log.Fields{
 		"url": url,
-	}).Info("start backfill for restaurant")
+	}).Debug("start backfill for restaurant")
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
@@ -112,9 +105,8 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	s.setupHandlers(collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	api := "https://web.archive.org/cdx/search/cdx?url=" + restaurant.URL + "&output=json&fl=timestamp,original"
+	api := "https://web.archive.org/cdx/search/cdx?url=" + url + "&output=json&fl=timestamp,original"
 	s.client.EnqueueURL(api)
-
 	s.client.Run()
 
 	log.Info("complete single restaurant backfill")
@@ -123,6 +115,9 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 
 func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
 	collector.OnError(s.createErrorHandler())
+
+	// TODO: create the following function to improve debugging capabilities
+	// collector.OnRequest(func(r *colly.Request) {}
 
 	collector.OnResponse(func(r *colly.Response) {
 		url := r.Request.URL.Query().Get("url")
@@ -196,65 +191,10 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	})
 
 	detailCollector.OnXML("html", func(e *colly.XMLElement) {
-		restaurantURL := extractOriginalURL(e.Request.URL.String())
-
-		restaurant, err := s.repository.FindRestaurantByURL(ctx, restaurantURL)
+		err := handlers.Handle(ctx, e, s.repository)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"error":       err,
-				"wayback_url": e.Request.URL.String(),
-				"url":         restaurantURL,
-			}).Error("no restaurant found for URL")
-			return
+			log.WithError(err).Error("failed to handle restaurant extraction")
 		}
-
-		data := s.extractData(e)
-
-		distinction := extraction.ParseDistinction(data.Distinction)
-		price := extraction.MapPrice(data.Price)
-		if price == "" {
-			log.WithFields(log.Fields{
-				"price":       price,
-				"wayback_url": e.Request.URL.String(),
-			}).Error("skip award: empty price")
-			return
-		}
-
-		year := data.PublishedDate
-		if year == 0 {
-			log.WithFields(log.Fields{
-				"publishedDate": data.PublishedDate,
-				"wayback_url":   e.Request.URL.String(),
-			}).Error("skip award: invalid or missing year")
-			return
-		}
-
-		award := &models.RestaurantAward{
-			RestaurantID: restaurant.ID,
-			Distinction:  distinction,
-			GreenStar:    data.GreenStar,
-			Price:        price,
-			WaybackURL:   e.Request.URL.String(),
-			Year:         year,
-		}
-
-		err = s.repository.SaveAward(ctx, award)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error":       err,
-				"wayback_url": e.Request.URL.String(),
-			}).Error("fail to save restaurant award")
-			return
-		}
-
-		log.WithFields(log.Fields{
-			"distinction": distinction,
-			"name":        restaurant.Name,
-			"price":       price,
-			"url":         restaurant.URL,
-			"wayback_url": e.Request.URL.String(),
-			"year":        year,
-		}).Debug("save restaurant award")
 	})
 }
 
@@ -275,6 +215,11 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			"url":         r.Request.URL.String(),
 		}
 
+		if strings.Contains(err.Error(), "already visited") {
+			log.WithFields(fields).Debug("already visited, skip retry")
+			return
+		}
+
 		// We don't retry 403 Forbidden errors, as they indicate restricted access and retries won't help.
 		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
 		switch r.StatusCode {
@@ -283,12 +228,6 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			return
 		case http.StatusNotFound:
 			log.WithFields(fields).Debug("request not found, skip retry")
-			return
-		}
-
-		// Do not retry if already visited.
-		if strings.Contains(err.Error(), "already visited") {
-			log.WithFields(fields).Debug("already visited, skip retry")
 			return
 		}
 

@@ -13,12 +13,12 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// SQLiteRepository implements RestaurantRepository using SQLite database.
+// SQLiteRepository implements RestaurantRepository using SQLite database
 type SQLiteRepository struct {
 	db *gorm.DB
 }
 
-// NewSQLiteRepository creates a new SQLite repository instance.
+// NewSQLiteRepository creates a new SQLite repository instance
 func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 	dsn := fmt.Sprintf("%s?_loc=UTC", dbPath)
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
@@ -32,7 +32,6 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Get the generic database object sql.DB to use its functions
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database object: %w", err)
@@ -60,8 +59,8 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 	return &SQLiteRepository{db: db}, nil
 }
 
-// SaveRestaurant saves or updates a restaurant in the database.
-// If the restaurant already exists (identified by URL), it updates the existing record.
+// SaveRestaurant saves or updates a restaurant in the database
+// If the restaurant already exists (identified by URL), it updates the existing record
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
 	log.WithFields(log.Fields{
 		"url": restaurant.URL,
@@ -78,7 +77,7 @@ func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *model
 	}).Create(restaurant).Error
 }
 
-// SaveAward saves or updates a restaurant award in the database.
+// SaveAward saves or updates a restaurant award in the database
 func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.RestaurantAward) error {
 	awardsEqual := func(a, b *models.RestaurantAward) bool {
 		return a.Distinction == b.Distinction &&
@@ -210,8 +209,8 @@ func (r *SQLiteRepository) FindRestaurantByURL(ctx context.Context, url string) 
 	return &restaurant, nil
 }
 
-// ListAllRestaurantsWithURL retrieves all restaurants that have a non-empty URL.
-func (r *SQLiteRepository) ListAllRestaurantsWithURL(ctx context.Context) ([]models.Restaurant, error) {
+// ListRestaurants retrieves all restaurants that have a non-empty URL.
+func (r *SQLiteRepository) ListRestaurants(ctx context.Context) ([]models.Restaurant, error) {
 	var restaurants []models.Restaurant
 	err := r.db.WithContext(ctx).Where("url != ''").Find(&restaurants).Error
 	if err != nil {

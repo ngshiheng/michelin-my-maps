@@ -1,4 +1,4 @@
-package extraction
+package parsers
 
 import (
 	"regexp"
@@ -7,8 +7,8 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 )
 
-// Michelin distinction patterns for parsing award levels
 var (
+	// Michelin distinction patterns for parsing award levels
 	re3Stars      = regexp.MustCompile(`(?i)\b(three|3)\b.*?\bstars?\b`)
 	re2Stars      = regexp.MustCompile(`(?i)\b(two|2)\b.*?\bstars?\b`)
 	re1Star       = regexp.MustCompile(`(?i)\b(one|1)\b.*?\bstar\b`)
@@ -16,14 +16,14 @@ var (
 	reSelected    = regexp.MustCompile(`(?i)\bselected\s*restaurants?\b|\bplate\b`)
 )
 
-// ParseGreenStarValue converts string representation to boolean for GreenStar field.
-func ParseGreenStarValue(greenStar string) bool {
-	return strings.EqualFold(greenStar, "True") ||
-		strings.EqualFold(greenStar, "michelin green star")
+func parseGreenStar(text string) string {
+	if strings.Contains(strings.ToLower(text), "green star") {
+		return "true"
+	}
+	return "false"
 }
 
-// ParseDistinction parses the Michelin distinction based on the input string.
-func ParseDistinction(distinction string) string {
+func parseDistinction(distinction string) string {
 	s := strings.ToLower(distinction)
 	s = decodeHTMLEntities(s)
 	s = strings.Trim(s, " .!?,;:-")
@@ -45,7 +45,6 @@ func ParseDistinction(distinction string) string {
 	}
 }
 
-// decodeHTMLEntities decodes basic HTML entities (extend as needed)
 func decodeHTMLEntities(s string) string {
 	s = strings.ReplaceAll(s, "&bull;", "")
 	s = strings.ReplaceAll(s, "•", "")

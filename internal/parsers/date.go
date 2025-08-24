@@ -1,4 +1,4 @@
-package extraction
+package parsers
 
 import (
 	"encoding/json"
@@ -25,6 +25,34 @@ var commonDateLayouts = []string{
 	"2006-01-02T15:04:05", // Full ISO with seconds
 	"2006-01-02T15:04",    // ISO with hours and minutes
 	"2006-01-02",          // Date only
+}
+
+func parsePublishedDate(text string) string {
+	// Try JSON-LD first
+	if year := ParsePublishedYear(text); year != 0 {
+		return strconv.Itoa(year)
+	}
+
+	// Try text parsing
+	if date := ParseDateFromText(text); date != "" {
+		return date
+	}
+
+	return text
+}
+
+func parseYear(dateText string) int {
+	if dateText == "" {
+		return 0
+	}
+
+	// Try to parse as integer first
+	if year, err := strconv.Atoi(dateText); err == nil && year > 1900 && year < 3000 {
+		return year
+	}
+
+	// Try extraction from any format
+	return ParseYearFromAnyFormat(dateText)
 }
 
 // ParseDateFromText attempts to parse a date from text using all known date patterns.
@@ -144,4 +172,69 @@ func ParsePublishedYear(jsonLD string) int {
 func validateYear(year int) bool {
 	currentYear := time.Now().Year()
 	return year >= 1900 && year <= currentYear+1 // Allow one year in future for edge cases
+}
+
+/*
+ParseCoordinates extracts latitude and longitude from a Michelin Guide JSON-LD script.
+Returns the coordinates as strings to match the database schema.
+Returns empty strings if coordinates are not found or invalid.
+*/
+func ParseCoordinates(jsonLD string) (latitude, longitude string) {
+	if jsonLD == "" {
+		return "", ""
+	}
+
+	var ld map[string]any
+	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
+		return "", ""
+	}
+
+	parseCoordinate := func(value any) (string, bool) {
+		switch v := value.(type) {
+		case string:
+			if v != "" && validateCoordinate(v) {
+				return v, true
+			}
+		case float64:
+			coordStr := strconv.FormatFloat(v, 'f', -1, 64)
+			if validateCoordinate(coordStr) {
+				return coordStr, true
+			}
+		case int:
+			coordStr := strconv.Itoa(v)
+			if validateCoordinate(coordStr) {
+				return coordStr, true
+			}
+		}
+		return "", false
+	}
+
+	// Extract latitude
+	if latValue, ok := ld["latitude"]; ok {
+		if lat, valid := parseCoordinate(latValue); valid {
+			latitude = lat
+		}
+	}
+
+	// Extract longitude
+	if lngValue, ok := ld["longitude"]; ok {
+		if lng, valid := parseCoordinate(lngValue); valid {
+			longitude = lng
+		}
+	}
+
+	return latitude, longitude
+}
+
+// validateCoordinate checks if a coordinate string represents a valid latitude or longitude.
+func validateCoordinate(coordStr string) bool {
+	coord, err := strconv.ParseFloat(coordStr, 64)
+	if err != nil {
+		return false
+	}
+
+	// Basic validation: coordinates should be reasonable values
+	// Latitude: -90 to 90, Longitude: -180 to 180
+	// We'll do a broader check here since we don't know which is which
+	return coord >= -180.0 && coord <= 180.0
 }

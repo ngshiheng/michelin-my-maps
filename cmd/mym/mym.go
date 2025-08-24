@@ -14,18 +14,18 @@ import (
 )
 
 const (
-	versionLongFlag  = "--version"
-	versionShortFlag = "-v"
 	helpLongFlag     = "--help"
 	helpShortFlag    = "-h"
+	versionLongFlag  = "--version"
+	versionShortFlag = "-v"
 )
 
 const (
-	commandScrape   = "scrape"
 	commandBackfill = "backfill"
+	commandScrape   = "scrape"
 )
 
-// run contains the main application logic
+// run contains the main application logic of the CLI tool
 func run() error {
 	if len(os.Args) < 2 {
 		printUsage()
@@ -65,11 +65,11 @@ func handleCommand(arg []string) error {
 func printVersion() {
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
-		fmt.Println("unable to determine version information.")
+		fmt.Println("unable to determine build information.")
 		return
 	}
 
-	version := "unknown"
+	version := "development"
 	if buildInfo.Main.Version != "" {
 		version = buildInfo.Main.Version
 	}
@@ -120,7 +120,7 @@ func handleScrape(args []string) error {
 
 	app, err := scraper.New()
 	if err != nil {
-		return fmt.Errorf("failed to create scraper: %w", err)
+		return fmt.Errorf("failed to create live scraper: %w", err)
 	}
 
 	log.Info("starting scrape command")
@@ -158,6 +158,7 @@ func handleBackfill(args []string) error {
 	return app.RunAll(ctx)
 }
 
+// main is the entry point for the mym CLI tool
 func main() {
 	os.Setenv("TZ", time.UTC.String())
 	time.Local = time.UTC

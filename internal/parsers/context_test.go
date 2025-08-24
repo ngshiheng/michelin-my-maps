@@ -1,4 +1,4 @@
-package extraction
+package parsers
 
 import (
 	"testing"

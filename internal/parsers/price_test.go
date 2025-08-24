@@ -1,4 +1,4 @@
-package extraction
+package parsers
 
 import (
 	"testing"
@@ -25,51 +25,9 @@ func TestValidatePriceText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := ValidatePriceText(tt.input)
+			got := parsePrice(tt.input)
 			if got != tt.expected {
-				t.Errorf("ValidatePriceText(%q) = %q; want %q", tt.input, got, tt.expected)
-			}
-		})
-	}
-}
-
-func TestMapPrice(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{"CAT_P01", "$"},
-		{"CAT_P02", "$$"},
-		{"CAT_P03", "$$$"},
-		{"CAT_P04", "$$$$"},
-		{"", ""},
-		{"random", "random"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			got := MapPrice(tt.input)
-			if got != tt.expected {
-				t.Errorf("MapPrice(%q) = %q; want %q", tt.input, got, tt.expected)
-			}
-		})
-	}
-}
-
-func TestCleanPriceValue(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{`$$$$\"`, "$$$$\""},
-		{`€€€`, "€€€"},
-		{`155\\\"EUR`, "155\"EUR"},
-		{"", ""},
-	}
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			got := CleanPriceValue(tt.input)
-			if got != tt.expected {
-				t.Errorf("CleanPriceValue(%q) = %q; want %q", tt.input, got, tt.expected)
+				t.Errorf("parsePrice(%q) = %q; want %q", tt.input, got, tt.expected)
 			}
 		})
 	}

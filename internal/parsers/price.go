@@ -1,12 +1,10 @@
-package extraction
+package parsers
 
 import (
 	"regexp"
 	"strings"
 )
 
-// Shared price validation regex patterns for extracting price information from HTML text.
-// These patterns handle various price formats found on Michelin Guide pages.
 var (
 	// currencyRegex matches pure currency symbols (e.g., "$$$$", "€€€€")
 	currencyRegex = regexp.MustCompile(`^[€$£¥₩₽₹฿₺﷼₫]+$`)
@@ -30,19 +28,14 @@ var (
 	lessThanRegex = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
 )
 
-// Price separators commonly found in price information that need to be stripped
-// Original data: "$$$ · French cuisine", "€€€ • Modern European"
-const priceSeparators = "·•"
-
-// ValidatePriceText processes and validates a price text candidate against known patterns.
-// Returns the valid price string or empty string if no valid pattern matches.
-func ValidatePriceText(text string) string {
+// parsePrice processes and validates a price text candidate against known patterns.
+func parsePrice(text string) string {
+	const priceSeparators = "·•"
 	candidate := normalizePriceText(text, priceSeparators)
 	if candidate == "" {
 		return ""
 	}
 
-	// Check against all known price patterns in order of preference
 	priceValidators := []func(string) string{
 		validateCurrencySymbols,
 		validatePriceWithCurrencyCode,
@@ -65,7 +58,6 @@ func ValidatePriceText(text string) string {
 // validateCurrencySymbols checks if text contains only currency symbols.
 // Original HTML data examples: "$$$$", "€€€€", "£££", "¥¥¥"
 func validateCurrencySymbols(text string) string {
-
 	if currencyRegex.MatchString(text) {
 		return text
 	}
@@ -124,40 +116,6 @@ func validateLessThanPrice(text string) string {
 		return text
 	}
 	return ""
-}
-
-// MapPrice maps CAT_P01 ... CAT_P04 to $, $$, $$$, $$$$.
-func MapPrice(price string) string {
-	price = strings.TrimSpace(price)
-	if price == "" {
-		return ""
-	}
-	switch price {
-	case "CAT_P01":
-		return "$"
-	case "CAT_P02":
-		return "$$"
-	case "CAT_P03":
-		return "$$$"
-	case "CAT_P04":
-		return "$$$$"
-	default:
-		return price
-	}
-}
-
-// CleanPriceValue removes unicode escapes and other artifacts from price strings.
-// Original data examples: "$$$$\\"", "€€€", "155\\\"EUR"
-func CleanPriceValue(price string) string {
-	if price == "" {
-		return ""
-	}
-
-	// Remove unicode escapes commonly found in dLayer data
-	cleaned := strings.ReplaceAll(price, `\"`, `"`)
-	cleaned = strings.ReplaceAll(cleaned, `\\`, ``)
-
-	return strings.TrimSpace(cleaned)
 }
 
 // normalizePriceText cleans and normalizes price text for validation by removing separators and extra whitespace.

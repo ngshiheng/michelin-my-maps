@@ -9,7 +9,7 @@ import (
 // RestaurantRepository defines the interface for restaurant data operations.
 type RestaurantRepository interface {
 	FindRestaurantByURL(ctx context.Context, url string) (*models.Restaurant, error)
-	ListAllRestaurantsWithURL(ctx context.Context) ([]models.Restaurant, error)
+	ListRestaurants(ctx context.Context) ([]models.Restaurant, error)
 	SaveAward(ctx context.Context, award *models.RestaurantAward) error
 	SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error
 }

@@ -1,4 +1,4 @@
-package extraction
+package parsers
 
 import (
 	"strings"
@@ -69,4 +69,28 @@ func SplitUnpack(str string, separator string) (string, string) {
 	}
 
 	return parsedStr[0], parsedStr[1]
+}
+
+// SplitUnpackMultiDelimiter attempts to split a string using multiple possible delimiters.
+// Tries delimiters in order and returns the first successful split.
+// Original data examples:
+//
+//	"$$$ · French" (middle dot)
+//	"$$$ • French" (bullet)
+//	"$$$ - French" (hyphen)
+//	"$$$ | French" (pipe)
+func SplitUnpackMultiDelimiter(str string, delimiters []string) (string, string) {
+	if len(str) == 0 {
+		return str, str
+	}
+
+	// Try each delimiter in order
+	for _, delimiter := range delimiters {
+		if strings.Contains(str, delimiter) {
+			return SplitUnpack(str, delimiter)
+		}
+	}
+
+	// If no delimiter found, assume it's all cuisine (price missing)
+	return "", strings.TrimSpace(str)
 }
