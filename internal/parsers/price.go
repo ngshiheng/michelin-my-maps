@@ -30,18 +30,16 @@ var (
 	lessThanRegex = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
 )
 
-// ExtractPrice centralizes price extraction logic and fallbacks.
 func ExtractPrice(e *colly.XMLElement) string {
-	price := tryAwardSelectors(e, "price", parsePrice)
-	if price != "" {
-		return price
+	if p := tryAwardSelectors(e, "price", parsePrice); p != "" {
+		return p
 	}
-	scriptContent := FindDLayerScript(e)
-	price = ParseDLayerValue(scriptContent, "price")
-	return mapPrice(price)
+	if p := ParseDLayerValue(FindDLayerScript(e), "price"); p != "" {
+		return mapPrice(p)
+	}
+	return ""
 }
 
-// parsePrice processes and validates a price text candidate against known patterns.
 func parsePrice(text string) string {
 	const priceSeparators = "·•"
 	candidate := normalizePriceText(text, priceSeparators)
@@ -49,17 +47,17 @@ func parsePrice(text string) string {
 		return ""
 	}
 
-	priceValidators := []func(string) string{
-		validateCurrencySymbols,
-		validatePriceWithCurrencyCode,
-		validatePriceRange,
-		validateOverUnderPrice,
-		validateBetweenPrice,
-		validateToRangePrice,
-		validateLessThanPrice,
+	pricePatternMatchers := []func(string) string{
+		matchCurrencySymbols,
+		matchPriceWithCurrencyCode,
+		matchPriceRange,
+		matchOverUnderPrice,
+		matchBetweenPrice,
+		matchToRangePrice,
+		matchLessThanPrice,
 	}
 
-	for _, validator := range priceValidators {
+	for _, validator := range pricePatternMatchers {
 		if result := validator(candidate); result != "" {
 			return result
 		}
@@ -89,7 +87,7 @@ func mapPrice(price string) string {
 
 // validateCurrencySymbols checks if text contains only currency symbols.
 // e.g. "$$$$", "€€€€", "£££", "¥¥¥"
-func validateCurrencySymbols(text string) string {
+func matchCurrencySymbols(text string) string {
 	if currencyRegex.MatchString(text) {
 		return text
 	}
@@ -98,7 +96,7 @@ func validateCurrencySymbols(text string) string {
 
 // validatePriceWithCurrencyCode checks for price with currency code.
 // e.g. "1,800 NOK", "155 EUR", "300 - 2,000 MOP", "75-150 CHF"
-func validatePriceWithCurrencyCode(text string) string {
+func matchPriceWithCurrencyCode(text string) string {
 	if match := priceCodeRegex.FindString(text); match != "" {
 		return match
 	}
@@ -107,7 +105,7 @@ func validatePriceWithCurrencyCode(text string) string {
 
 // validatePriceRange checks for numeric price ranges.
 // e.g. "155 - 380", "300 - 2,000", "50-75"
-func validatePriceRange(text string) string {
+func matchPriceRange(text string) string {
 	if priceRangeRegex.MatchString(text) {
 		return text
 	}
@@ -116,7 +114,7 @@ func validatePriceRange(text string) string {
 
 // validateOverUnderPrice checks for "Over X" or "Under X" patterns.
 // e.g. "Over 75 USD", "Under 200 SGD"
-func validateOverUnderPrice(text string) string {
+func matchOverUnderPrice(text string) string {
 	if overUnderRegex.MatchString(text) {
 		return text
 	}
@@ -125,7 +123,7 @@ func validateOverUnderPrice(text string) string {
 
 // validateBetweenPrice checks for "Between X and Y [CURRENCY]" patterns.
 // e.g. "Between 350 and 500 HKD", "Between 50 and 100 EUR"
-func validateBetweenPrice(text string) string {
+func matchBetweenPrice(text string) string {
 	if betweenRegex.MatchString(text) {
 		return text
 	}
@@ -134,7 +132,7 @@ func validateBetweenPrice(text string) string {
 
 // validateToRangePrice checks for "X to Y [CURRENCY]" patterns.
 // e.g. "500 to 1500 TWD", "25 to 50 GBP"
-func validateToRangePrice(text string) string {
+func matchToRangePrice(text string) string {
 	if toRangeRegex.MatchString(text) {
 		return text
 	}
@@ -143,7 +141,7 @@ func validateToRangePrice(text string) string {
 
 // validateLessThanPrice checks for "Less than X [CURRENCY]" patterns.
 // e.g. "Less than 200 THB", "Less than 50.5 EUR"
-func validateLessThanPrice(text string) string {
+func matchLessThanPrice(text string) string {
 	if lessThanRegex.MatchString(text) {
 		return text
 	}

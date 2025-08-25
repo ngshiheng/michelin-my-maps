@@ -44,14 +44,12 @@ func ParseCoordinates(jsonLD string) (latitude, longitude string) {
 		return "", false
 	}
 
-	// Extract latitude
 	if latValue, ok := ld["latitude"]; ok {
 		if lat, valid := parseCoordinate(latValue); valid {
 			latitude = lat
 		}
 	}
 
-	// Extract longitude
 	if lngValue, ok := ld["longitude"]; ok {
 		if lng, valid := parseCoordinate(lngValue); valid {
 			longitude = lng

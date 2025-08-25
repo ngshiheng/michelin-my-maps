@@ -49,14 +49,14 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 	}
 
 	data.Distinction = tryAwardSelectors(e, "distinction", ParseDistinction)
-	// We need the following because tryAwardSelectors return "" if no selector matches
+	// We need this because tryAwardSelectors return "" if no selector matches
 	if data.Distinction == "" {
 		data.Distinction = models.SelectedRestaurants
 	}
 
 	data.Price = ExtractPrice(e)
 
-	data.GreenStar = tryAwardSelectors(e, "greenStar", parseGreenStar) == "true"
+	data.GreenStar = tryAwardSelectors(e, "greenStar", ParseGreenStar) == "true"
 	data.Year = ExtractPublishedYear(e)
 
 	data.Name = tryRestaurantSelectors(e, "name", TrimWhiteSpaces)

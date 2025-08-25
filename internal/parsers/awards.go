@@ -16,7 +16,7 @@ var (
 	reSelected    = regexp.MustCompile(`(?i)\bselected\s*restaurants?\b|\bplate\b`)
 )
 
-func parseGreenStar(text string) string {
+func ParseGreenStar(text string) string {
 	if strings.Contains(strings.ToLower(text), "green star") {
 		return "true"
 	}

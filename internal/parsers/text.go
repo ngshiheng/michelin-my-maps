@@ -6,24 +6,21 @@ import (
 
 // NormalizeAddress cleans up address strings by removing newlines and normalizing whitespace.
 // e.g. "Shaw Centre, #01-16,\n1 Scotts Road, 228208, Singapore"
-func NormalizeAddress(address string) string {
-	// Replace newlines with spaces
-	normalized := strings.ReplaceAll(address, "\n", " ")
-
-	// Normalize multiple spaces to single space
+func NormalizeAddress(text string) string {
+	normalized := strings.ReplaceAll(text, "\n", " ")
 	normalized = strings.Join(strings.Fields(normalized), " ")
 
 	return strings.TrimSpace(normalized)
 }
 
 // TrimWhiteSpaces removes various whitespace characters including line breaks and multiple spaces.
-func TrimWhiteSpaces(str string) string {
-	if str == "" {
+func TrimWhiteSpaces(text string) string {
+	if text == "" {
 		return ""
 	}
 
 	// Remove line breaks and normalize spaces
-	trimmed := strings.ReplaceAll(str, "\n", "")
+	trimmed := strings.ReplaceAll(text, "\n", "")
 	trimmed = strings.ReplaceAll(trimmed, "  ", " ")
 
 	return strings.TrimSpace(trimmed)
@@ -52,25 +49,6 @@ func JoinFacilities(facilities []string) string {
 	return strings.Join(nonEmpty, ",")
 }
 
-// SplitUnpack performs SplitN and unpacks a string.
-func SplitUnpack(str string, separator string) (string, string) {
-	if len(str) == 0 {
-		return str, str
-	}
-
-	parsedStr := strings.SplitN(str, separator, 2)
-
-	for i, s := range parsedStr {
-		parsedStr[i] = strings.TrimSpace(s)
-	}
-
-	if len(parsedStr) == 1 {
-		return "", parsedStr[0] // Always assume price is missing
-	}
-
-	return parsedStr[0], parsedStr[1]
-}
-
 // SplitUnpackMultiDelimiter attempts to split a string using multiple possible delimiters.
 // Tries delimiters in order and returns the first successful split.
 // e.g.
@@ -84,7 +62,6 @@ func SplitUnpackMultiDelimiter(str string, delimiters []string) (string, string)
 		return str, str
 	}
 
-	// Try each delimiter in order
 	for _, delimiter := range delimiters {
 		if strings.Contains(str, delimiter) {
 			return SplitUnpack(str, delimiter)
@@ -93,4 +70,23 @@ func SplitUnpackMultiDelimiter(str string, delimiters []string) (string, string)
 
 	// If no delimiter found, assume it's all cuisine (price missing)
 	return "", strings.TrimSpace(str)
+}
+
+// SplitUnpack performs SplitN and unpacks a string.
+func SplitUnpack(text string, separator string) (string, string) {
+	if len(text) == 0 {
+		return text, text
+	}
+
+	parsedStr := strings.SplitN(text, separator, 2)
+
+	for i, s := range parsedStr {
+		parsedStr[i] = strings.TrimSpace(s)
+	}
+
+	if len(parsedStr) == 1 {
+		return "", parsedStr[0] // Always assume price is missing
+	}
+
+	return parsedStr[0], parsedStr[1]
 }
