@@ -10,11 +10,11 @@ import (
 )
 
 /*
-ParseCoordinates extracts latitude and longitude from a Michelin Guide JSON-LD script.
+parseCoordinates extracts latitude and longitude from a Michelin Guide JSON-LD script.
 Returns the coordinates as strings to match the database schema.
 Returns empty strings if coordinates are not found or invalid.
 */
-func ParseCoordinates(jsonLD string) (latitude, longitude string) {
+func parseCoordinates(jsonLD string) (latitude, longitude string) {
 	if jsonLD == "" {
 		return "", ""
 	}
@@ -89,7 +89,7 @@ func ExtractCoordinates(e *colly.XMLElement) (lat, lng string) {
 	jsonLDSelectors := AwardSelectors["publishedDate"] // Reuse the JSON-LD selectors
 	for _, selector := range jsonLDSelectors {
 		if jsonLD := e.ChildText(selector); jsonLD != "" {
-			if latitude, longitude := ParseCoordinates(jsonLD); latitude != "" && longitude != "" {
+			if latitude, longitude := parseCoordinates(jsonLD); latitude != "" && longitude != "" {
 				return latitude, longitude
 			}
 		}

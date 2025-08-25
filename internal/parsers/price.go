@@ -42,7 +42,7 @@ func ExtractPrice(e *colly.XMLElement) string {
 
 func parsePrice(text string) string {
 	const priceSeparators = "·•"
-	candidate := normalizePriceText(text, priceSeparators)
+	candidate := NormalizePriceText(text, priceSeparators)
 	if candidate == "" {
 		return ""
 	}
@@ -146,20 +146,4 @@ func matchLessThanPrice(text string) string {
 		return text
 	}
 	return ""
-}
-
-// normalizePriceText cleans and normalizes price text for validation by removing separators and extra whitespace.
-// e.g. "$$$ · French cuisine", "€€€ • Modern European", "155 - 380"
-func normalizePriceText(text string, separators string) string {
-	candidate := strings.TrimSpace(text)
-
-	// Normalize whitespace
-	candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
-
-	// Only consider text before separator characters
-	if idx := strings.IndexAny(candidate, separators); idx != -1 {
-		candidate = strings.TrimSpace(candidate[:idx])
-	}
-
-	return candidate
 }

@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 )
 
 // ExtractedData contains all possible data that can be extracted from a restaurant page
@@ -48,15 +47,9 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 		WaybackURL: waybackURL,
 	}
 
-	data.Distinction = tryAwardSelectors(e, "distinction", ParseDistinction)
-	// We need this because tryAwardSelectors return "" if no selector matches
-	if data.Distinction == "" {
-		data.Distinction = models.SelectedRestaurants
-	}
+	data.Distinction, data.GreenStar = ExtractDistinction(e)
 
 	data.Price = ExtractPrice(e)
-
-	data.GreenStar = tryAwardSelectors(e, "greenStar", ParseGreenStar) == "true"
 	data.Year = ExtractPublishedYear(e)
 
 	data.Name = tryRestaurantSelectors(e, "name", TrimWhiteSpaces)
@@ -65,9 +58,8 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 	address := tryRestaurantSelectors(e, "address", NormalizeAddress)
 	data.Address = address
 
-	priceAndCuisine := tryRestaurantSelectors(e, "priceAndCuisine", TrimWhiteSpaces)
-
 	delimiters := []string{"·", "•", "-", "|", "–", "—"}
+	priceAndCuisine := tryRestaurantSelectors(e, "priceAndCuisine", TrimWhiteSpaces)
 	price, cuisine := SplitUnpackMultiDelimiter(priceAndCuisine, delimiters)
 	if data.Price == "" {
 		data.Price = price
@@ -75,7 +67,7 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 	data.Cuisine = cuisine
 
 	phoneNumber := tryRestaurantSelectorsAttr(e, "phoneNumber", "href")
-	data.PhoneNumber = ParsePhoneNumber(phoneNumber)
+	data.PhoneNumber = ExtractPhoneNumber(phoneNumber)
 
 	data.WebsiteURL = tryRestaurantSelectorsAttr(e, "websiteURL", "href")
 

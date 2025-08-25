@@ -30,30 +30,24 @@ var commonDateLayouts = []string{
 }
 
 /*
-ExtractPublishedYear extracts the published year of the Michelin award from a restaurant page.
+ExtractPublishedYear extracts the published year of the Michelin award from a restaurant HTML element.
 Extraction order: JSON-LD → XPath text → meta description. Returns 0 if not found.
 */
 func ExtractPublishedYear(e *colly.XMLElement) int {
-	// 1. Try extracting from JSON-LD
 	json := findJSONLDScript(e)
-	if year := ParsePublishedYear(json); year != 0 {
+	if year := parsePublishedYear(json); year != 0 {
 		return year
 	}
-
-	// 2. Try extracting from XPath text content
 	if date := extractDateFromTexts(e); date != "" {
 		if year := parseYearFromAnyFormat(date); year != 0 {
 			return year
 		}
 	}
-
-	// 3. Try extracting from meta description
 	if meta := extractDateFromMetaContent(e); meta != "" {
 		if year := parseYearFromAnyFormat(meta); year != 0 {
 			return year
 		}
 	}
-
 	return 0
 }
 
@@ -141,29 +135,25 @@ func parseYearFromAnyFormat(text string) int {
 }
 
 /*
-ParsePublishedYear extracts the year from a Michelin Guide JSON-LD script.
+parsePublishedYear extracts the year from a Michelin Guide JSON-LD script.
 It prioritizes extracting from award.dateAwarded if present and valid,
 otherwise falls back to review.datePublished.
 */
-func ParsePublishedYear(jsonLD string) int {
+func parsePublishedYear(jsonLD string) int {
 	if jsonLD == "" {
 		return 0
 	}
-
 	var ld map[string]any
 	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
 		return 0
 	}
-
 	parseYear := func(s string) (int, bool) {
-		// Try as 4-digit year
 		fourDigitYear := len(s) == 4 && strings.TrimSpace(s) != ""
 		if fourDigitYear {
 			if year, err := strconv.Atoi(s); err == nil && validateYear(year) {
 				return year, true
 			}
 		}
-		// Try as date with known layouts
 		for _, layout := range commonDateLayouts {
 			if t, err := time.Parse(layout, s); err == nil {
 				year := t.Year()
@@ -174,8 +164,6 @@ func ParsePublishedYear(jsonLD string) int {
 		}
 		return 0, false
 	}
-
-	// 1. Try award.dateAwarded first
 	if award, ok := ld["award"].(map[string]any); ok {
 		if dateAwarded, ok := award["dateAwarded"].(string); ok && dateAwarded != "" {
 			if year, ok := parseYear(dateAwarded); ok {
@@ -183,8 +171,6 @@ func ParsePublishedYear(jsonLD string) int {
 			}
 		}
 	}
-
-	// 2. Fallback to review.datePublished
 	if review, ok := ld["review"].(map[string]any); ok {
 		if pd, ok := review["datePublished"].(string); ok && pd != "" {
 			if year, ok := parseYear(pd); ok {
@@ -192,7 +178,6 @@ func ParsePublishedYear(jsonLD string) int {
 			}
 		}
 	}
-
 	return 0
 }
 

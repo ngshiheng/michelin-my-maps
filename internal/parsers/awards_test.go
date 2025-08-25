@@ -24,7 +24,7 @@ func TestParseDistinction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := ParseDistinction(tt.input)
+			got := parseDistinction(tt.input)
 			if got != tt.expected {
 				t.Errorf("ParseDistinction(%q) = %q; want %q", tt.input, got, tt.expected)
 			}
@@ -43,7 +43,7 @@ func TestDecodeHTMLEntities(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := decodeHTMLEntities(tt.input)
+			got := DecodeHTMLEntities(tt.input)
 			if got != tt.expected {
 				t.Errorf("decodeHTMLEntities(%q) = %q; want %q", tt.input, got, tt.expected)
 			}

@@ -70,7 +70,7 @@ func TestNormalizePriceText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := normalizePriceText(tt.input, tt.separators)
+			got := NormalizePriceText(tt.input, tt.separators)
 			if got != tt.expected {
 				t.Errorf("normalizePriceText(%q, %q) = %q; want %q", tt.input, tt.separators, got, tt.expected)
 			}
