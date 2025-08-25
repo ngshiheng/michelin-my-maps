@@ -51,12 +51,31 @@ func parsePrice(text string) string {
 			return result
 		}
 	}
+	return mapPrice(candidate)
+}
 
-	return ""
+// mapPrice maps CAT_P01 ... CAT_P04 to $, $$, $$$, $$$$.
+func mapPrice(price string) string {
+	price = strings.TrimSpace(price)
+	if price == "" {
+		return ""
+	}
+	switch price {
+	case "CAT_P01":
+		return "$"
+	case "CAT_P02":
+		return "$$"
+	case "CAT_P03":
+		return "$$$"
+	case "CAT_P04":
+		return "$$$$"
+	default:
+		return ""
+	}
 }
 
 // validateCurrencySymbols checks if text contains only currency symbols.
-// Original HTML data examples: "$$$$", "€€€€", "£££", "¥¥¥"
+// e.g. "$$$$", "€€€€", "£££", "¥¥¥"
 func validateCurrencySymbols(text string) string {
 	if currencyRegex.MatchString(text) {
 		return text
@@ -65,7 +84,7 @@ func validateCurrencySymbols(text string) string {
 }
 
 // validatePriceWithCurrencyCode checks for price with currency code.
-// Original HTML data examples: "1,800 NOK", "155 EUR", "300 - 2,000 MOP", "75-150 CHF"
+// e.g. "1,800 NOK", "155 EUR", "300 - 2,000 MOP", "75-150 CHF"
 func validatePriceWithCurrencyCode(text string) string {
 	if match := priceCodeRegex.FindString(text); match != "" {
 		return match
@@ -74,7 +93,7 @@ func validatePriceWithCurrencyCode(text string) string {
 }
 
 // validatePriceRange checks for numeric price ranges.
-// Original HTML data examples: "155 - 380", "300 - 2,000", "50-75"
+// e.g. "155 - 380", "300 - 2,000", "50-75"
 func validatePriceRange(text string) string {
 	if priceRangeRegex.MatchString(text) {
 		return text
@@ -83,7 +102,7 @@ func validatePriceRange(text string) string {
 }
 
 // validateOverUnderPrice checks for "Over X" or "Under X" patterns.
-// Original HTML data examples: "Over 75 USD", "Under 200 SGD"
+// e.g. "Over 75 USD", "Under 200 SGD"
 func validateOverUnderPrice(text string) string {
 	if overUnderRegex.MatchString(text) {
 		return text
@@ -92,7 +111,7 @@ func validateOverUnderPrice(text string) string {
 }
 
 // validateBetweenPrice checks for "Between X and Y [CURRENCY]" patterns.
-// Original HTML data examples: "Between 350 and 500 HKD", "Between 50 and 100 EUR"
+// e.g. "Between 350 and 500 HKD", "Between 50 and 100 EUR"
 func validateBetweenPrice(text string) string {
 	if betweenRegex.MatchString(text) {
 		return text
@@ -101,7 +120,7 @@ func validateBetweenPrice(text string) string {
 }
 
 // validateToRangePrice checks for "X to Y [CURRENCY]" patterns.
-// Original HTML data examples: "500 to 1500 TWD", "25 to 50 GBP"
+// e.g. "500 to 1500 TWD", "25 to 50 GBP"
 func validateToRangePrice(text string) string {
 	if toRangeRegex.MatchString(text) {
 		return text
@@ -110,7 +129,7 @@ func validateToRangePrice(text string) string {
 }
 
 // validateLessThanPrice checks for "Less than X [CURRENCY]" patterns.
-// Original HTML data examples: "Less than 200 THB", "Less than 50.5 EUR"
+// e.g. "Less than 200 THB", "Less than 50.5 EUR"
 func validateLessThanPrice(text string) string {
 	if lessThanRegex.MatchString(text) {
 		return text
@@ -119,7 +138,7 @@ func validateLessThanPrice(text string) string {
 }
 
 // normalizePriceText cleans and normalizes price text for validation by removing separators and extra whitespace.
-// Original data examples: "$$$ · French cuisine", "€€€ • Modern European", "155 - 380"
+// e.g. "$$$ · French cuisine", "€€€ • Modern European", "155 - 380"
 func normalizePriceText(text string, separators string) string {
 	candidate := strings.TrimSpace(text)
 

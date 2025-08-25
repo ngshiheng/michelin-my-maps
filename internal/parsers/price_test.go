@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestValidatePriceText(t *testing.T) {
+func TestParsePrice(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
@@ -28,6 +28,29 @@ func TestValidatePriceText(t *testing.T) {
 			got := parsePrice(tt.input)
 			if got != tt.expected {
 				t.Errorf("parsePrice(%q) = %q; want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+
+}
+
+func TestMapPrice(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"CAT_P01", "$"},
+		{"CAT_P02", "$$"},
+		{"CAT_P03", "$$$"},
+		{"CAT_P04", "$$$$"},
+		{"", ""},
+		{"random", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := mapPrice(tt.input)
+			if got != tt.expected {
+				t.Errorf("mapPrice(%q) = %q; want %q", tt.input, got, tt.expected)
 			}
 		})
 	}

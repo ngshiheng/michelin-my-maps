@@ -55,6 +55,7 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 
 		if err := repo.SaveRestaurant(ctx, restaurant); err != nil {
 			log.WithFields(log.Fields{
+				"id":    restaurant.ID,
 				"error": err,
 				"url":   data.URL,
 			}).Error("failed to save restaurant")
@@ -73,6 +74,7 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 
 	if err := repo.SaveAward(ctx, award); err != nil {
 		log.WithFields(log.Fields{
+			"id":          restaurant.ID,
 			"error":       err,
 			"wayback_url": data.WaybackURL,
 			"url":         data.URL,
