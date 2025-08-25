@@ -11,7 +11,6 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/client"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/handlers"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/parsers"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
 	log "github.com/sirupsen/logrus"
 )
@@ -158,14 +157,6 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			"attempt": attempt,
 			"url":     r.URL.String(),
 		}).Debug("fetch restaurant detail")
-	})
-
-	// FIXME: move this to handlers.HandleRestaurantExtraction
-	detailCollector.OnXML(parsers.AwardSelectors["publishedDate"][0], func(e *colly.XMLElement) {
-		jsonLD := e.Text
-		year := parsers.ParsePublishedYear(jsonLD)
-		e.Request.Ctx.Put("publishedYear", year)
-
 	})
 
 	detailCollector.OnXML("html", func(e *colly.XMLElement) {

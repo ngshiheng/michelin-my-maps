@@ -23,30 +23,30 @@ func parseGreenStar(text string) string {
 	return "false"
 }
 
-func parseDistinction(distinction string) string {
-	s := strings.ToLower(distinction)
-	s = decodeHTMLEntities(s)
-	s = strings.Trim(s, " .!?,;:-")
-	s = strings.TrimSpace(s)
+func ParseDistinction(text string) string {
+	distinction := strings.ToLower(text)
+	distinction = decodeHTMLEntities(distinction)
+	distinction = strings.Trim(distinction, " .!?,;:-")
+	distinction = strings.TrimSpace(distinction)
 
 	switch {
-	case re3Stars.MatchString(s):
+	case re3Stars.MatchString(distinction):
 		return models.ThreeStars
-	case re2Stars.MatchString(s):
+	case re2Stars.MatchString(distinction):
 		return models.TwoStars
-	case re1Star.MatchString(s):
+	case re1Star.MatchString(distinction):
 		return models.OneStar
-	case reBibGourmand.MatchString(s):
+	case reBibGourmand.MatchString(distinction):
 		return models.BibGourmand
-	case reSelected.MatchString(s):
+	case reSelected.MatchString(distinction):
 		return models.SelectedRestaurants
 	default:
 		return models.SelectedRestaurants
 	}
 }
 
-func decodeHTMLEntities(s string) string {
-	s = strings.ReplaceAll(s, "&bull;", "")
-	s = strings.ReplaceAll(s, "•", "")
-	return s
+func decodeHTMLEntities(text string) string {
+	text = strings.ReplaceAll(text, "&bull;", "")
+	text = strings.ReplaceAll(text, "•", "")
+	return text
 }

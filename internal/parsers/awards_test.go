@@ -24,9 +24,9 @@ func TestParseDistinction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := parseDistinction(tt.input)
+			got := ParseDistinction(tt.input)
 			if got != tt.expected {
-				t.Errorf("parseDistinction(%q) = %q; want %q", tt.input, got, tt.expected)
+				t.Errorf("ParseDistinction(%q) = %q; want %q", tt.input, got, tt.expected)
 			}
 		})
 	}

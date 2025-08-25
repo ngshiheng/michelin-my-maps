@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gocolly/colly/v2"
 )
 
 // Date extraction patterns for parsing published dates from various HTML formats
@@ -27,36 +29,63 @@ var commonDateLayouts = []string{
 	"2006-01-02",          // Date only
 }
 
-func parsePublishedDate(text string) string {
-	// Try JSON-LD first
-	if year := ParsePublishedYear(text); year != 0 {
-		return strconv.Itoa(year)
-	}
-
-	// Try text parsing
-	if date := ParseDateFromText(text); date != "" {
-		return date
-	}
-
-	return text
-}
-
-func parseYear(dateText string) int {
-	if dateText == "" {
-		return 0
-	}
-
-	// Try to parse as integer first
-	if year, err := strconv.Atoi(dateText); err == nil && year > 1900 && year < 3000 {
+/*
+ExtractPublishedYear extracts the published year of the Michelin award from a restaurant page.
+Extraction order: JSON-LD → XPath text → meta description. Returns 0 if not found.
+*/
+func ExtractPublishedYear(e *colly.XMLElement) int {
+	// 1. Try extracting from JSON-LD
+	json := findJSONLDScript(e)
+	if year := ParsePublishedYear(json); year != 0 {
 		return year
 	}
 
-	// Try extraction from any format
-	return ParseYearFromAnyFormat(dateText)
+	// 2. Try extracting from XPath text content
+	if date := extractDateFromTexts(e); date != "" {
+		if year := parseYearFromAnyFormat(date); year != 0 {
+			return year
+		}
+	}
+
+	// 3. Try extracting from meta description
+	if meta := extractDateFromMetaContent(e); meta != "" {
+		if year := parseYearFromAnyFormat(meta); year != 0 {
+			return year
+		}
+	}
+
+	return 0
 }
 
-// ParseDateFromText attempts to parse a date from text using all known date patterns.
-func ParseDateFromText(text string) string {
+// extractDateFromTexts extracts date from XPath text content using predefined patterns.
+func extractDateFromTexts(e *colly.XMLElement) string {
+	texts := e.ChildTexts("//div[contains(@class,'restaurant-details__heading--label-title')] | //div[contains(@class,'label-text')]")
+	for _, text := range texts {
+		if date := parseDateFromText(strings.TrimSpace(text)); date != "" {
+			return date
+		}
+	}
+	return ""
+}
+
+// extractDateFromMetaContent extracts date from meta description content.
+func extractDateFromMetaContent(e *colly.XMLElement) string {
+	metaContent := e.ChildAttr("//meta[@name='description']", "content")
+	if metaContent != "" {
+		return parseDateFromText(metaContent)
+	}
+	return ""
+}
+
+// findJSONLDScript searches for a JSON-LD script containing restaurant data.
+func findJSONLDScript(e *colly.XMLElement) string {
+	return findScript(e, func(text string) bool {
+		return strings.Contains(text, `"@type":"Restaurant"`)
+	})
+}
+
+// parseDateFromText attempts to parse a date from text using all known date patterns.
+func parseDateFromText(text string) string {
 	if text == "" {
 		return ""
 	}
@@ -79,21 +108,21 @@ func ParseDateFromText(text string) string {
 	return ""
 }
 
-// ParseYearFromAnyFormat extracts year from various date string formats.
-func ParseYearFromAnyFormat(publishedDate string) int {
-	if publishedDate == "" {
+// parseYearFromAnyFormat extracts year from various date string formats.
+func parseYearFromAnyFormat(text string) int {
+	if text == "" {
 		return 0
 	}
 
 	// Try parsing as full date first
 	for _, layout := range commonDateLayouts {
-		if t, err := time.Parse(layout, publishedDate); err == nil {
+		if t, err := time.Parse(layout, text); err == nil {
 			return t.Year()
 		}
 	}
 
 	// Try extracting year from text patterns
-	if yearStr := ParseDateFromText(publishedDate); yearStr != "" {
+	if yearStr := parseDateFromText(text); yearStr != "" {
 		if len(yearStr) == 4 {
 			if year, err := strconv.Atoi(yearStr); err == nil {
 				return year
@@ -102,8 +131,8 @@ func ParseYearFromAnyFormat(publishedDate string) int {
 	}
 
 	// Fallback: try parsing as 4-digit year string
-	if len(publishedDate) == 4 {
-		if year, err := strconv.Atoi(publishedDate); err == nil {
+	if len(text) == 4 {
+		if year, err := strconv.Atoi(text); err == nil {
 			return year
 		}
 	}
@@ -172,69 +201,4 @@ func ParsePublishedYear(jsonLD string) int {
 func validateYear(year int) bool {
 	currentYear := time.Now().Year()
 	return year >= 1900 && year <= currentYear+1 // Allow one year in future for edge cases
-}
-
-/*
-ParseCoordinates extracts latitude and longitude from a Michelin Guide JSON-LD script.
-Returns the coordinates as strings to match the database schema.
-Returns empty strings if coordinates are not found or invalid.
-*/
-func ParseCoordinates(jsonLD string) (latitude, longitude string) {
-	if jsonLD == "" {
-		return "", ""
-	}
-
-	var ld map[string]any
-	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
-		return "", ""
-	}
-
-	parseCoordinate := func(value any) (string, bool) {
-		switch v := value.(type) {
-		case string:
-			if v != "" && validateCoordinate(v) {
-				return v, true
-			}
-		case float64:
-			coordStr := strconv.FormatFloat(v, 'f', -1, 64)
-			if validateCoordinate(coordStr) {
-				return coordStr, true
-			}
-		case int:
-			coordStr := strconv.Itoa(v)
-			if validateCoordinate(coordStr) {
-				return coordStr, true
-			}
-		}
-		return "", false
-	}
-
-	// Extract latitude
-	if latValue, ok := ld["latitude"]; ok {
-		if lat, valid := parseCoordinate(latValue); valid {
-			latitude = lat
-		}
-	}
-
-	// Extract longitude
-	if lngValue, ok := ld["longitude"]; ok {
-		if lng, valid := parseCoordinate(lngValue); valid {
-			longitude = lng
-		}
-	}
-
-	return latitude, longitude
-}
-
-// validateCoordinate checks if a coordinate string represents a valid latitude or longitude.
-func validateCoordinate(coordStr string) bool {
-	coord, err := strconv.ParseFloat(coordStr, 64)
-	if err != nil {
-		return false
-	}
-
-	// Basic validation: coordinates should be reasonable values
-	// Latitude: -90 to 90, Longitude: -180 to 180
-	// We'll do a broader check here since we don't know which is which
-	return coord >= -180.0 && coord <= 180.0
 }

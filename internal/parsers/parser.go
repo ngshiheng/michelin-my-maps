@@ -48,15 +48,16 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 		WaybackURL: waybackURL,
 	}
 
-	data.Distinction = tryAwardSelectors(e, "distinction", parseDistinction)
+	data.Distinction = tryAwardSelectors(e, "distinction", ParseDistinction)
 	// We need the following because tryAwardSelectors return "" if no selector matches
 	if data.Distinction == "" {
 		data.Distinction = models.SelectedRestaurants
 	}
 
-	data.Price = tryAwardSelectors(e, "price", parsePrice)
-	data.GreenStar = tryAwardSelectors(e, "greenStar", parseGreenStar) != ""
-	data.Year = parseYear(tryAwardSelectors(e, "publishedDate", parsePublishedDate))
+	data.Price = ExtractPrice(e)
+
+	data.GreenStar = tryAwardSelectors(e, "greenStar", parseGreenStar) == "true"
+	data.Year = ExtractPublishedYear(e)
 
 	data.Name = tryRestaurantSelectors(e, "name", TrimWhiteSpaces)
 	data.Description = tryRestaurantSelectors(e, "description", TrimWhiteSpaces)
@@ -81,12 +82,8 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 	facilities := tryRestaurantSelectorsMultiple(e, "facilitiesAndServices")
 	data.FacilitiesAndServices = JoinFacilities(facilities)
 
-	latitude, longitude := extractCoordinates(e)
-	data.Latitude = latitude
-	data.Longitude = longitude
-
-	location := parseLocationFromAddress(address)
-	data.Location = location
+	data.Latitude, data.Longitude = ExtractCoordinates(e)
+	data.Location = ParseLocationFromAddress(address)
 
 	return data
 }

@@ -115,7 +115,7 @@ var RestaurantSelectors = map[string][]string{
 
 var AwardSelectors = map[string][]string{
 	"distinction": {
-		"//div[@class='data-sheet__classification-item--content'][2]",                           // Modern 2024+
+		"//div[@class='data-sheet__classification-item--content'][2]",
 		"//ul[contains(@class,'restaurant-details__classification--list')]//li",                 // Legacy 2020-2023
 		"//div[contains(@class,'restaurant__classification')]//p[contains(@class,'flex-fill')]", // Older fallback
 		"//div[contains(@class,'classification')]",                                              // Generic fallback

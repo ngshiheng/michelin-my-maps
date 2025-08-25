@@ -3,6 +3,8 @@ package parsers
 import (
 	"regexp"
 	"strings"
+
+	"github.com/gocolly/colly/v2"
 )
 
 var (
@@ -28,6 +30,17 @@ var (
 	lessThanRegex = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
 )
 
+// ExtractPrice centralizes price extraction logic and fallbacks.
+func ExtractPrice(e *colly.XMLElement) string {
+	price := tryAwardSelectors(e, "price", parsePrice)
+	if price != "" {
+		return price
+	}
+	scriptContent := FindDLayerScript(e)
+	price = ParseDLayerValue(scriptContent, "price")
+	return mapPrice(price)
+}
+
 // parsePrice processes and validates a price text candidate against known patterns.
 func parsePrice(text string) string {
 	const priceSeparators = "·•"
@@ -51,7 +64,7 @@ func parsePrice(text string) string {
 			return result
 		}
 	}
-	return mapPrice(candidate)
+	return ""
 }
 
 // mapPrice maps CAT_P01 ... CAT_P04 to $, $$, $$$, $$$$.

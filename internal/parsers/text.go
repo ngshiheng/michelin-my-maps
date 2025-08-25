@@ -5,7 +5,7 @@ import (
 )
 
 // NormalizeAddress cleans up address strings by removing newlines and normalizing whitespace.
-// Original data examples: "Shaw Centre, #01-16,\n1 Scotts Road, 228208, Singapore"
+// e.g. "Shaw Centre, #01-16,\n1 Scotts Road, 228208, Singapore"
 func NormalizeAddress(address string) string {
 	// Replace newlines with spaces
 	normalized := strings.ReplaceAll(address, "\n", " ")
@@ -41,7 +41,7 @@ func ExtractTextFromElements(texts []string) string {
 }
 
 // JoinFacilities joins facility strings with a consistent separator, filtering out empty values.
-// Original data examples: ["Air conditioning", "", "Car park", "Interesting wine list"]
+// e.g. ["Air conditioning", "", "Car park", "Interesting wine list"]
 func JoinFacilities(facilities []string) string {
 	var nonEmpty []string
 	for _, facility := range facilities {
@@ -73,7 +73,7 @@ func SplitUnpack(str string, separator string) (string, string) {
 
 // SplitUnpackMultiDelimiter attempts to split a string using multiple possible delimiters.
 // Tries delimiters in order and returns the first successful split.
-// Original data examples:
+// e.g.
 //
 //	"$$$ · French" (middle dot)
 //	"$$$ • French" (bullet)

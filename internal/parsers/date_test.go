@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func TestParseDateFromText(t *testing.T) {
+func TestarseDateFromText(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
@@ -18,9 +18,9 @@ func TestParseDateFromText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := ParseDateFromText(tt.input)
+			got := parseDateFromText(tt.input)
 			if got != tt.expected {
-				t.Errorf("ParseDateFromText(%q) = %q; want %q", tt.input, got, tt.expected)
+				t.Errorf("parseDateFromText(%q) = %q; want %q", tt.input, got, tt.expected)
 			}
 		})
 	}

@@ -1,16 +1,83 @@
 package parsers
 
 import (
+	"encoding/json"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
 )
 
-// parseLocationFromAddress extracts location information from address string
+/*
+ParseCoordinates extracts latitude and longitude from a Michelin Guide JSON-LD script.
+Returns the coordinates as strings to match the database schema.
+Returns empty strings if coordinates are not found or invalid.
+*/
+func ParseCoordinates(jsonLD string) (latitude, longitude string) {
+	if jsonLD == "" {
+		return "", ""
+	}
+
+	var ld map[string]any
+	if err := json.Unmarshal([]byte(jsonLD), &ld); err != nil {
+		return "", ""
+	}
+
+	parseCoordinate := func(value any) (string, bool) {
+		switch v := value.(type) {
+		case string:
+			if v != "" && validateCoordinate(v) {
+				return v, true
+			}
+		case float64:
+			coordStr := strconv.FormatFloat(v, 'f', -1, 64)
+			if validateCoordinate(coordStr) {
+				return coordStr, true
+			}
+		case int:
+			coordStr := strconv.Itoa(v)
+			if validateCoordinate(coordStr) {
+				return coordStr, true
+			}
+		}
+		return "", false
+	}
+
+	// Extract latitude
+	if latValue, ok := ld["latitude"]; ok {
+		if lat, valid := parseCoordinate(latValue); valid {
+			latitude = lat
+		}
+	}
+
+	// Extract longitude
+	if lngValue, ok := ld["longitude"]; ok {
+		if lng, valid := parseCoordinate(lngValue); valid {
+			longitude = lng
+		}
+	}
+
+	return latitude, longitude
+}
+
+// validateCoordinate checks if a coordinate string represents a valid latitude or longitude.
+func validateCoordinate(coordStr string) bool {
+	coord, err := strconv.ParseFloat(coordStr, 64)
+	if err != nil {
+		return false
+	}
+
+	// Basic validation: coordinates should be reasonable values
+	// Latitude: -90 to 90, Longitude: -180 to 180
+	// We'll do a broader check here since we don't know which is which
+	return coord >= -180.0 && coord <= 180.0
+}
+
+// ParseLocationFromAddress extracts location information from address string
 // return the last part as location (usually city/country)
 // FIXME: could be enhanced with more sophisticated parsing
-func parseLocationFromAddress(address string) string {
+func ParseLocationFromAddress(address string) string {
 	parts := strings.Split(address, ",")
 	if len(parts) >= 2 {
 		return strings.TrimSpace(parts[len(parts)-1])
@@ -18,8 +85,8 @@ func parseLocationFromAddress(address string) string {
 	return ""
 }
 
-// extractCoordinates attempts to extract latitude and longitude using multiple methods
-func extractCoordinates(e *colly.XMLElement) (lat, lng string) {
+// ExtractCoordinates attempts to extract latitude and longitude using multiple methods
+func ExtractCoordinates(e *colly.XMLElement) (lat, lng string) {
 	// Method 1: Try JSON-LD extraction first (highest priority)
 	jsonLDSelectors := AwardSelectors["publishedDate"] // Reuse the JSON-LD selectors
 	for _, selector := range jsonLDSelectors {
