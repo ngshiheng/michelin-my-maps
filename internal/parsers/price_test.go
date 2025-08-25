@@ -43,8 +43,8 @@ func TestMapPrice(t *testing.T) {
 		{"CAT_P02", "$$"},
 		{"CAT_P03", "$$$"},
 		{"CAT_P04", "$$$$"},
+		{"none", "none"},
 		{"", ""},
-		{"random", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {

@@ -83,7 +83,7 @@ func mapPrice(price string) string {
 	case "CAT_P04":
 		return "$$$$"
 	default:
-		return ""
+		return price
 	}
 }
 
