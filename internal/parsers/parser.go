@@ -28,18 +28,11 @@ type ExtractedData struct {
 
 // Parse is the unified extraction function that works for both scraper and backfill modes
 func Parse(e *colly.XMLElement) *ExtractedData {
-	var (
-		url        = ""
-		waybackURL = ""
-	)
-
 	currentURL := e.Request.URL.String()
-
+	url, waybackURL := currentURL, ""
 	if strings.Contains(currentURL, "web.archive.org") {
 		waybackURL = currentURL
 		url = extractOriginalURL(currentURL)
-	} else {
-		url = currentURL
 	}
 
 	data := &ExtractedData{
@@ -47,16 +40,17 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 		WaybackURL: waybackURL,
 	}
 
-	data.Distinction, data.GreenStar = ExtractDistinction(e)
+	address := tryRestaurantSelectors(e, "address", NormalizeAddress)
+	data.Description = tryRestaurantSelectors(e, "description", TrimWhiteSpaces)
+	data.Name = tryRestaurantSelectors(e, "name", TrimWhiteSpaces)
+	data.WebsiteURL = tryRestaurantSelectorsAttr(e, "websiteURL", "href")
+	data.Address = address
 
+	data.Distinction, data.GreenStar = ExtractDistinction(e)
+	data.Latitude, data.Longitude = ExtractCoordinates(e)
+	data.PhoneNumber = ExtractPhoneNumber(e)
 	data.Price = ExtractPrice(e)
 	data.Year = ExtractPublishedYear(e)
-
-	data.Name = tryRestaurantSelectors(e, "name", TrimWhiteSpaces)
-	data.Description = tryRestaurantSelectors(e, "description", TrimWhiteSpaces)
-
-	address := tryRestaurantSelectors(e, "address", NormalizeAddress)
-	data.Address = address
 
 	delimiters := []string{"·", "•", "-", "|", "–", "—"}
 	priceAndCuisine := tryRestaurantSelectors(e, "priceAndCuisine", TrimWhiteSpaces)
@@ -66,15 +60,8 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 	}
 	data.Cuisine = cuisine
 
-	phoneNumber := tryRestaurantSelectorsAttr(e, "phoneNumber", "href")
-	data.PhoneNumber = ExtractPhoneNumber(phoneNumber)
-
-	data.WebsiteURL = tryRestaurantSelectorsAttr(e, "websiteURL", "href")
-
 	facilities := tryRestaurantSelectorsMultiple(e, "facilitiesAndServices")
 	data.FacilitiesAndServices = JoinFacilities(facilities)
-
-	data.Latitude, data.Longitude = ExtractCoordinates(e)
 	data.Location = ParseLocationFromAddress(address)
 
 	return data

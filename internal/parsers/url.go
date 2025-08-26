@@ -2,15 +2,17 @@ package parsers
 
 import "regexp"
 
-// extractOriginalURL extracts the original URL from a Wayback Machine archive URL
-// Wayback URLs have format: https://web.archive.org/web/YYYYMMDDhhmmss/ORIGINAL_URL
-func extractOriginalURL(waybackURL string) string {
-	waybackPattern := regexp.MustCompile(`https?://web\.archive\.org/web/\d{14}[^/]*/(.+)`)
-	matches := waybackPattern.FindStringSubmatch(waybackURL)
+var (
+	// waybackRegex matches a Wayback Machine archive URL
+	waybackRegex = regexp.MustCompile(`https?://web\.archive\.org/web/\d{14}[^/]*/(.+)`)
+)
 
+// extractOriginalURL extracts the original URL from a Wayback Machine archive URL.
+// e.g. https://web.archive.org/web/YYYYMMDDhhmmss/ORIGINAL_URL
+func extractOriginalURL(waybackURL string) string {
+	matches := waybackRegex.FindStringSubmatch(waybackURL)
 	if len(matches) >= 2 {
 		return matches[1]
 	}
-
 	return waybackURL
 }
