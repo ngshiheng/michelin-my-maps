@@ -61,14 +61,15 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 			WebsiteURL:            data.WebsiteURL,
 		}
 
-		if err := repo.SaveRestaurant(ctx, restaurant); err != nil {
-			log.WithFields(log.Fields{
-				"id":    restaurant.ID,
-				"error": err,
-				"url":   data.URL,
-			}).Error("failed to save restaurant")
-			return err
-		}
+	}
+
+	if err := repo.SaveRestaurant(ctx, restaurant); err != nil {
+		log.WithFields(log.Fields{
+			"id":    restaurant.ID,
+			"error": err,
+			"url":   data.URL,
+		}).Error("failed to save restaurant")
+		return err
 	}
 
 	award := &models.RestaurantAward{
