@@ -91,25 +91,3 @@ func SplitUnpack(text string, separator string) (string, string) {
 	}
 	return parsedStr[0], parsedStr[1]
 }
-
-/*
-decodeHTMLEntities removes HTML entities and bullet symbols from text.
-*/
-func DecodeHTMLEntities(text string) string {
-	text = strings.ReplaceAll(text, "&bull;", "")
-	text = strings.ReplaceAll(text, "•", "")
-	return text
-}
-
-/*
-normalizePriceText cleans and normalizes price text for validation by removing separators and extra whitespace.
-e.g. "$$$ · French cuisine", "€€€ • Modern European", "155 - 380"
-*/
-func normalizePriceText(text string, separators string) string {
-	candidate := strings.TrimSpace(text)
-	candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
-	if idx := strings.IndexAny(candidate, separators); idx != -1 {
-		candidate = strings.TrimSpace(candidate[:idx])
-	}
-	return candidate
-}

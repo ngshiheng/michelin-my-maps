@@ -8,8 +8,6 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 )
 
-// ExtractDistinction extracts the Michelin distinction and green star status from a restaurant HTML element.
-// Returns (distinction string, greenStar bool).
 func ExtractDistinction(e *colly.XMLElement) (string, bool) {
 	distinction := tryAwardSelectors(e, "distinction", parseDistinction)
 	if distinction == "" {
@@ -36,7 +34,7 @@ func parseGreenStar(text string) string {
 
 func parseDistinction(text string) string {
 	distinction := strings.ToLower(text)
-	distinction = DecodeHTMLEntities(distinction)
+	distinction = decodeHTMLEntities(distinction)
 	distinction = strings.Trim(distinction, " .!?,;:-")
 	distinction = strings.TrimSpace(distinction)
 
@@ -54,4 +52,10 @@ func parseDistinction(text string) string {
 	default:
 		return models.SelectedRestaurants
 	}
+}
+
+func decodeHTMLEntities(text string) string {
+	text = strings.ReplaceAll(text, "&bull;", "")
+	text = strings.ReplaceAll(text, "•", "")
+	return text
 }

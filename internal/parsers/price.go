@@ -147,3 +147,14 @@ func matchLessThanPrice(text string) string {
 	}
 	return ""
 }
+
+// normalizePriceText cleans and normalizes price text for validation by removing separators and extra whitespace.
+// e.g. "$$$ · French cuisine", "€€€ • Modern European", "155 - 380"
+func normalizePriceText(text string, separators string) string {
+	candidate := strings.TrimSpace(text)
+	candidate = strings.TrimSpace(strings.Join(strings.Fields(candidate), " "))
+	if idx := strings.IndexAny(candidate, separators); idx != -1 {
+		candidate = strings.TrimSpace(candidate[:idx])
+	}
+	return candidate
+}
