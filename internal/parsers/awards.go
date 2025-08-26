@@ -59,7 +59,9 @@ func parseDistinction(text string) string {
 
 // decodeHTMLEntities removes bullet HTML entities and symbols from the text.
 func decodeHTMLEntities(text string) string {
-	text = strings.ReplaceAll(text, "&bull;", "")
-	text = strings.ReplaceAll(text, "•", "")
-	return text
+	replacer := strings.NewReplacer(
+		"&bull;", "",
+		"•", "",
+	)
+	return replacer.Replace(text)
 }
