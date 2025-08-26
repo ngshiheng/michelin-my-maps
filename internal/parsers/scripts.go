@@ -12,16 +12,7 @@ import (
 // Example (supported):
 //
 // script := "dLayer['distinction'] = '3 star';"
-// value := ParseDLayerValue(script, "distinction")
-// // value == "3 star"
-//
-// Example (not supported):
-//
-// script := "dLayer = { 'distinction': '1 star' };"
-// value := ParseDLayerValue(script, "distinction")
-// // value == ""
-//
-// To support object literal syntax, the parsing logic must be extended.
+// value := ParseDLayerValue(script, "distinction") // value == "3 star"
 func ParseDLayerValue(script, key string) string {
 	re := regexp.MustCompile(key + `'\]\s*=\s*'([^']*)'`)
 	m := re.FindStringSubmatch(script)

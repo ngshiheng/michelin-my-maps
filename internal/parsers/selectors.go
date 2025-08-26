@@ -95,12 +95,6 @@ var RestaurantSelectors = map[string][]string{
 		"//a[@data-event='CTA_website']",
 		"//a[contains(@class,'website')]",
 	},
-	"coordinates": {
-		"//div[@data-lat and @data-lng]",
-	},
-	"location": {
-		"//div[@class='card__menu-footer--score pl-text']",
-	},
 	"facilitiesAndServices": {
 		"//div[contains(@class,'col col-12 col-lg-6')]//li",
 		"//div[@class='restaurant-details__services']//div[@class='restaurant-details__services--content']/text()[normalize-space()]",

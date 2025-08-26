@@ -42,7 +42,7 @@ func ExtractPrice(e *colly.XMLElement) string {
 
 func parsePrice(text string) string {
 	const priceSeparators = "·•"
-	candidate := NormalizePriceText(text, priceSeparators)
+	candidate := normalizePriceText(text, priceSeparators)
 	if candidate == "" {
 		return ""
 	}
