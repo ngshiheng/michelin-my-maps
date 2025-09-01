@@ -69,6 +69,9 @@ func tryRestaurantSelectorsMultiple(e *colly.XMLElement, field string) []string 
 }
 
 var RestaurantSelectors = map[string][]string{
+	"googleMapDiv": {
+		"//div[@id='map']",
+	},
 	"name": {
 		"//*[@class='data-sheet__title']",
 		"//*[@class='restaurant-details__heading--title']",
@@ -76,16 +79,20 @@ var RestaurantSelectors = map[string][]string{
 	"description": {
 		"//div[contains(@class,'data-sheet__description')]",
 		"//*[contains(@class,'js-show-description-text')]",
+		"//div[contains(@class,'restaurant-details__description--text ')]",
+		"//div[@id='opinion']//div[contains(@class,'tab__content-paragraph')]/p", // 20190818190359
 	},
 	"address": {
 		"//*[contains(@class,'data-sheet__block--text')][1]",
 		"//*[contains(@class,'restaurant-details__heading--address')]",
-		"//li[*[contains(@class,'fa-map-marker-alt')]]/text()[normalize-space()]",
+		"//div[contains(@class,'collapse__block-title')]//span[contains(@class,'fa-map-marker-alt')]/following-sibling::span[contains(@class,'flex-fill')]", // 20190818190359
+		"//li[*[contains(@class,'fa-map-marker-alt')]]/text()[normalize-space()]",                                                                           // 20220125203424, 20211127004727
 	},
 	"priceAndCuisine": {
 		"//div[contains(@class,'data-sheet__block--text')][2]",
 		"//div[contains(@class,'restaurant-details__heading--price')]",
 		"//*[contains(@class,'restaurant-details__heading-price')]",
+		"//li[span[contains(@class, 'jumbotron__card-detail--icon')]][last()]", // 20190818190359
 	},
 	"phoneNumber": {
 		"//a[@data-event='CTA_tel']",

@@ -25,7 +25,26 @@ func ExtractCoordinates(e *colly.XMLElement) (lat, lng string) {
 	if lat, lng := extractCoordinatesFromGoogleMaps(e); lat != "" && lng != "" {
 		return lat, lng
 	}
+	if lat, lng := extractCoordinatesFromMapDiv(e); lat != "" && lng != "" {
+		return lat, lng
+	}
 	return "", ""
+}
+
+// extractCoordinatesFromMapDiv extracts lat/lng from data-center-lat and data-center-lng attributes of the map div.
+func extractCoordinatesFromMapDiv(e *colly.XMLElement) (latitude, longitude string) {
+	lat := tryRestaurantSelectorsAttr(e, "googleMapDiv", "data-center-lat")
+	lng := tryRestaurantSelectorsAttr(e, "googleMapDiv", "data-center-lng")
+	if lat == "" || lng == "" {
+		return "", ""
+	}
+	if cLat, err := strconv.ParseFloat(lat, 64); err != nil || cLat < -180.0 || cLat > 180.0 {
+		return "", ""
+	}
+	if cLng, err := strconv.ParseFloat(lng, 64); err != nil || cLng < -180.0 || cLng > 180.0 {
+		return "", ""
+	}
+	return lat, lng
 }
 
 // extractCoordinatesFromJSONLD extracts latitude and longitude from a JSON-LD <script> tag.
