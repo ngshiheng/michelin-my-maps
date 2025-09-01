@@ -133,5 +133,11 @@ func parseCoordinates(jsonLD string) (latitude, longitude string) {
 	}
 	latitude = parseCoordinate(ld["latitude"])
 	longitude = parseCoordinate(ld["longitude"])
+	if latitude == "" || longitude == "" {
+		if geo, ok := ld["geo"].(map[string]any); ok {
+			latitude = parseCoordinate(geo["latitude"])
+			longitude = parseCoordinate(geo["longitude"])
+		}
+	}
 	return latitude, longitude
 }

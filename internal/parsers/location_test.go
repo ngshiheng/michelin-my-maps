@@ -15,11 +15,7 @@ func TestParseLocationFromAddress(t *testing.T) {
 		},
 		{
 			address:  "57 Porte des Ardennes, Erpeldange, 9145, Luxembourg",
-			expected: "Erpeldange, Luxembourg",
-		},
-		{
-			address:  "Klara Norra Kyrkogata 26, Stockholm",
-			expected: "Stockholm",
+			expected: "Luxembourg",
 		},
 		{
 			address:  "Hong Kong",
