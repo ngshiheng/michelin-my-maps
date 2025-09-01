@@ -3,12 +3,13 @@ package scraper
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/client"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/extraction"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/handlers"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
 	log "github.com/sirupsen/logrus"
@@ -69,7 +70,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
 
-	s.setupHandlers(collector, detailCollector)
+	s.setupHandlers(ctx, collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
 	michelinGuideURLs := map[string]string{
@@ -83,7 +84,6 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	for _, url := range michelinGuideURLs {
 		s.client.EnqueueURL(url)
 	}
-
 	s.client.Run()
 
 	// TODO: add summary of results
@@ -107,7 +107,7 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	return nil
 }
 
-func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
+func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector, detailCollector *colly.Collector) {
 	collector.OnError(s.createErrorHandler())
 
 	collector.OnRequest(func(r *colly.Request) {
@@ -129,30 +129,14 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		}).Info("process listing page")
 	})
 
-	// Extract restaurant URLs from the listing page and visit them
-	collector.OnXML(restaurantXPath, func(e *colly.XMLElement) {
-		url := e.Request.AbsoluteURL(e.ChildAttr(restaurantDetailURLXPath, "href"))
-
-		location := e.ChildText(restaurantLocationXPath)
-		longitude := e.Attr("data-lng")
-		latitude := e.Attr("data-lat")
-
+	collector.OnXML("//div[contains(@class, 'card__menu selection-card')]", func(e *colly.XMLElement) {
+		url := e.Request.AbsoluteURL(e.ChildAttr("//a[@class='link']", "href"))
+		location := e.ChildText("//div[@class='card__menu-footer--score pl-text']")
 		e.Request.Ctx.Put("location", location)
-		e.Request.Ctx.Put("longitude", longitude)
-		e.Request.Ctx.Put("latitude", latitude)
-
-		log.WithFields(log.Fields{
-			"url":       url,
-			"location":  location,
-			"longitude": longitude,
-			"latitude":  latitude,
-		}).Debug("queue restaurant detail page")
-
 		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
 
-	// Extract and visit next page links
-	collector.OnXML(nextPageArrowButtonXPath, func(e *colly.XMLElement) {
+	collector.OnXML("//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']", func(e *colly.XMLElement) {
 		log.WithFields(log.Fields{
 			"url": e.Attr("href"),
 		}).Debug("queue next page")
@@ -175,57 +159,11 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		}).Debug("fetch restaurant detail")
 	})
 
-	detailCollector.OnXML(restaurantAwardPublishedYearXPath, func(e *colly.XMLElement) {
-		jsonLD := e.Text
-		year := extraction.ParsePublishedYear(jsonLD)
-		e.Request.Ctx.Put("publishedYear", year)
-
-	})
-
-	detailCollector.OnXML(restaurantDetailXPath, func(e *colly.XMLElement) {
-		data := s.extractData(e)
-
-		restaurant := &models.Restaurant{
-			URL:                   data.URL,
-			Name:                  data.Name,
-			Description:           data.Description,
-			Address:               data.Address,
-			Location:              data.Location,
-			Latitude:              data.Latitude,
-			Longitude:             data.Longitude,
-			Cuisine:               data.Cuisine,
-			FacilitiesAndServices: data.FacilitiesAndServices,
-			PhoneNumber:           data.PhoneNumber,
-			WebsiteURL:            data.WebsiteURL,
+	detailCollector.OnXML("html", func(e *colly.XMLElement) {
+		err := handlers.Handle(ctx, e, s.repository)
+		if err != nil {
+			log.WithError(err).Error("failed to handle restaurant extraction")
 		}
-		if err := s.repository.SaveRestaurant(ctx, restaurant); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"url":   data.URL,
-			}).Error("fail to save restaurant")
-			return
-		}
-
-		award := &models.RestaurantAward{
-			RestaurantID: restaurant.ID,
-			Year:         data.Year,
-			Distinction:  data.Distinction,
-			Price:        data.Price,
-			GreenStar:    data.GreenStar,
-		}
-		if err := s.repository.SaveAward(ctx, award); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"url":   data.URL,
-			}).Error("fail to save restaurant award")
-			return
-		}
-		log.WithFields(log.Fields{
-			"distinction": data.Distinction,
-			"name":        data.Name,
-			"url":         data.URL,
-			"year":        data.Year,
-		}).Debug("save restaurant and award")
 	})
 }
 
@@ -246,9 +184,17 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			"url":         r.Request.URL.String(),
 		}
 
-		// Do not retry if already visited.
 		if strings.Contains(err.Error(), "already visited") {
 			log.WithFields(fields).Warn("already visited, skip retry")
+			return
+		}
+
+		switch r.StatusCode {
+		case http.StatusTooManyRequests:
+			log.WithFields(fields).Debug("request rate limited, skip retry")
+			return
+		case http.StatusNotFound:
+			log.WithFields(fields).Debug("request not found, skip retry")
 			return
 		}
 
@@ -259,7 +205,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).Warnf("fail request, retry after %v", backoff)
+			log.WithFields(fields).Debugf("fail request, retry after %v", backoff)
 			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt", attempt+1)

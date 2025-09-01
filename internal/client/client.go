@@ -14,7 +14,7 @@ import (
 	"github.com/gocolly/colly/v2/queue"
 )
 
-// Config defines the minimal config needed for Colly.
+// Config defines the minimal config needed for Colly
 type Config struct {
 	AllowedDomains []string
 	CachePath      string
@@ -26,14 +26,14 @@ type Config struct {
 	ThreadCount    int
 }
 
-// Colly provides HTTP client functionality for web scraping.
+// Colly provides HTTP client functionality for web scraping
 type Colly struct {
 	collector *colly.Collector
 	queue     *queue.Queue
 	config    *Config
 }
 
-// New creates a new web client instance.
+// New creates a new web client instance
 func New(cfg *Config) (*Colly, error) {
 	cacheDir := filepath.Join(cfg.CachePath)
 
@@ -65,12 +65,12 @@ func New(cfg *Config) (*Colly, error) {
 	}, nil
 }
 
-// GetCollector returns the colly collector for direct access.
+// GetCollector returns the colly collector for direct access
 func (w *Colly) GetCollector() *colly.Collector {
 	return w.collector
 }
 
-// GetDetailCollector creates a cloned collector for detail page scraping.
+// GetDetailCollector creates a cloned collector for detail page scraping
 func (w *Colly) GetDetailCollector() *colly.Collector {
 	dc := w.collector.Clone()
 	extensions.RandomUserAgent(dc)
@@ -78,7 +78,7 @@ func (w *Colly) GetDetailCollector() *colly.Collector {
 	return dc
 }
 
-// ClearCache removes the cache file for a given colly.Request.
+// ClearCache removes the cache file for a given colly.Request
 func (w *Colly) ClearCache(r *colly.Request) error {
 	url := r.URL.String()
 	sum := sha1.Sum([]byte(url))
@@ -94,12 +94,12 @@ func (w *Colly) ClearCache(r *colly.Request) error {
 	return nil
 }
 
-// EnqueueURL adds a URL to the queue for processing.
+// EnqueueURL adds a URL to the queue for processing
 func (w *Colly) EnqueueURL(url string) {
 	w.queue.AddURL(url)
 }
 
-// Run starts the web scraping process.
+// Run starts the web scraping process
 func (w *Colly) Run() {
 	w.queue.Run(w.collector)
 }

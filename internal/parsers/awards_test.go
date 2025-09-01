@@ -1,32 +1,10 @@
-package extraction
+package parsers
 
 import (
 	"testing"
 
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 )
-
-func TestParseGreenStarValue(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected bool
-	}{
-		{"True", true},
-		{"true", true},
-		{"michelin green star", true},
-		{"false", false},
-		{"", false},
-		{"Green", false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			got := ParseGreenStarValue(tt.input)
-			if got != tt.expected {
-				t.Errorf("ParseGreenStarValue(%q) = %v; want %v", tt.input, got, tt.expected)
-			}
-		})
-	}
-}
 
 func TestParseDistinction(t *testing.T) {
 	tests := []struct {
@@ -46,7 +24,7 @@ func TestParseDistinction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := ParseDistinction(tt.input)
+			got := parseDistinction(tt.input)
 			if got != tt.expected {
 				t.Errorf("ParseDistinction(%q) = %q; want %q", tt.input, got, tt.expected)
 			}
