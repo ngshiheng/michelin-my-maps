@@ -40,6 +40,9 @@ func (r *Restaurant) BeforeUpdate(tx *gorm.DB) error {
 
 // validate checks that required fields are not empty
 func (r *Restaurant) validate() error {
+	if strings.TrimSpace(r.Name) == "" {
+		return errors.New("name cannot be empty")
+	}
 	if strings.TrimSpace(r.Address) == "" {
 		return errors.New("address cannot be empty")
 	}
