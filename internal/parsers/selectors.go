@@ -75,6 +75,8 @@ var RestaurantSelectors = map[string][]string{
 	"name": {
 		"//*[@class='data-sheet__title']",
 		"//*[@class='restaurant-details__heading--title']",
+		"//*[@class='jumbotron-desc jumbotron__card-title']",
+		"//*[@class='col-12 text-center']/h4",
 	},
 	"description": {
 		"//div[contains(@class,'data-sheet__description')]",

@@ -46,21 +46,18 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 		data.Location = e.Request.Ctx.Get("location")
 	}
 
-	if restaurant == nil {
-		restaurant = &models.Restaurant{
-			URL:                   data.URL,
-			Name:                  data.Name,
-			Description:           data.Description,
-			Address:               data.Address,
-			Location:              data.Location,
-			Latitude:              data.Latitude,
-			Longitude:             data.Longitude,
-			Cuisine:               data.Cuisine,
-			FacilitiesAndServices: data.FacilitiesAndServices,
-			PhoneNumber:           data.PhoneNumber,
-			WebsiteURL:            data.WebsiteURL,
-		}
-
+	restaurant = &models.Restaurant{
+		URL:                   data.URL,
+		Name:                  data.Name,
+		Description:           data.Description,
+		Address:               data.Address,
+		Location:              data.Location,
+		Latitude:              data.Latitude,
+		Longitude:             data.Longitude,
+		Cuisine:               data.Cuisine,
+		FacilitiesAndServices: data.FacilitiesAndServices,
+		PhoneNumber:           data.PhoneNumber,
+		WebsiteURL:            data.WebsiteURL,
 	}
 
 	if err := repo.SaveRestaurant(ctx, restaurant); err != nil {
