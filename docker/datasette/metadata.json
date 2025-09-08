@@ -1,6 +1,6 @@
 {
     "title": "Michelin Guide Awards Historical Dataset (2019–Present)",
-    "description_html": "Explore a comprehensive, research-grade database of The Michelin Guide restaurants worldwide—complete award histories, provenance tracking, and analytics-ready data since 2019. <a href=\"https://jerrynsh.gumroad.com/l/michelindb\" target=\"_blank\">Download the full historical dataset</a>.",
+    "description_html": "Explore a comprehensive, research-grade database of The Michelin Guide restaurants worldwide—complete award histories, provenance tracking, and analytics-ready data since 2019.",
     "license": "MIT",
     "license_url": "https://github.com/ngshiheng/michelin-my-maps/blob/main/LICENSE",
     "source": "The Michelin Guides",
