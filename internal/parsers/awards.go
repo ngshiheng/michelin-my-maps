@@ -22,8 +22,16 @@ func ExtractDistinction(e *colly.XMLElement) (string, bool) {
 	if distinction == "" {
 		distinction = models.SelectedRestaurants
 	}
-	greenStar := tryAwardSelectors(e, "greenStar", parseGreenStar) == "true"
+	greenStar := extractGreenStar(e)
 	return distinction, greenStar
+}
+
+func extractGreenStar(e *colly.XMLElement) bool {
+	greenStar := tryAwardSelectors(e, "greenStar", parseGreenStar) == "true"
+	if !greenStar {
+		greenStar = ParseDLayerValue(FindDLayerScript(e), "greenstar") == "True"
+	}
+	return greenStar
 }
 
 // parseGreenStar returns "true" if the text contains "green star", otherwise "false".
