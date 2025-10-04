@@ -7,7 +7,8 @@
         {
             "matchUpdateTypes": ["minor", "patch"],
             "groupName": "minor and patch updates",
-            "groupSlug": "minor-patch"
+            "groupSlug": "minor-patch",
+            "automerge": true
         },
         {
             "matchUpdateTypes": ["major"],
