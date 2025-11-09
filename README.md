@@ -6,6 +6,8 @@
 -   [Context](#context)
 -   [Disclaimer](#disclaimer)
 -   [Content](#content)
+-   [Usage](#usage)
+    -   [Trip Feature](#trip-feature)
 -   [Inspiration](#inspiration)
 -   [Contributing](#contributing)
 
@@ -37,6 +39,58 @@ The dataset contains a list of restaurants along with additional details (e.g. a
 | :------ | :------------------------------------------------------------------------- | :----------------------------- |
 | CSV     | [CSV](./data/michelin_my_maps.csv)                                         | Good'ol comma-separated values |
 | Kaggle  | [Kaggle](https://www.kaggle.com/ngshiheng/michelin-guide-restaurants-2021) | Data science community         |
+
+## Usage
+
+### Trip Feature
+
+Create personalized restaurant maps for your travels with the `trip` command. Filter restaurants by location, awards, cuisine, and more, then export to multiple map formats.
+
+**Quick Start:**
+
+```bash
+# Create a trip with filters
+mym trip create "Paris2025" -cities "Paris" -min-stars 1
+
+# Export to interactive maps (GeoJSON, KML, HTML)
+mym trip export "Paris2025"
+
+# View your trips
+mym trip list
+
+# Delete a trip
+mym trip delete "Paris2025"
+```
+
+**Available Filters:**
+- `-cities` - Filter by cities/locations (comma-separated)
+- `-distinctions` - Filter by award types (3 Stars, 2 Stars, 1 Star, Bib Gourmand)
+- `-min-stars` - Minimum star rating (1, 2, or 3)
+- `-cuisines` - Filter by cuisine types (comma-separated)
+- `-green-star` - Only sustainable/green star restaurants
+
+**Export Formats:**
+- **GeoJSON** - For web maps and GIS applications
+- **KML** - For Google Earth and offline mobile apps (Maps.me, OsmAnd)
+- **HTML** - Standalone interactive map with Leaflet (works on any device)
+
+**Example Use Cases:**
+
+```bash
+# Multi-city food tour
+mym trip create "FrenchTour" -cities "Paris,Lyon,Marseille"
+
+# 3-star bucket list
+mym trip create "ThreeStarBucketList" -distinctions "3 Stars"
+
+# Sustainable dining
+mym trip create "GreenItaly" -cities "Italy" -green-star
+
+# Budget-friendly options
+mym trip create "BibGourmand" -cities "Tokyo" -distinctions "Bib Gourmand"
+```
+
+For detailed documentation, see [TRIP_FEATURE.md](./TRIP_FEATURE.md).
 
 ## Inspiration
 

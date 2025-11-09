@@ -222,3 +222,8 @@ func (r *SQLiteRepository) ListRestaurants(ctx context.Context) ([]models.Restau
 	}).Debug("retrieve all restaurants with URL")
 	return restaurants, nil
 }
+
+// GetDB returns the underlying GORM database instance
+func (r *SQLiteRepository) GetDB() *gorm.DB {
+	return r.db
+}
