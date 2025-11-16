@@ -93,7 +93,7 @@
             },
             "tables": {
                 "restaurants": {
-                    "hidden": true,
+                    "allow": false,
                     "sort": "updated_at",
                     "sortable_columns": ["name", "location", "cuisine", "created_at", "updated_at"],
                     "facets": ["location", "cuisine"],
@@ -122,7 +122,7 @@
                     }
                 },
                 "restaurant_awards": {
-                    "hidden": true,
+                    "allow": false,
                     "sort": "updated_at",
                     "sortable_columns": ["year", "distinction", "price", "green_star", "created_at", "updated_at"],
                     "facets": ["year", "distinction", "price", "green_star"],
@@ -139,7 +139,7 @@
                     }
                 },
                 "sqlite_sequence": {
-                    "hidden": true
+                    "allow": false
                 }
             }
         }
