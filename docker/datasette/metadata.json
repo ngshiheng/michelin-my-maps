@@ -21,7 +21,6 @@
     },
     "databases": {
         "michelin": {
-            "allow_sql": false,
             "queries": {
                 "restaurant_finder": {
                     "sql": "SELECT r.name, r.location, r.cuisine, ra.price, ra.distinction as current_distinction, ra_prev.distinction as previous_distinction, r.url, r.website_url, r.phone_number, r.facilities_and_services, r.latitude, r.longitude FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) LEFT JOIN restaurant_awards ra_prev ON r.id = ra_prev.restaurant_id AND ra_prev.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id AND year < (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id)) WHERE (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN r.name = SUBSTR(:name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:distinction IS NULL OR :distinction = '' OR LOWER(ra.distinction) LIKE LOWER('%' || :distinction || '%')) ORDER BY CASE ra.distinction WHEN '3 Stars' THEN 1 WHEN '2 Stars' THEN 2 WHEN '1 Star' THEN 3 WHEN 'Bib Gourmand' THEN 4 WHEN 'Selected Restaurants' THEN 5 ELSE 6 END, r.name LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
