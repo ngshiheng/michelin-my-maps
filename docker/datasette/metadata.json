@@ -92,7 +92,7 @@
             },
             "tables": {
                 "restaurants": {
-                    "allow": false,
+                    "allow": { "id": "root" },
                     "sort": "updated_at",
                     "sortable_columns": ["name", "location", "cuisine", "created_at", "updated_at"],
                     "facets": ["location", "cuisine"],
@@ -121,7 +121,7 @@
                     }
                 },
                 "restaurant_awards": {
-                    "allow": false,
+                    "allow": { "id": "root" },
                     "sort": "updated_at",
                     "sortable_columns": ["year", "distinction", "price", "green_star", "created_at", "updated_at"],
                     "facets": ["year", "distinction", "price", "green_star"],
