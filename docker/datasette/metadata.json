@@ -17,6 +17,286 @@
         },
         "datasette-google-analytics": {
             "tracking_id": "G-VMRWWSG9KS"
+        },
+        "datasette-dashboards": {
+            "overview": {
+                "title": "Michelin Analytics Hub",
+                "description": "High-level overview and trends across the Michelin Guide dataset with interactive filtering and real-time chart updates",
+                "settings": {
+                    "allow_fullscreen": true,
+                    "autorefresh": 30
+                },
+                "layout": [
+                    ["intro-text", "key-metrics"],
+                    ["awards-distribution", "yearly-trends"],
+                    ["geographic-distribution", "cuisine-performance"],
+                    ["green-star-trends", "price-analysis"]
+                ],
+                "filters": {
+                    "start_year": {
+                        "name": "Start Year",
+                        "type": "number",
+                        "default": 2023,
+                        "min": 2018,
+                        "max": 2026
+                    },
+                    "end_year": {
+                        "name": "End Year",
+                        "type": "number",
+                        "default": 2025,
+                        "min": 2018,
+                        "max": 2026
+                    },
+                    "location": {
+                        "name": "Location",
+                        "type": "text"
+                    },
+                    "cuisine": {
+                        "name": "Cuisine Type",
+                        "type": "select",
+                        "db": "michelin",
+                        "query": "SELECT DISTINCT cuisine FROM restaurants WHERE cuisine IS NOT NULL ORDER BY cuisine"
+                    },
+                    "distinction": {
+                        "name": "Distinction",
+                        "type": "select",
+                        "options": ["3 Stars", "2 Stars", "1 Star", "Bib Gourmand", "Selected Restaurants"]
+                    }
+                },
+                "charts": {
+                    "intro-text": {
+                        "library": "markdown",
+                        "display": "# Michelin Analytics Hub\n\n> Comprehensive visual analytics of the Michelin Guide dataset with interactive filtering. Explore trends, distributions, and insights across restaurants worldwide.\n\n**Data Coverage**: 2019–Present | **Interactive Filtering**: All visualizations update dynamically"
+                    },
+                    "key-metrics": {
+                        "title": "Key Metrics",
+                        "db": "michelin",
+                        "query": "WITH current_year_data AS (SELECT ra.*, r.location FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id WHERE ra.year BETWEEN COALESCE(:start_year, 2018) AND COALESCE(:end_year, 2026) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :distinction ]]) SELECT COUNT(DISTINCT restaurant_id) as total_restaurants, COUNT(*) as total_awards, COUNT(DISTINCT year) as years_covered, ROUND(CAST(COUNT(*) AS FLOAT) / COUNT(DISTINCT year), 1) as avg_awards_per_year, COUNT(CASE WHEN green_star = 1 THEN 1 END) as green_stars FROM current_year_data",
+                        "library": "table",
+                        "display": {}
+                    },
+                    "awards-distribution": {
+                        "title": "Current Awards Distribution",
+                        "db": "michelin",
+                        "query": "WITH latest_awards AS (SELECT ra.distinction, ra.restaurant_id FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id WHERE ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = ra.restaurant_id) AND ra.year BETWEEN COALESCE(:start_year, 2018) AND COALESCE(:end_year, 2026) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :distinction ]]) SELECT distinction, COUNT(*) as count FROM latest_awards GROUP BY distinction ORDER BY CASE distinction WHEN '3 Stars' THEN 1 WHEN '2 Stars' THEN 2 WHEN '1 Star' THEN 3 WHEN 'Bib Gourmand' THEN 4 WHEN 'Selected Restaurants' THEN 5 END",
+                        "library": "vega-lite",
+                        "display": {
+                            "mark": { "type": "arc", "tooltip": true, "outerRadius": 120 },
+                            "encoding": {
+                                "color": {
+                                    "field": "distinction",
+                                    "type": "nominal",
+                                    "scale": {
+                                        "domain": ["3 Stars", "2 Stars", "1 Star", "Bib Gourmand", "Selected Restaurants"],
+                                        "range": ["#FFD700", "#C0C0C0", "#CD7F32", "#8B4513", "#808080"]
+                                    }
+                                },
+                                "theta": { "field": "count", "type": "quantitative" }
+                            }
+                        }
+                    },
+                    "yearly-trends": {
+                        "title": "Awards Trends by Year",
+                        "db": "michelin",
+                        "query": "SELECT ra.year, ra.distinction, COUNT(*) as count FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id WHERE ra.year BETWEEN COALESCE(:start_year, 2018) AND COALESCE(:end_year, 2026) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :distinction ]] GROUP BY ra.year, ra.distinction ORDER BY ra.year, CASE ra.distinction WHEN '3 Stars' THEN 1 WHEN '2 Stars' THEN 2 WHEN '1 Star' THEN 3 WHEN 'Bib Gourmand' THEN 4 WHEN 'Selected Restaurants' THEN 5 END",
+                        "library": "vega-lite",
+                        "display": {
+                            "mark": { "type": "line", "point": true, "tooltip": true },
+                            "encoding": {
+                                "x": { "field": "year", "type": "ordinal", "axis": { "title": "Year" } },
+                                "y": { "field": "count", "type": "quantitative", "axis": { "title": "Number of Awards" } },
+                                "color": {
+                                    "field": "distinction",
+                                    "type": "nominal",
+                                    "scale": {
+                                        "domain": ["3 Stars", "2 Stars", "1 Star", "Bib Gourmand", "Selected Restaurants"],
+                                        "range": ["#FFD700", "#C0C0C0", "#CD7F32", "#8B4513", "#808080"]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "geographic-distribution": {
+                        "title": "Top Locations by Awards",
+                        "db": "michelin",
+                        "query": "SELECT TRIM(SUBSTR(r.location, 1, CASE WHEN INSTR(r.location, ',') > 0 THEN INSTR(r.location, ',') - 1 ELSE LENGTH(r.location) END)) AS city, COUNT(DISTINCT ra.restaurant_id) as total_restaurants, COUNT(CASE WHEN ra.distinction IN ('3 Stars', '2 Stars', '1 Star') THEN 1 END) as star_restaurants FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.year BETWEEN COALESCE(:start_year, 2018) AND COALESCE(:end_year, 2026) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :distinction ]] GROUP BY city HAVING total_restaurants >= 5 ORDER BY star_restaurants DESC, total_restaurants DESC LIMIT 15",
+                        "library": "vega-lite",
+                        "display": {
+                            "mark": { "type": "bar", "tooltip": true },
+                            "encoding": {
+                                "x": { "field": "total_restaurants", "type": "quantitative", "axis": { "title": "Total Restaurants" } },
+                                "y": { "field": "city", "type": "ordinal", "sort": "-x", "axis": { "title": "City" } },
+                                "color": { "field": "star_restaurants", "type": "quantitative", "scale": { "scheme": "goldorange" } }
+                            }
+                        }
+                    },
+                    "cuisine-performance": {
+                        "title": "Cuisine Types by Star Concentration",
+                        "db": "michelin",
+                        "query": "SELECT r.cuisine, COUNT(DISTINCT ra.restaurant_id) as total_restaurants, COUNT(CASE WHEN ra.distinction IN ('3 Stars', '2 Stars', '1 Star') THEN 1 END) as star_count, ROUND(CAST(COUNT(CASE WHEN ra.distinction IN ('3 Stars', '2 Stars', '1 Star') THEN 1 END) AS FLOAT) / COUNT(DISTINCT ra.restaurant_id) * 100, 1) as star_percentage FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.year BETWEEN COALESCE(:start_year, 2018) AND COALESCE(:end_year, 2026) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :distinction ]] GROUP BY r.cuisine HAVING total_restaurants >= 10 ORDER BY star_percentage DESC LIMIT 12",
+                        "library": "vega-lite",
+                        "display": {
+                            "mark": { "type": "bar", "tooltip": true },
+                            "encoding": {
+                                "x": { "field": "star_percentage", "type": "quantitative", "axis": { "title": "Star Percentage (%)" } },
+                                "y": { "field": "cuisine", "type": "ordinal", "sort": "-x", "axis": { "title": "Cuisine Type" } },
+                                "color": { "field": "star_percentage", "type": "quantitative", "scale": { "scheme": "goldorange" } }
+                            }
+                        }
+                    },
+                    "green-star-trends": {
+                        "title": "Green Star Sustainability Awards",
+                        "db": "michelin",
+                        "query": "SELECT ra.year, COUNT(*) as green_star_count FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id WHERE ra.green_star = 1 AND ra.year BETWEEN COALESCE(:start_year, 2018) AND COALESCE(:end_year, 2026) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :distinction ]] GROUP BY ra.year ORDER BY ra.year",
+                        "library": "vega-lite",
+                        "display": {
+                            "mark": { "type": "area", "point": true, "tooltip": true, "color": "#228B22" },
+                            "encoding": {
+                                "x": { "field": "year", "type": "ordinal", "axis": { "title": "Year" } },
+                                "y": { "field": "green_star_count", "type": "quantitative", "axis": { "title": "Green Star Count" } }
+                            }
+                        }
+                    },
+                    "price-analysis": {
+                        "title": "Price Distribution Across Awards",
+                        "db": "michelin",
+                        "query": "SELECT ra.price, ra.distinction, COUNT(*) as count FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id WHERE ra.price IS NOT NULL AND ra.year BETWEEN COALESCE(:start_year, 2018) AND COALESCE(:end_year, 2026) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :distinction ]] GROUP BY ra.price, ra.distinction ORDER BY ra.price, CASE ra.distinction WHEN '3 Stars' THEN 1 WHEN '2 Stars' THEN 2 WHEN '1 Star' THEN 3 WHEN 'Bib Gourmand' THEN 4 WHEN 'Selected Restaurants' THEN 5 END",
+                        "library": "vega-lite",
+                        "display": {
+                            "mark": { "type": "bar", "tooltip": true },
+                            "encoding": {
+                                "x": { "field": "price", "type": "ordinal", "axis": { "title": "Price Range" } },
+                                "y": { "field": "count", "type": "quantitative", "axis": { "title": "Number of Restaurants" } },
+                                "color": {
+                                    "field": "distinction",
+                                    "type": "nominal",
+                                    "scale": {
+                                        "domain": ["3 Stars", "2 Stars", "1 Star", "Bib Gourmand", "Selected Restaurants"],
+                                        "range": ["#FFD700", "#C0C0C0", "#CD7F32", "#8B4513", "#808080"]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "restaurant": {
+                "title": "Restaurant Explorer",
+                "description": "Search and analyze individual restaurants with interactive filtering across all visualizations",
+                "settings": {
+                    "allow_fullscreen": true
+                },
+                "layout": [
+                    ["search-intro", "search-metrics"],
+                    ["recent-changes", "individual-timeline"],
+                    ["geographic-map", "."],
+                    ["restaurant-results", "."]
+                ],
+                "filters": {
+                    "restaurant_name": {
+                        "name": "Restaurant Name",
+                        "type": "select",
+                        "db": "michelin",
+                        "query": "SELECT DISTINCT name FROM restaurants ORDER BY name"
+                    },
+                    "location": {
+                        "name": "Location",
+                        "type": "text"
+                    },
+                    "cuisine": {
+                        "name": "Cuisine Type",
+                        "type": "select",
+                        "db": "michelin",
+                        "query": "SELECT DISTINCT cuisine FROM restaurants WHERE cuisine IS NOT NULL ORDER BY cuisine"
+                    },
+                    "current_distinction": {
+                        "name": "Current Distinction",
+                        "type": "select",
+                        "options": ["3 Stars", "2 Stars", "1 Star", "Bib Gourmand", "Selected Restaurants"]
+                    },
+                    "price_range": {
+                        "name": "Price Range",
+                        "type": "select",
+                        "db": "michelin",
+                        "query": "SELECT DISTINCT price FROM restaurant_awards WHERE price IS NOT NULL ORDER BY price"
+                    },
+                    "has_green_star": {
+                        "name": "Has Green Star",
+                        "type": "select",
+                        "options": ["Yes", "No"]
+                    }
+                },
+                "charts": {
+                    "search-intro": {
+                        "library": "markdown",
+                        "display": "# Restaurant Explorer\n\n> Search and analyze individual restaurants with **restaurant name search** and comprehensive filtering. View current awards, award history, and detailed information.\n\n**Search Tips**: Use the Restaurant Name field for targeted search, or combine filters for broader exploration."
+                    },
+                    "search-metrics": {
+                        "title": "Search Results Summary",
+                        "db": "michelin",
+                        "query": "WITH filtered_restaurants AS (SELECT DISTINCT r.id FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE (CASE WHEN :restaurant_name IS NULL OR :restaurant_name = '' THEN 1=1 WHEN SUBSTR(:restaurant_name, 1, 1) = '=' THEN r.name = SUBSTR(:restaurant_name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :restaurant_name || '%') END) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :current_distinction ]] [[ AND ra.price = :price_range ]] [[ AND ((ra.green_star = 1 AND :has_green_star = 'Yes') OR (ra.green_star = 0 AND :has_green_star = 'No') OR :has_green_star IS NULL OR :has_green_star = '') ]] AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id)) SELECT COUNT(*) as matching_restaurants, COUNT(CASE WHEN ra.distinction IN ('3 Stars', '2 Stars', '1 Star') THEN 1 END) as starred_restaurants, COUNT(CASE WHEN ra.green_star = 1 THEN 1 END) as green_star_restaurants FROM filtered_restaurants fr JOIN restaurant_awards ra ON fr.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = fr.id)",
+                        "library": "table",
+                        "display": {}
+                    },
+                    "restaurant-results": {
+                        "title": "Restaurant Search Results",
+                        "db": "michelin",
+                        "query": "SELECT r.name, r.location, r.cuisine, ra.distinction as current_distinction, ra_prev.distinction as previous_distinction, ra.price, CASE WHEN ra.green_star = 1 THEN '✓' ELSE '' END as green_star, r.website_url FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) LEFT JOIN restaurant_awards ra_prev ON r.id = ra_prev.restaurant_id AND ra_prev.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id AND year < (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id)) WHERE (CASE WHEN :restaurant_name IS NULL OR :restaurant_name = '' THEN 1=1 WHEN SUBSTR(:restaurant_name, 1, 1) = '=' THEN r.name = SUBSTR(:restaurant_name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :restaurant_name || '%') END) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :current_distinction ]] [[ AND ra.price = :price_range ]] [[ AND ((ra.green_star = 1 AND :has_green_star = 'Yes') OR (ra.green_star = 0 AND :has_green_star = 'No') OR :has_green_star IS NULL OR :has_green_star = '') ]] ORDER BY CASE ra.distinction WHEN '3 Stars' THEN 1 WHEN '2 Stars' THEN 2 WHEN '1 Star' THEN 3 WHEN 'Bib Gourmand' THEN 4 WHEN 'Selected Restaurants' THEN 5 ELSE 6 END, r.name LIMIT 25",
+                        "library": "table",
+                        "display": {
+                            "autosize": "fit"
+                        }
+                    },
+                    "geographic-map": {
+                        "title": "Restaurant Locations Map",
+                        "db": "michelin",
+                        "query": "SELECT r.name, r.location, r.latitude, r.longitude, ra.distinction, ra.price FROM restaurants r LEFT JOIN restaurant_awards ra ON r.id = ra.restaurant_id AND ra.year = (SELECT MAX(year) FROM restaurant_awards WHERE restaurant_id = r.id) WHERE r.latitude IS NOT NULL AND r.longitude IS NOT NULL AND (CASE WHEN :restaurant_name IS NULL OR :restaurant_name = '' THEN 1=1 WHEN SUBSTR(:restaurant_name, 1, 1) = '=' THEN r.name = SUBSTR(:restaurant_name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :restaurant_name || '%') END) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.distinction = :current_distinction ]] [[ AND ra.price = :price_range ]] [[ AND ((ra.green_star = 1 AND :has_green_star = 'Yes') OR (ra.green_star = 0 AND :has_green_star = 'No') OR :has_green_star IS NULL OR :has_green_star = '') ]] LIMIT 200",
+                        "library": "map",
+                        "display": {
+                            "latitude_column": "latitude",
+                            "longitude_column": "longitude",
+                            "show_latlng_popup": false
+                        }
+                    },
+                    "individual-timeline": {
+                        "title": "Individual Restaurant Timeline",
+                        "db": "michelin",
+                        "query": "SELECT r.name, ra.year, ra.distinction, CASE WHEN ra.green_star = 1 THEN 'Green Star' ELSE '' END as sustainability, ra.price FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE (CASE WHEN :restaurant_name IS NULL OR :restaurant_name = '' THEN 1=1 WHEN SUBSTR(:restaurant_name, 1, 1) = '=' THEN r.name = SUBSTR(:restaurant_name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :restaurant_name || '%') END) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] [[ AND ra.price = :price_range ]] [[ AND ((ra.green_star = 1 AND :has_green_star = 'Yes') OR (ra.green_star = 0 AND :has_green_star = 'No') OR :has_green_star IS NULL OR :has_green_star = '') ]] ORDER BY r.name, ra.year",
+                        "library": "vega-lite",
+                        "display": {
+                            "autosize": "fit",
+                            "mark": { "type": "line", "point": { "filled": true, "size": 100 }, "tooltip": true },
+                            "encoding": {
+                                "x": { "field": "year", "type": "ordinal", "axis": { "title": "Year" } },
+                                "y": {
+                                    "field": "distinction",
+                                    "type": "ordinal",
+                                    "scale": {
+                                        "domain": ["3 Stars", "2 Stars", "1 Star", "Bib Gourmand", "Selected Restaurants"]
+                                    },
+                                    "axis": { "title": "Michelin Distinction" }
+                                },
+                                "color": { "field": "name", "type": "nominal" },
+                                "shape": {
+                                    "field": "sustainability",
+                                    "type": "nominal",
+                                    "scale": {
+                                        "domain": ["", "Green Star"],
+                                        "range": ["circle", "diamond"]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "recent-changes": {
+                        "title": "Recent Award Changes",
+                        "db": "michelin",
+                        "query": "WITH recent_changes AS (SELECT r.name, r.location, ra1.year, ra1.distinction as current_distinction, LAG(ra1.distinction) OVER (PARTITION BY r.id ORDER BY ra1.year) as previous_distinction FROM restaurants r JOIN restaurant_awards ra1 ON r.id = ra1.restaurant_id WHERE (CASE WHEN :restaurant_name IS NULL OR :restaurant_name = '' THEN 1=1 WHEN SUBSTR(:restaurant_name, 1, 1) = '=' THEN r.name = SUBSTR(:restaurant_name, 2) ELSE LOWER(r.name) LIKE LOWER('%' || :restaurant_name || '%') END) [[ AND LOWER(r.location) LIKE LOWER('%' || :location || '%') ]] [[ AND LOWER(r.cuisine) LIKE LOWER('%' || :cuisine || '%') ]] ORDER BY r.id, ra1.year) SELECT name, location, year, previous_distinction || ' → ' || current_distinction as change FROM recent_changes WHERE current_distinction != previous_distinction AND year >= 2018 ORDER BY year DESC LIMIT 10",
+                        "library": "table",
+                        "display": {}
+                    }
+                }
+            }
         }
     },
     "databases": {
