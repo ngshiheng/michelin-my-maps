@@ -109,7 +109,7 @@ convert_sqlite_to_csv() {
         exit 1
     fi
     mkdir -p "$(dirname "$CSV_FILE")"
-    sqlite3 -header -csv "$DB_FILE" "SELECT r.name as Name, r.address as Address, r.location as Location, ra.price as Price, r.cuisine as Cuisine, r.longitude as Longitude, r.latitude as Latitude, r.phone_number as PhoneNumber, r.url as Url, r.website_url as WebsiteUrl, ra.distinction as Award, ra.green_star as GreenStar, r.facilities_and_services as FacilitiesAndServices, r.description as Description FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.year = (SELECT MAX(year) FROM restaurant_awards ra2 WHERE ra2.restaurant_id = r.id);" >"$CSV_FILE"
+    sqlite3 -header -csv "$DB_FILE" "SELECT r.name as Name, r.address as Address, r.location as Location, ra.price as Price, r.cuisine as Cuisine, r.longitude as Longitude, r.latitude as Latitude, r.phone_number as PhoneNumber, r.url as Url, r.website_url as WebsiteUrl, ra.distinction as Award, ra.green_star as GreenStar, r.facilities_and_services as FacilitiesAndServices, r.description as Description FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.year = ( SELECT MAX(year) FROM restaurant_awards ra2 WHERE ra2.restaurant_id = r.id ) AND DATE(r.updated_at) = DATE('now');" >"$CSV_FILE"
 }
 
 # Publishing functions
