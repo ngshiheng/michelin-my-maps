@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	github.com/gocolly/colly/v2 v2.3.0
-	github.com/nyaruka/phonenumbers v1.6.7
-	github.com/sirupsen/logrus v1.9.3
+	github.com/nyaruka/phonenumbers v1.6.8
+	github.com/sirupsen/logrus v1.9.4
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
 )
@@ -32,5 +32,5 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
