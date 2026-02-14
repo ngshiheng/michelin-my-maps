@@ -28,13 +28,16 @@ var (
 
 	// lessThanRegex matches "Less than X [CURRENCY]" patterns (e.g., "Less than 200 THB")
 	lessThanRegex = regexp.MustCompile(`(?i)^Less than \d+(\.\d+)?\s*[A-Z]{2,4}$`)
+
+	// unavailableRegex matches Michelin's "Prices are currently unavailable for this restaurant" message.
+	unavailableRegex = regexp.MustCompile(`(?i)^Prices are currently unavailable for this restaurant\.?$`)
 )
 
 func ExtractPrice(e *colly.XMLElement) string {
 	if p := tryAwardSelectors(e, "price", parsePrice); p != "" {
 		return p
 	}
-	if p := ParseDLayerValue(FindDLayerScript(e), "price"); p != "" {
+	if p := parseDLayerValue(FindDLayerScript(e), "price"); p != "" {
 		return mapPrice(p)
 	}
 	return ""
@@ -55,6 +58,7 @@ func parsePrice(text string) string {
 		matchBetweenPrice,
 		matchToRangePrice,
 		matchLessThanPrice,
+		matchUnavailablePrice,
 	}
 
 	for _, validator := range pricePatternMatchers {
@@ -143,6 +147,14 @@ func matchToRangePrice(text string) string {
 // e.g. "Less than 200 THB", "Less than 50.5 EUR"
 func matchLessThanPrice(text string) string {
 	if lessThanRegex.MatchString(text) {
+		return text
+	}
+	return ""
+}
+
+// matchUnavailablePrice checks for Michelin's unavailable price message.
+func matchUnavailablePrice(text string) string {
+	if unavailableRegex.MatchString(text) {
 		return text
 	}
 	return ""

@@ -29,7 +29,7 @@ func ExtractDistinction(e *colly.XMLElement) (string, bool) {
 func extractGreenStar(e *colly.XMLElement) bool {
 	greenStar := tryAwardSelectors(e, "greenStar", parseGreenStar) == "true"
 	if !greenStar {
-		greenStar = ParseDLayerValue(FindDLayerScript(e), "greenstar") == "True"
+		greenStar = parseDLayerValue(FindDLayerScript(e), "greenstar") == "True"
 	}
 	return greenStar
 }

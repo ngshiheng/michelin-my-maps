@@ -108,6 +108,7 @@ var RestaurantSelectors = map[string][]string{
 		"//div[contains(@class,'col col-12 col-lg-6')]//li",
 		"//div[@class='restaurant-details__services']//div[@class='restaurant-details__services--content']/text()[normalize-space()]",
 		"//div[@class='restaurant-details__services']//li",
+		"//span[contains(@class,'restaurant__services-list--desc')]",
 	},
 	"googleMaps": {
 		"//div[@class='google-map__static']/iframe",
@@ -129,6 +130,7 @@ var AwardSelectors = map[string][]string{
 		"//*[contains(@class,'restaurant-details__heading-price')]",                // Legacy
 		"//span[contains(@class,'mg-price') or contains(@class,'mg-euro-circle')]", // Price spans
 		"//div[contains(@class,'data-sheet__block--text')]",                        // Generic block text
+		"//p[contains(@class,'restaurant__services-none')]",                        // Price unavailable message
 	},
 	"greenStar": {
 		"//div[contains(text(),'MICHELIN Green Star')]",

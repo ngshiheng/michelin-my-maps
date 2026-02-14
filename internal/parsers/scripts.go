@@ -7,13 +7,13 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-// ParseDLayerValue parses a value from a dLayer script.
+// parseDLayerValue parses a value from a dLayer script.
 // Supported: Only extracts from assignment syntax, not object literals.
 // Example (supported):
 //
 // script := "dLayer['distinction'] = '3 star';"
-// value := ParseDLayerValue(script, "distinction") // value == "3 star"
-func ParseDLayerValue(script, key string) string {
+// value := parseDLayerValue(script, "distinction") // value == "3 star"
+func parseDLayerValue(script, key string) string {
 	re := regexp.MustCompile(key + `'\]\s*=\s*'([^']*)'`)
 	m := re.FindStringSubmatch(script)
 	if len(m) > 1 {

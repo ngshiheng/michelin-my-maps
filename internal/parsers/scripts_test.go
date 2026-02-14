@@ -18,9 +18,9 @@ func TestParseDLayerValue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.key, func(t *testing.T) {
-			got := ParseDLayerValue(tt.script, tt.key)
+			got := parseDLayerValue(tt.script, tt.key)
 			if got != tt.expected {
-				t.Errorf("ParseDLayerValue(%q, %q) = %q; want %q", tt.script, tt.key, got, tt.expected)
+				t.Errorf("parseDLayerValue(%q, %q) = %q; want %q", tt.script, tt.key, got, tt.expected)
 			}
 		})
 	}
