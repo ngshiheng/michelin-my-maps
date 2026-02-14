@@ -135,6 +135,7 @@ func handleScrape(args []string) error {
 func handleBackfill(args []string) error {
 	backfillCmd := flag.NewFlagSet(commandBackfill, flag.ExitOnError)
 	logLevel := backfillCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
+	ignoreCache := backfillCmd.Bool("ignore-cache", false, "skip using Wayback cache")
 
 	if err := backfillCmd.Parse(args); err != nil {
 		return err
@@ -145,7 +146,7 @@ func handleBackfill(args []string) error {
 
 	urlArg := backfillCmd.Arg(0)
 
-	app, err := backfill.New()
+	app, err := backfill.New(*ignoreCache)
 	if err != nil {
 		return fmt.Errorf("failed to create backfill scraper: %w", err)
 	}

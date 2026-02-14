@@ -37,10 +37,14 @@ type Colly struct {
 func New(cfg *Config) (*Colly, error) {
 	cacheDir := filepath.Join(cfg.CachePath)
 
-	c := colly.NewCollector(
-		colly.CacheDir(cacheDir),
-		colly.AllowedDomains(cfg.AllowedDomains...),
-	)
+	// Build collector options conditionally so cache can be disabled when CachePath is empty.
+	opts := []colly.CollectorOption{}
+	if cfg.CachePath != "" {
+		opts = append(opts, colly.CacheDir(cacheDir))
+	}
+	opts = append(opts, colly.AllowedDomains(cfg.AllowedDomains...))
+
+	c := colly.NewCollector(opts...)
 
 	c.Limit(&colly.LimitRule{
 		Delay:       cfg.Delay,
@@ -80,6 +84,10 @@ func (w *Colly) GetDetailCollector() *colly.Collector {
 
 // ClearCache removes the cache file for a given colly.Request
 func (w *Colly) ClearCache(r *colly.Request) error {
+	if w.config == nil || w.config.CachePath == "" {
+		return nil // caching disabled, nothing to clear
+	}
+
 	url := r.URL.String()
 	sum := sha1.Sum([]byte(url))
 	hash := hex.EncodeToString(sum[:])

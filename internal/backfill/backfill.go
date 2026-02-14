@@ -37,7 +37,7 @@ type Scraper struct {
 }
 
 // New creates a new Scraper with default config and repository
-func New() (*Scraper, error) {
+func New(ignoreCache bool) (*Scraper, error) {
 	cfg := defaultConfig()
 
 	repo, err := storage.NewSQLiteRepository(cfg.DatabasePath)
@@ -45,14 +45,19 @@ func New() (*Scraper, error) {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
-	cl, err := client.New(&client.Config{
-		CachePath:      cfg.CachePath,
+	clientCfg := &client.Config{
 		AllowedDomains: cfg.AllowedDomains,
+		CachePath:      cfg.CachePath,
 		Delay:          cfg.Delay,
 		RandomDelay:    cfg.RandomDelay,
 		ThreadCount:    cfg.ThreadCount,
 		MaxURLs:        cfg.MaxURLs,
-	})
+	}
+	if ignoreCache {
+		clientCfg.CachePath = ""
+	}
+
+	cl, err := client.New(clientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
