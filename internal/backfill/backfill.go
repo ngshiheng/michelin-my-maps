@@ -128,13 +128,14 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 				"url":     url,
 				"cdx_api": r.Request.URL.String(),
 				"error":   err,
-			}).Warn("fail to parse CDX API response")
+			}).Warn("failed to parse CDX API response")
 			return
 		}
 
 		if len(rows) <= 1 {
 			log.WithFields(log.Fields{
 				"url":     url,
+				"rows":    rows,
 				"cdx_api": r.Request.URL.String(),
 			}).Debug("no snapshots found")
 			return
@@ -161,7 +162,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 					"error":       err,
 					"wayback_url": snapshotURL,
 					"url":         url,
-				}).Debug("fail to visit snapshot URL")
+				}).Debug("failed to visit snapshot URL")
 				continue
 			}
 			snapshotCount++
@@ -234,17 +235,17 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("fail to clear cache for request")
+				log.WithFields(fields).Error("failed to clear cache for request")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
 			time.Sleep(backoff)
-			log.WithFields(fields).Debugf("fail request, retry after %v", backoff)
+			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("fail request after %d attempts", attempt)
+			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)
 		}
 	}
 }
