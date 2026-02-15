@@ -38,6 +38,10 @@ func TestParseLocationFromAddress(t *testing.T) {
 			expected: "Some City, Some Country",
 		},
 		{
+			address:  "Cloverfield",
+			expected: "Cloverfield",
+		},
+		{
 			address:  "",
 			expected: "",
 		},
