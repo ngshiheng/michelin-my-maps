@@ -51,7 +51,12 @@ d-run-scraper: ## run local development server in docker.
 .PHONY: datasette
 datasette:  ## run datasette with metadata.json for local development.
 	@if [ -z $(DATASETTE) ]; then echo "Datasette could not be found. See https://docs.datasette.io/en/stable/installation.html"; exit 2; fi
-	$(DATASETTE) --root data/michelin.db --metadata docker/datasette/metadata.json
+	@PORT=8001; \
+	while lsof -iTCP:$$PORT -sTCP:LISTEN >/dev/null 2>&1; do \
+	  PORT=$$((PORT+1)); \
+	done; \
+	echo "Starting datasette on port $$PORT"; \
+	$(DATASETTE) --root data/michelin.db --metadata docker/datasette/metadata.json --port $$PORT
 
 .PHONY: d-build-datasette
 d-build-datasette:   ## build datasette docker image.
