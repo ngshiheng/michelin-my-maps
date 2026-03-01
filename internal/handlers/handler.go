@@ -39,7 +39,7 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	}
 
 	// Location data from listing page is preferred for better accuracy
-	// The `parseLocationFromAddress` function is insufficient for extracting detailed location from a restaurant address
+	// The `ParseLocationFromAddress` function is insufficient for extracting detailed location from a restaurant address
 	// It splits by commas and returns only the last segment, often just the country (e.g., "Taiwan"),
 	// missing useful locality info
 	if e.Request.Ctx.Get("location") != "" {

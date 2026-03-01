@@ -140,6 +140,7 @@ func handleBackfill(args []string) error {
 	if err := backfillCmd.Parse(args); err != nil {
 		return err
 	}
+
 	if err := setupLogging(*logLevel); err != nil {
 		return err
 	}

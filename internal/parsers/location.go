@@ -43,6 +43,7 @@ func ParseLocationFromAddress(address string) string {
 	}
 
 	if len(parts) == 1 {
+		// e.g. "Country"
 		city := strings.TrimSpace(parts[0])
 		return city
 	}
