@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gocolly/colly/v2 v2.3.0
-	github.com/nyaruka/phonenumbers v1.6.8
+	github.com/nyaruka/phonenumbers v1.6.10
 	github.com/sirupsen/logrus v1.9.4
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
