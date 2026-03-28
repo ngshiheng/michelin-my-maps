@@ -12,6 +12,7 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/handlers"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -73,6 +74,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.setupHandlers(ctx, collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
+	// TODO: allow user to specify initial URL
 	michelinGuideURLs := map[string]string{
 		models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
 		models.TwoStars:            "https://guide.michelin.com/en/restaurants/2-stars-michelin",
@@ -117,15 +119,19 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 			attempt = 1
 		}
 		log.WithFields(log.Fields{
-			"url":     r.URL.String(),
-			"attempt": attempt,
+			"url":             r.URL.String(),
+			"attempt":         attempt,
+			"request_headers": utils.FlattenHeaders(r.Headers),
+			"request_cookies": utils.FlattenCookies(r.Headers),
 		}).Debug("fetch listing page")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
 		log.WithFields(log.Fields{
-			"url":         r.Request.URL.String(),
-			"status_code": r.StatusCode,
+			"url":              r.Request.URL.String(),
+			"status_code":      r.StatusCode,
+			"response_headers": utils.FlattenHeaders(r.Headers),
+			"content_length":   len(r.Body),
 		}).Info("process listing page")
 	})
 
@@ -154,8 +160,10 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			attempt = 1
 		}
 		log.WithFields(log.Fields{
-			"attempt": attempt,
-			"url":     r.URL.String(),
+			"attempt":         attempt,
+			"url":             r.URL.String(),
+			"request_headers": utils.FlattenHeaders(r.Headers),
+			"request_cookies": utils.FlattenCookies(r.Headers),
 		}).Debug("fetch restaurant detail")
 	})
 
@@ -178,10 +186,13 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		}
 
 		fields := log.Fields{
-			"attempt":     attempt,
-			"error":       err,
-			"status_code": r.StatusCode,
-			"url":         r.Request.URL.String(),
+			"attempt":          attempt,
+			"error":            err,
+			"status_code":      r.StatusCode,
+			"url":              r.Request.URL.String(),
+			"request_headers":  utils.FlattenHeaders(r.Request.Headers),
+			"request_cookies":  utils.FlattenCookies(r.Request.Headers),
+			"response_headers": utils.FlattenHeaders(r.Headers),
 		}
 
 		if strings.Contains(err.Error(), "already visited") {

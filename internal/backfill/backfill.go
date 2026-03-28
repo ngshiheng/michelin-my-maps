@@ -12,6 +12,7 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/client"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/handlers"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -121,8 +122,19 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
 	collector.OnError(s.createErrorHandler())
 
-	// TODO: create the following function to improve debugging capabilities
-	// collector.OnRequest(func(r *colly.Request) {}
+	collector.OnRequest(func(r *colly.Request) {
+		attempt := r.Ctx.GetAny("attempt")
+		if attempt == nil {
+			r.Ctx.Put("attempt", 1)
+			attempt = 1
+		}
+		log.WithFields(log.Fields{
+			"attempt":         attempt,
+			"url":             r.URL.String(),
+			"request_headers": utils.FlattenHeaders(r.Headers),
+			"request_cookies": utils.FlattenCookies(r.Headers),
+		}).Debug("fetch CDX API")
+	})
 
 	collector.OnResponse(func(r *colly.Response) {
 		url := r.Request.URL.Query().Get("url")
@@ -174,9 +186,10 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		}
 
 		log.WithFields(log.Fields{
-			"cdx_api":     r.Request.URL.String(),
-			"snapshots":   snapshotCount,
-			"status_code": r.StatusCode,
+			"cdx_api":          r.Request.URL.String(),
+			"snapshots":        snapshotCount,
+			"status_code":      r.StatusCode,
+			"response_headers": utils.FlattenHeaders(r.Headers),
 		}).Info("process CDX API")
 	})
 }
@@ -191,8 +204,10 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			attempt = 1
 		}
 		log.WithFields(log.Fields{
-			"attempt": attempt,
-			"url":     r.URL.String(),
+			"attempt":         attempt,
+			"url":             r.URL.String(),
+			"request_headers": utils.FlattenHeaders(r.Headers),
+			"request_cookies": utils.FlattenCookies(r.Headers),
 		}).Debug("fetch Wayback snapshot")
 	})
 
@@ -215,10 +230,13 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		}
 
 		fields := log.Fields{
-			"attempt":     attempt,
-			"error":       err,
-			"status_code": r.StatusCode,
-			"url":         r.Request.URL.String(),
+			"attempt":          attempt,
+			"error":            err,
+			"status_code":      r.StatusCode,
+			"url":              r.Request.URL.String(),
+			"request_headers":  utils.FlattenHeaders(r.Request.Headers),
+			"request_cookies":  utils.FlattenCookies(r.Request.Headers),
+			"response_headers": utils.FlattenHeaders(r.Headers),
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
@@ -244,8 +262,8 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			time.Sleep(backoff)
 			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
+			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
