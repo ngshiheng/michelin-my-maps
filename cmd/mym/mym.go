@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/backfill"
+	"github.com/ngshiheng/michelin-my-maps/v3/internal/login"
 	"github.com/ngshiheng/michelin-my-maps/v3/internal/scraper"
 	log "github.com/sirupsen/logrus"
 )
@@ -23,6 +24,7 @@ const (
 const (
 	commandBackfill = "backfill"
 	commandScrape   = "scrape"
+	commandLogin    = "login"
 )
 
 // run contains the main application logic of the CLI tool
@@ -54,6 +56,8 @@ func handleCommand(arg []string) error {
 		return handleScrape(arg[2:])
 	case commandBackfill:
 		return handleBackfill(arg[2:])
+	case commandLogin:
+		return handleLogin(arg[2:])
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: \"%s\"\n\n", command)
 		printUsage()
@@ -83,6 +87,7 @@ func printUsage() {
 	fmt.Println("<command>")
 	fmt.Println("  scrape     scrape latest restaurant data or a single restaurant if <url> is provided.")
 	fmt.Println("  backfill   backfill restaurant data or a single restaurant if <url> is provided.")
+	fmt.Println("  login      interactive login flow; captures cookies and writes $HOME/.mym/config.json")
 	fmt.Println("")
 	fmt.Println("[options]")
 	fmt.Println("  -log <level>   set log level. (default: info)")
@@ -158,6 +163,70 @@ func handleBackfill(args []string) error {
 		return app.Run(ctx, urlArg)
 	}
 	return app.RunAll(ctx)
+}
+
+// handleLogin handles the 'login' subcommand
+func handleLogin(args []string) error {
+	loginCmd := flag.NewFlagSet("login", flag.ExitOnError)
+	logLevel := loginCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
+	email := loginCmd.String("email", "", "email to use for login")
+	password := loginCmd.String("password", "", "password for login (use with caution)")
+	headless := loginCmd.Bool("headless", true, "run browser headless")
+	output := loginCmd.String("output", "", "output path for config.json (default $HOME/.mym/config.json)")
+	timeout := loginCmd.Duration("timeout", 60*time.Second, "login flow timeout")
+
+	if err := loginCmd.Parse(args); err != nil {
+		return err
+	}
+
+	if err := setupLogging(*logLevel); err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+
+	// If output not set, default to $HOME/.mym/config.json
+	outPath := *output
+	if outPath == "" {
+		home := os.Getenv("HOME")
+		outPath = fmt.Sprintf("%s/.mym/config.json", home)
+	}
+
+	// require email and password flags (no interactive prompts here)
+	if *email == "" || *password == "" {
+		return fmt.Errorf("email and password flags are required for non-interactive login")
+	}
+
+	// Call the rod login helper
+	cookies, err := login.Login(ctx, *email, *password, *headless, *timeout)
+	if err != nil {
+		return fmt.Errorf("login failed: %w", err)
+	}
+
+	// Build config object
+	cfg := map[string]interface{}{
+		"version": 1,
+		"account": map[string]interface{}{
+			"email":      *email,
+			"last_login": time.Now().UTC().Format(time.RFC3339),
+		},
+		"cookies":    cookies,
+		"created_at": time.Now().UTC().Format(time.RFC3339),
+		"source":     "rod",
+	}
+
+	// Ensure directory exists
+	if err := os.MkdirAll(fmt.Sprintf("%s/.mym", os.Getenv("HOME")), 0700); err != nil {
+		return fmt.Errorf("failed to create config dir: %w", err)
+	}
+
+	if err := login.WriteConfig(outPath, cfg); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+
+	log.Infof("wrote login config to %s", outPath)
+	_ = ctx
+	return nil
 }
 
 // main is the entry point for the mym CLI tool
