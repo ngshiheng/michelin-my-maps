@@ -23,8 +23,5 @@ mym
 *.db-shm
 *.db-wal
 
-# Cline
-.clinerules
-memory-bank/
-
+# macOS
 .DS_Store
