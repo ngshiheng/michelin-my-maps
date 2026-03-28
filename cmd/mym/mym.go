@@ -172,7 +172,6 @@ func handleLogin(args []string) error {
 	email := loginCmd.String("email", "", "email to use for login")
 	password := loginCmd.String("password", "", "password for login (use with caution)")
 	headless := loginCmd.Bool("headless", true, "run browser headless")
-	output := loginCmd.String("output", "", "output path for config.json (default $HOME/.mym/config.json)")
 	timeout := loginCmd.Duration("timeout", 60*time.Second, "login flow timeout")
 
 	if err := loginCmd.Parse(args); err != nil {
@@ -185,28 +184,20 @@ func handleLogin(args []string) error {
 
 	ctx := context.Background()
 
-	// If output not set, default to $HOME/.mym/config.json
-	outPath := *output
-	if outPath == "" {
-		home := os.Getenv("HOME")
-		outPath = fmt.Sprintf("%s/.mym/config.json", home)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
 	}
+	outputPath := fmt.Sprintf("%s/.mym/config.json", home)
 
-	// require email and password flags (no interactive prompts here)
-	if *email == "" || *password == "" {
-		return fmt.Errorf("email and password flags are required for non-interactive login")
-	}
-
-	// Call the rod login helper
 	cookies, err := login.Login(ctx, *email, *password, *headless, *timeout)
 	if err != nil {
-		return fmt.Errorf("login failed: %w", err)
+		return fmt.Errorf("failed to login: %w", err)
 	}
 
-	// Build config object
-	cfg := map[string]interface{}{
+	cfg := map[string]any{
 		"version": 1,
-		"account": map[string]interface{}{
+		"account": map[string]any{
 			"email":      *email,
 			"last_login": time.Now().UTC().Format(time.RFC3339),
 		},
@@ -215,16 +206,11 @@ func handleLogin(args []string) error {
 		"source":     "rod",
 	}
 
-	// Ensure directory exists
-	if err := os.MkdirAll(fmt.Sprintf("%s/.mym", os.Getenv("HOME")), 0700); err != nil {
-		return fmt.Errorf("failed to create config dir: %w", err)
-	}
-
-	if err := login.WriteConfig(outPath, cfg); err != nil {
+	if err := login.WriteConfig(outputPath, cfg); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
-	log.Infof("wrote login config to %s", outPath)
+	log.Infof("wrote login config to %s", outputPath)
 	_ = ctx
 	return nil
 }
