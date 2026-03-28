@@ -127,15 +127,9 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
-		if r.StatusCode == http.StatusAccepted {
-			r.Request.Abort()
-		}
-
 		log.WithFields(log.Fields{
-			"url":              r.Request.URL.String(),
-			"status_code":      r.StatusCode,
-			"response_headers": utils.FlattenHeaders(r.Headers),
-			"content_length":   len(r.Body),
+			"url":         r.Request.URL.String(),
+			"status_code": r.StatusCode,
 		}).Info("process listing page")
 	})
 
@@ -169,12 +163,6 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			"request_headers": utils.FlattenHeaders(r.Headers),
 			"request_cookies": utils.FlattenCookies(r.Headers),
 		}).Debug("fetch restaurant detail")
-	})
-
-	detailCollector.OnResponse(func(r *colly.Response) {
-		if r.StatusCode == http.StatusAccepted {
-			r.Request.Abort()
-		}
 	})
 
 	detailCollector.OnXML("html", func(e *colly.XMLElement) {
