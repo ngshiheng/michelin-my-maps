@@ -140,7 +140,7 @@ func handleScrape(args []string) error {
 func handleBackfill(args []string) error {
 	backfillCmd := flag.NewFlagSet(commandBackfill, flag.ExitOnError)
 	logLevel := backfillCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-	ignoreCache := backfillCmd.Bool("ignore-cache", false, "skip using Wayback cache")
+	ignoreCache := backfillCmd.Bool("no-cache", false, "skip using Wayback cache")
 
 	if err := backfillCmd.Parse(args); err != nil {
 		return err
