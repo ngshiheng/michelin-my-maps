@@ -183,36 +183,8 @@ func handleLogin(args []string) error {
 	}
 
 	ctx := context.Background()
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	outputPath := fmt.Sprintf("%s/.mym/config.json", home)
-
-	cookies, err := login.Login(ctx, *email, *password, *headless, *timeout)
-	if err != nil {
-		return fmt.Errorf("failed to login: %w", err)
-	}
-
-	cfg := map[string]any{
-		"version": 1,
-		"account": map[string]any{
-			"email":      *email,
-			"last_login": time.Now().UTC().Format(time.RFC3339),
-		},
-		"cookies":    cookies,
-		"created_at": time.Now().UTC().Format(time.RFC3339),
-		"source":     "rod",
-	}
-
-	if err := login.WriteConfig(outputPath, cfg); err != nil {
-		return fmt.Errorf("failed to write config: %w", err)
-	}
-
-	log.Infof("wrote login config to %s", outputPath)
-	_ = ctx
-	return nil
+	log.Info("starting login command")
+	return login.Login(ctx, *email, *password, *headless, *timeout)
 }
 
 // main is the entry point for the mym CLI tool
