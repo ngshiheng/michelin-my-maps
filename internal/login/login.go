@@ -113,7 +113,6 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 		return nil, errors.New("no michelin cookies found after login")
 	}
 
-	// Optionally write a debug file (not by default). Return cookies.
 	return out, nil
 }
 

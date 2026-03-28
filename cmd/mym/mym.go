@@ -87,7 +87,7 @@ func printUsage() {
 	fmt.Println("<command>")
 	fmt.Println("  scrape     scrape latest restaurant data or a single restaurant if <url> is provided.")
 	fmt.Println("  backfill   backfill restaurant data or a single restaurant if <url> is provided.")
-	fmt.Println("  login      interactive login flow; captures cookies and writes $HOME/.mym/config.json")
+	fmt.Println("  login      login to captures session cookies and save them to $HOME/.mym/config.json")
 	fmt.Println("")
 	fmt.Println("[options]")
 	fmt.Println("  -log <level>   set log level. (default: info)")
