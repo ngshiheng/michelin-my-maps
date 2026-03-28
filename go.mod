@@ -1,8 +1,9 @@
 module github.com/ngshiheng/michelin-my-maps/v3
 
-go 1.25.0
+go 1.26.1
 
 require (
+	github.com/go-rod/rod v0.116.2
 	github.com/gocolly/colly/v2 v2.3.0
 	github.com/nyaruka/phonenumbers v1.6.8
 	github.com/sirupsen/logrus v1.9.4
@@ -27,6 +28,11 @@ require (
 	github.com/nlnwa/whatwg-url v0.6.2 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
+	github.com/ysmood/fetchup v0.2.3 // indirect
+	github.com/ysmood/goob v0.4.0 // indirect
+	github.com/ysmood/got v0.40.0 // indirect
+	github.com/ysmood/gson v0.7.3 // indirect
+	github.com/ysmood/leakless v0.9.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
