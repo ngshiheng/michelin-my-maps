@@ -37,8 +37,8 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 		return nil, fmt.Errorf("failed to get database object: %w", err)
 	}
 
-	// Set PRAGMA statements for better performance
 	pragmas := []string{
+		"PRAGMA foreign_keys = ON;",
 		"PRAGMA journal_mode = WAL;",
 		"PRAGMA synchronous = NORMAL;",
 		"PRAGMA cache_size = 10000;",
@@ -184,6 +184,9 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					"green_star":  award.GreenStar,
 					"wayback_url": award.WaybackURL,
 					"year":        award.Year,
+				}
+				if award.Price != "" {
+					updates["price"] = award.Price
 				}
 
 				return r.db.WithContext(ctx).
