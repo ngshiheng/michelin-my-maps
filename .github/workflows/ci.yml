@@ -22,3 +22,7 @@ jobs:
                   go-version: ${{ matrix.go-version }}
                   cache: true
             - run: go test ./... -v -count=1
+            - uses: go-semantic-release/action@v1
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  dry: true
