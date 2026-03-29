@@ -7,10 +7,10 @@ import (
 )
 
 func TestFlattenHeaders(t *testing.T) {
-	cases := []struct {
-		name   string
-		header *http.Header
-		want   map[string]string
+	tests := []struct {
+		name     string
+		input    *http.Header
+		expected map[string]string
 	}{
 		{"nil", nil, nil},
 		{"single-value", func() *http.Header { h := http.Header{}; h.Set("Content-Type", "application/json"); return &h }(), map[string]string{"Content-Type": "application/json"}},
@@ -23,22 +23,22 @@ func TestFlattenHeaders(t *testing.T) {
 		{"multiple-keys", func() *http.Header { h := http.Header{}; h.Set("Foo", "a"); h.Set("Bar", "b"); return &h }(), map[string]string{"Foo": "a", "Bar": "b"}},
 	}
 
-	for _, c := range cases {
+	for _, c := range tests {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
-			got := FlattenHeaders(c.header)
-			if !reflect.DeepEqual(got, c.want) {
-				t.Fatalf("%s: got %v, want %v", c.name, got, c.want)
+			got := FlattenHeaders(c.input)
+			if !reflect.DeepEqual(got, c.expected) {
+				t.Fatalf("%s: got %v, expected %v", c.name, got, c.expected)
 			}
 		})
 	}
 }
 
 func TestFlattenCookies(t *testing.T) {
-	cases := []struct {
-		name   string
-		header *http.Header
-		want   map[string]string
+	tests := []struct {
+		name     string
+		input    *http.Header
+		expected map[string]string
 	}{
 		{"nil", nil, nil},
 		{"single-cookie-header", func() *http.Header { h := http.Header{}; h.Add("Cookie", "a=1; b=2"); return &h }(), map[string]string{"a": "1", "b": "2"}},
@@ -51,12 +51,12 @@ func TestFlattenCookies(t *testing.T) {
 		{"duplicate-name-last-wins", func() *http.Header { h := http.Header{}; h.Add("Cookie", "a=1"); h.Add("Cookie", "a=2"); return &h }(), map[string]string{"a": "2"}},
 	}
 
-	for _, c := range cases {
+	for _, c := range tests {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
-			got := FlattenCookies(c.header)
-			if !reflect.DeepEqual(got, c.want) {
-				t.Fatalf("%s: got %v, want %v", c.name, got, c.want)
+			got := FlattenCookies(c.input)
+			if !reflect.DeepEqual(got, c.expected) {
+				t.Fatalf("%s: got %v, expected %v", c.name, got, c.expected)
 			}
 		})
 	}
