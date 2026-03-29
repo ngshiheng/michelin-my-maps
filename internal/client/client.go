@@ -17,6 +17,7 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -67,10 +68,12 @@ func New(cfg *Config) (*Colly, error) {
 
 	c := colly.NewCollector(opts...)
 
-	c.Limit(&colly.LimitRule{
+	if err := c.Limit(&colly.LimitRule{
 		Delay:       cfg.Delay,
 		RandomDelay: cfg.RandomDelay,
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	extensions.RandomUserAgent(c)
 	extensions.Referer(c)
@@ -94,7 +97,7 @@ func New(cfg *Config) (*Colly, error) {
 	}, nil
 }
 
-// attachCookies loads cookies from ~/.mym/config.json and injects them into
+// attachCookies loads cookies from $HOME/.mym/config.json and injects them into
 // the collector's cookie jar. Returns nil (no-op) if the file does not exist.
 func attachCookies(c *colly.Collector) error {
 	home, err := os.UserHomeDir()
@@ -106,7 +109,11 @@ func attachCookies(c *colly.Collector) error {
 	if err != nil {
 		return errors.New("login is required")
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			log.WithError(cerr).Warn("failed to close cookie file")
+		}
+	}()
 
 	var cfg cookieConfig
 	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
@@ -178,10 +185,17 @@ func (w *Colly) ClearCache(r *colly.Request) error {
 
 // EnqueueURL adds a URL to the queue for processing
 func (w *Colly) EnqueueURL(url string) {
-	w.queue.AddURL(url)
+	if err := w.queue.AddURL(url); err != nil {
+		log.WithFields(log.Fields{
+			"url":   url,
+			"error": err,
+		}).Warn("failed to enqueue url")
+	}
 }
 
 // Run starts the web scraping process
 func (w *Colly) Run() {
-	w.queue.Run(w.collector)
+	if err := w.queue.Run(w.collector); err != nil {
+		log.WithError(err).Warn("queue run error")
+	}
 }

@@ -189,7 +189,9 @@ func handleLogin(args []string) error {
 
 // main is the entry point for the mym CLI tool
 func main() {
-	os.Setenv("TZ", time.UTC.String())
+	if err := os.Setenv("TZ", time.UTC.String()); err != nil {
+		log.WithError(err).Warn("failed to set TZ")
+	}
 	time.Local = time.UTC
 
 	if err := run(); err != nil {

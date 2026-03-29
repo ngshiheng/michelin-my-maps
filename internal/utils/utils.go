@@ -25,7 +25,7 @@ func FlattenCookies(h *http.Header) map[string]string {
 	}
 	out := make(map[string]string)
 	for _, line := range h.Values("Cookie") {
-		for _, pair := range strings.Split(line, ";") {
+		for pair := range strings.SplitSeq(line, ";") {
 			parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
 			if len(parts) == 2 {
 				out[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])

@@ -111,7 +111,7 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 		Cookies: cookies,
 	}
 
-	if err := WriteConfig(cfg); err != nil {
+	if err := writeCookies(cfg); err != nil {
 		// Non-fatal: cookies are still valid even if we can't persist them.
 		log.WithError(err).Warn("login succeeded but failed to write config")
 	}
@@ -256,9 +256,9 @@ func extractMichelinCookies(page *rod.Page) ([]Cookie, error) {
 	return out, nil
 }
 
-// WriteConfig serialises cfg as indented JSON to $HOME/.mym/config.json.
+// writeCookies serialises cfg as indented JSON to $HOME/.mym/config.json.
 // It creates the directory if it does not exist
-func WriteConfig(cfg *Config) error {
+func writeCookies(cfg *Config) error {
 	path, err := ConfigPath()
 	if err != nil {
 		return err
@@ -275,7 +275,11 @@ func WriteConfig(cfg *Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to open config file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			log.WithError(cerr).Warn("failed to close cookie file")
+		}
+	}()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
