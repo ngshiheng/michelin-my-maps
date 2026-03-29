@@ -269,9 +269,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt_count", attempt+1)
-			if retryErr := r.Request.Retry(); retryErr != nil {
-				log.WithFields(fields).WithError(retryErr).Debug("retry failed")
-			}
+			r.Request.Retry()
 		} else {
 			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)
 		}
