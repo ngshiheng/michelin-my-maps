@@ -90,7 +90,7 @@ func TestSQLiteRepository(t *testing.T) {
 		}
 	})
 
-	t.Run("SaveAward incoming live should overwrite price and distinction", func(t *testing.T) {
+	t.Run("SaveAward incoming live should override existing price and award if there are no existing wayback url", func(t *testing.T) {
 		repo, _ := newTestRepo(t)
 
 		r := validRestaurant()
@@ -132,7 +132,7 @@ func TestSQLiteRepository(t *testing.T) {
 		}
 	})
 
-	t.Run("SaveAward should preserve existing price when incoming price empty", func(t *testing.T) {
+	t.Run("SaveAward should preserve existing price when incoming price is empty", func(t *testing.T) {
 		repo, _ := newTestRepo(t)
 
 		r := validRestaurant()
@@ -155,7 +155,7 @@ func TestSQLiteRepository(t *testing.T) {
 
 		inc := &models.RestaurantAward{
 			RestaurantID: created.ID,
-			Distinction:  models.BibGourmand,
+			Distinction:  models.OneStar,
 			GreenStar:    false,
 			Price:        "",
 			Year:         ex.Year,
@@ -174,7 +174,7 @@ func TestSQLiteRepository(t *testing.T) {
 		}
 	})
 
-	t.Run("SaveAward incoming wayback sets wayback_url", func(t *testing.T) {
+	t.Run("SaveAward incoming wayback should set wayback url", func(t *testing.T) {
 		repo, _ := newTestRepo(t)
 
 		r := validRestaurant()
@@ -211,12 +211,12 @@ func TestSQLiteRepository(t *testing.T) {
 		if err := repo.db.WithContext(ctx).Where("restaurant_id = ? AND year = ?", created.ID, ex.Year).First(&got).Error; err != nil {
 			t.Fatalf("query award failed: %v", err)
 		}
-		if got.WaybackURL == "" {
-			t.Fatalf("expected wayback_url to be set, got empty")
+		if got.WaybackURL != inc.WaybackURL {
+			t.Fatalf("expected wayback_url to be set")
 		}
 	})
 
-	t.Run("SaveAward wayback should cause incoming live to be skipped when shouldOverride is false", func(t *testing.T) {
+	t.Run("SaveAward wayback should cause skip award updates if the existing award is not Selected Restaurants", func(t *testing.T) {
 		repo, _ := newTestRepo(t)
 
 		r := validRestaurant()
@@ -258,7 +258,7 @@ func TestSQLiteRepository(t *testing.T) {
 		}
 	})
 
-	t.Run("SaveAward overrides existing wayback when shouldOverride is true", func(t *testing.T) {
+	t.Run("SaveAward should override existing wayback award when existing award is Selected Restaurants and there are changes to the award from live", func(t *testing.T) {
 		repo, _ := newTestRepo(t)
 
 		r := validRestaurant()
@@ -286,7 +286,6 @@ func TestSQLiteRepository(t *testing.T) {
 			Price:        "$$$",
 			Year:         seed.Year,
 			WaybackURL:   "",
-			// assume ShouldOverride is expressed via Distinction/WaybackURL logic inside SaveAward
 		}
 
 		if err := repo.SaveAward(ctx, incoming); err != nil {
@@ -302,12 +301,11 @@ func TestSQLiteRepository(t *testing.T) {
 		}
 	})
 
-	t.Run("SaveAward should return error for non-existent restaurant id", func(t *testing.T) {
+	t.Run("SaveAward should return error for non-existent restaurant", func(t *testing.T) {
 		repo, _ := newTestRepo(t)
 
-		// choose a high id that should not exist
 		bad := &models.RestaurantAward{
-			RestaurantID: 999999,
+			RestaurantID: 999999, // chose a high id that should not exist
 			Distinction:  models.OneStar,
 			GreenStar:    false,
 			Price:        "$$",
