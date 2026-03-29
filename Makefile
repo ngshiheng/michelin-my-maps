@@ -13,7 +13,7 @@ help:   ## display this help message.
 ##@ Development
 .PHONY: test
 test:   ## run all the tests.
-	@go test ./... -v -count=1
+	@go test ./... -count=1 | grep -v 'no test files'
 
 .PHONY: lint
 lint:   ## run lint with golangci-lint in docker.
