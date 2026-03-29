@@ -17,20 +17,3 @@ func FlattenHeaders(h *http.Header) map[string]string {
 	}
 	return out
 }
-
-// FlattenCookies parses the Cookie request header and returns a map of name→value pairs
-func FlattenCookies(h *http.Header) map[string]string {
-	if h == nil {
-		return nil
-	}
-	out := make(map[string]string)
-	for _, line := range h.Values("Cookie") {
-		for pair := range strings.SplitSeq(line, ";") {
-			parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
-			if len(parts) == 2 {
-				out[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-			}
-		}
-	}
-	return out
-}
