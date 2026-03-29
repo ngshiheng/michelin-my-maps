@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/client"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/handlers"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/utils"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/client"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/handlers"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/storage"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/utils"
 	log "github.com/sirupsen/logrus"
 )
 

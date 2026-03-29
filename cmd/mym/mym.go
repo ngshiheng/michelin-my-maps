@@ -8,9 +8,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/backfill"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/login"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/scraper"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/backfill"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/login"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/scraper"
 	log "github.com/sirupsen/logrus"
 )
 

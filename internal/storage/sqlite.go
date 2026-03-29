@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

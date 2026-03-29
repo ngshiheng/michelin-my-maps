@@ -3,7 +3,7 @@ package parsers
 import (
 	"testing"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 )
 
 func TestParseDistinction(t *testing.T) {

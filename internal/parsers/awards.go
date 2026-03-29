@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 )
 
 var (

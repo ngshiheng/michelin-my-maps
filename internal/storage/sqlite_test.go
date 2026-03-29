@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 )
 
 func newTestRepo(t *testing.T) (*SQLiteRepository, func()) {

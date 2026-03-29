@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 )
 
 // RestaurantRepository defines the interface for restaurant data operations.
