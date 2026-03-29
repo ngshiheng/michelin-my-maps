@@ -177,9 +177,9 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		cookies := s.client.GetCookies(r.URL.String())
 		log.WithFields(log.Fields{
 			"attempt_count":   attempt,
-			"url":             r.URL.String(),
-			"request_headers": utils.FlattenHeaders(r.Headers),
 			"cookie_count":    len(cookies),
+			"request_headers": utils.FlattenHeaders(r.Headers),
+			"url":             r.URL,
 		}).Debug("requesting restaurant detail")
 	})
 
