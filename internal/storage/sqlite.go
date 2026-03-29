@@ -61,8 +61,9 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 // SaveRestaurant saves or updates a restaurant in the database
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
 	log.WithFields(log.Fields{
-		"url": restaurant.URL,
-	}).Debug("upsert restaurant")
+		"url":  restaurant.URL,
+		"name": restaurant.Name,
+	}).Debug("upserting restaurant") // Added name for easier human-reading in logs
 
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "url"}},
@@ -115,7 +116,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			Updates(updates).Error
 	}
 
-	// Scenario 2: Incoming Wayback (authoritative),
+	// Scenario 2: Incoming Wayback (authoritative)
 	if award.WaybackURL != "" {
 		if !awardsEqual(&existing, award) {
 			diff := map[string]string{}
@@ -134,7 +135,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					"restaurant_id": existing.RestaurantID,
 					"year":          existing.Year,
 					"diff":          diff,
-				}).Warn("update award from Wayback")
+				}).Warn("overwriting award with wayback data")
 			}
 		}
 
@@ -175,7 +176,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 						"restaurant_id": existing.RestaurantID,
 						"year":          existing.Year,
 						"diff":          diff,
-					}).Warn("update award distinction from Wayback to Live")
+					}).Warn("upgrading award distinction from live scrape")
 				}
 
 				updates := map[string]any{
@@ -193,7 +194,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					"restaurant_id": existing.RestaurantID,
 					"year":          existing.Year,
 					"diff":          diff,
-				}).Debug("award conflict: Wayback vs Live (not overridden)")
+				}).Debug("skipping award update: wayback priority")
 			}
 		}
 		return nil
@@ -215,10 +216,9 @@ func (r *SQLiteRepository) ListRestaurants(ctx context.Context) ([]models.Restau
 	var restaurants []models.Restaurant
 	err := r.db.WithContext(ctx).Where("url != ''").Find(&restaurants).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to list restaurants with URL: %w", err)
+		return nil, fmt.Errorf("failed to list restaurants: %w", err)
 	}
-	log.WithFields(log.Fields{
-		"count": len(restaurants),
-	}).Debug("retrieve all restaurants with URL")
+
+	log.WithField("count", len(restaurants)).Debug("fetched restaurants")
 	return restaurants, nil
 }

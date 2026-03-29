@@ -26,14 +26,14 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 				"error":       err,
 				"wayback_url": data.WaybackURL,
 				"url":         data.URL,
-			}).Debug("restaurant not found, will create from Wayback data")
+			}).Debug("restaurant not found; will recreate from wayback data")
 		}
 	}
 
 	if data.Price == "" {
 		log.WithFields(log.Fields{
 			"price":       data.Price,
-			"wayback_url": e.Request.URL.String(),
+			"wayback_url": e.Request.URL,
 		}).Error("skip award: empty price")
 		return nil
 	}

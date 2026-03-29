@@ -128,7 +128,7 @@ func handleScrape(args []string) error {
 		return fmt.Errorf("failed to create live scraper: %w", err)
 	}
 
-	log.Info("starting scrape command")
+	log.Info("running scrape command")
 	ctx := context.Background()
 	if urlArg != "" {
 		return app.Run(ctx, urlArg)
@@ -157,7 +157,7 @@ func handleBackfill(args []string) error {
 		return fmt.Errorf("failed to create backfill scraper: %w", err)
 	}
 
-	log.Info("starting backfill command")
+	log.Info("running backfill command")
 	ctx := context.Background()
 	if urlArg != "" {
 		return app.Run(ctx, urlArg)
@@ -183,7 +183,7 @@ func handleLogin(args []string) error {
 	}
 
 	ctx := context.Background()
-	log.Info("starting login command")
+	log.Info("running login command")
 	return login.Login(ctx, *email, *password, *headless, *timeout)
 }
 

@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// defaultConfig returns a default config for Wayback backfill.
+// defaultConfig returns a default config for Wayback backfill
 func defaultConfig() *client.Config {
 	return &client.Config{
 		AllowedDomains: []string{"web.archive.org"},
@@ -55,6 +55,7 @@ func New(ignoreCache bool) (*Scraper, error) {
 		MaxURLs:        cfg.MaxURLs,
 	}
 	if ignoreCache {
+		log.Debug("ignoring cache")
 		clientCfg.CachePath = ""
 	}
 
@@ -80,7 +81,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 
 	log.WithFields(log.Fields{
 		"count": len(restaurants),
-	}).Info("start backfill for restaurants")
+	}).Info("running backfill for restaurants")
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
@@ -95,7 +96,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.client.Run()
 
 	// TODO: add summary of results
-	log.Info("complete backfill")
+	log.Info("completed backfill")
 	return nil
 }
 
@@ -103,7 +104,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 func (s *Scraper) Run(ctx context.Context, url string) error {
 	log.WithFields(log.Fields{
 		"url": url,
-	}).Debug("start backfill for restaurant")
+	}).Debug("running backfill for restaurant")
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
@@ -115,7 +116,7 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	s.client.EnqueueURL(api)
 	s.client.Run()
 
-	log.Info("complete single restaurant backfill")
+	log.Info("completed backfill for one restaurant")
 	return nil
 }
 
@@ -123,17 +124,18 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 	collector.OnError(s.createErrorHandler())
 
 	collector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt")
+		attempt := r.Ctx.GetAny("attempt_count")
 		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
+			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cookies := s.client.GetCookies(r.URL.String())
 		log.WithFields(log.Fields{
-			"attempt":         attempt,
-			"url":             r.URL.String(),
+			"attempt_count":   attempt,
+			"cookie_count":    len(cookies),
 			"request_headers": utils.FlattenHeaders(r.Headers),
-			"request_cookies": utils.FlattenCookies(r.Headers),
-		}).Debug("fetch CDX API")
+			"url":             r.URL,
+		}).Debug("requesting cdx api")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
@@ -143,9 +145,9 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		if err := json.Unmarshal(r.Body, &rows); err != nil {
 			log.WithFields(log.Fields{
 				"url":     url,
-				"cdx_api": r.Request.URL.String(),
+				"cdx_api": r.Request.URL,
 				"error":   err,
-			}).Warn("failed to parse CDX API response")
+			}).Warn("failed to parse cdx api response")
 			return
 		}
 
@@ -153,13 +155,13 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			log.WithFields(log.Fields{
 				"url":     url,
 				"rows":    rows,
-				"cdx_api": r.Request.URL.String(),
+				"cdx_api": r.Request.URL,
 			}).Debug("no snapshots found")
 			return
 		}
 
 		minTimestampLen := 14
-		snapshotCount := 0
+		snapshot := 0
 		for i, row := range rows {
 			if i == 0 || len(row) == 0 {
 				continue // skip header or malformed
@@ -182,15 +184,14 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 				}).Debug("failed to visit snapshot URL")
 				continue
 			}
-			snapshotCount++
+			snapshot++
 		}
 
 		log.WithFields(log.Fields{
-			"cdx_api":          r.Request.URL.String(),
-			"snapshots":        snapshotCount,
-			"status_code":      r.StatusCode,
-			"response_headers": utils.FlattenHeaders(r.Headers),
-		}).Info("process CDX API")
+			"cdx_api":        r.Request.URL,
+			"snapshot_count": snapshot,
+			"status_code":    r.StatusCode,
+		}).Info("process cdx api")
 	})
 }
 
@@ -198,17 +199,18 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	detailCollector.OnError(s.createErrorHandler())
 
 	detailCollector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt")
+		attempt := r.Ctx.GetAny("attempt_count")
 		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
+			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cookies := s.client.GetCookies(r.URL.String())
 		log.WithFields(log.Fields{
-			"attempt":         attempt,
+			"attempt_count":   attempt,
 			"url":             r.URL.String(),
 			"request_headers": utils.FlattenHeaders(r.Headers),
-			"request_cookies": utils.FlattenCookies(r.Headers),
-		}).Debug("fetch Wayback snapshot")
+			"cookie_count":    len(cookies),
+		}).Debug("requesting wayback snapshot")
 	})
 
 	detailCollector.OnXML("html", func(e *colly.XMLElement) {
@@ -223,20 +225,21 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
-		if v := r.Ctx.GetAny("attempt"); v != nil {
+		if v := r.Ctx.GetAny("attempt_count"); v != nil {
 			if a, ok := v.(int); ok {
 				attempt = a
 			}
 		}
 
+		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt":          attempt,
+			"attempt_count":    attempt,
+			"cookie_count":     len(cookies),
 			"error":            err,
-			"status_code":      r.StatusCode,
-			"url":              r.Request.URL.String(),
 			"request_headers":  utils.FlattenHeaders(r.Request.Headers),
-			"request_cookies":  utils.FlattenCookies(r.Request.Headers),
 			"response_headers": utils.FlattenHeaders(r.Headers),
+			"status_code":      r.StatusCode,
+			"url":              r.Request.URL,
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
@@ -265,7 +268,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
 			time.Sleep(backoff)
 
-			r.Ctx.Put("attempt", attempt+1)
+			r.Ctx.Put("attempt_count", attempt+1)
 			if retryErr := r.Request.Retry(); retryErr != nil {
 				log.WithFields(fields).WithError(retryErr).Debug("retry failed")
 			}

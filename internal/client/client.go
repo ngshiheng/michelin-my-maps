@@ -69,6 +69,7 @@ func New(cfg *Config) (*Colly, error) {
 	c := colly.NewCollector(opts...)
 
 	if err := c.Limit(&colly.LimitRule{
+		DomainGlob:  "*",
 		Delay:       cfg.Delay,
 		RandomDelay: cfg.RandomDelay,
 	}); err != nil {
@@ -157,6 +158,20 @@ func attachCookies(c *colly.Collector) error {
 // GetCollector returns the colly collector for direct access
 func (w *Colly) GetCollector() *colly.Collector {
 	return w.collector
+}
+
+// GetCookies returns a map of cookie name->value for the given URL as seen by
+// the collector's cookie jar.
+func (w *Colly) GetCookies(urlStr string) map[string]string {
+	out := make(map[string]string)
+	if w == nil || w.collector == nil {
+		return out
+	}
+	cookies := w.collector.Cookies(urlStr)
+	for _, c := range cookies {
+		out[c.Name] = c.Value
+	}
+	return out
 }
 
 // GetDetailCollector creates a cloned collector for detail page scraping

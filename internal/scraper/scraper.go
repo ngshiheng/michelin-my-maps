@@ -89,7 +89,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.client.Run()
 
 	// TODO: add summary of results
-	log.Info("complete scraping")
+	log.Info("completed scraping")
 	return nil
 }
 
@@ -98,14 +98,14 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	detailCollector := s.client.GetDetailCollector()
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	log.WithField("url", url).Info("scrape restaurant")
+	log.WithField("url", url).Info("scraping restaurant")
 	err := detailCollector.Visit(url)
 	if err != nil {
 		log.WithError(err).Error("failed to visit restaurant URL")
 		return err
 	}
 	detailCollector.Wait()
-	log.Info("complete single restaurant scraping")
+	log.Info("completed scraping for one restaurant")
 	return nil
 }
 
@@ -113,27 +113,43 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 	collector.OnError(s.createErrorHandler())
 
 	collector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt")
+		attempt := r.Ctx.GetAny("attempt_count")
 		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
+			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cookies := s.client.GetCookies(r.URL.String())
 		log.WithFields(log.Fields{
-			"url":             r.URL.String(),
-			"attempt":         attempt,
+			"attempt_count":   attempt,
+			"cookie_count":    len(cookies),
 			"request_headers": utils.FlattenHeaders(r.Headers),
-			"request_cookies": utils.FlattenCookies(r.Headers),
-		}).Debug("fetch listing page")
+			"url":             r.URL,
+		}).Debug("requesting restaurant listing page")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
+		if r.StatusCode == http.StatusAccepted {
+			if err := s.client.ClearCache(r.Request); err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+					"url":   r.Request.URL,
+				}).Warn("failed to clear cached response")
+			}
+			log.WithFields(log.Fields{
+				"url":         r.Request.URL,
+				"status_code": r.StatusCode,
+			}).Warn("request challenged")
+			return
+		}
+
 		log.WithFields(log.Fields{
-			"url":         r.Request.URL.String(),
+			"url":         r.Request.URL,
 			"status_code": r.StatusCode,
-		}).Info("process listing page")
+		}).Info("processing restaurant listing page")
 	})
 
 	collector.OnXML("//div[contains(@class, 'card__menu selection-card')]", func(e *colly.XMLElement) {
+		// In 202, this won't run; no need to handle this codepath
 		url := e.Request.AbsoluteURL(e.ChildAttr("//a[@class='link']", "href"))
 		location := e.ChildText("//div[@class='card__menu-footer--score pl-text']")
 		e.Request.Ctx.Put("location", location)
@@ -141,9 +157,10 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 	})
 
 	collector.OnXML("//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']", func(e *colly.XMLElement) {
+		// In 202, this won't run; no need to handle this codepath
 		log.WithFields(log.Fields{
 			"url": e.Attr("href"),
-		}).Debug("queue next page")
+		}).Debug("queuing next page")
 		e.Request.Visit(e.Attr("href"))
 	})
 }
@@ -152,20 +169,35 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	detailCollector.OnError(s.createErrorHandler())
 
 	detailCollector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt")
+		attempt := r.Ctx.GetAny("attempt_count")
 		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
+			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cookies := s.client.GetCookies(r.URL.String())
 		log.WithFields(log.Fields{
-			"attempt":         attempt,
+			"attempt_count":   attempt,
 			"url":             r.URL.String(),
 			"request_headers": utils.FlattenHeaders(r.Headers),
-			"request_cookies": utils.FlattenCookies(r.Headers),
-		}).Debug("fetch restaurant detail")
+			"cookie_count":    len(cookies),
+		}).Debug("requesting restaurant detail")
 	})
 
 	detailCollector.OnXML("html", func(e *colly.XMLElement) {
+		if e.Response.StatusCode == http.StatusAccepted {
+			if err := s.client.ClearCache(e.Request); err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Warn("failed to clear cached response")
+			}
+
+			log.WithFields(log.Fields{
+				"url":         e.Request.URL,
+				"status_code": e.Response.StatusCode,
+			}).Warn("request challenged")
+			return
+		}
+
 		err := handlers.Handle(ctx, e, s.repository)
 		if err != nil {
 			log.WithError(err).Error("failed to handle restaurant extraction")
@@ -177,19 +209,20 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
-		if v := r.Ctx.GetAny("attempt"); v != nil {
+		if v := r.Ctx.GetAny("attempt_count"); v != nil {
 			if a, ok := v.(int); ok {
 				attempt = a
 			}
 		}
 
+		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt":          attempt,
+			"attempt_count":    attempt,
 			"error":            err,
 			"status_code":      r.StatusCode,
-			"url":              r.Request.URL.String(),
+			"url":              r.Request.URL,
 			"request_headers":  utils.FlattenHeaders(r.Request.Headers),
-			"request_cookies":  utils.FlattenCookies(r.Request.Headers),
+			"cookie_count":     len(cookies),
 			"response_headers": utils.FlattenHeaders(r.Headers),
 		}
 
@@ -217,7 +250,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
 			time.Sleep(backoff)
 
-			r.Ctx.Put("attempt", attempt+1)
+			r.Ctx.Put("attempt_count", attempt+1)
 			r.Request.Retry()
 		} else {
 			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)

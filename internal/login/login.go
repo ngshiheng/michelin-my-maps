@@ -70,7 +70,7 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 	log.WithFields(log.Fields{
 		"headless": headless,
 		"timeout":  timeout,
-	}).Debug("starting login flow")
+	}).Debug("running login flow")
 
 	browser, cleanup, err := launchBrowser(headless)
 	if err != nil {
@@ -93,7 +93,7 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 		return err
 	}
 
-	log.Info("login succeeded, extracting cookies")
+	log.Info("login succeeded; extracting cookies")
 	cookies, err := extractMichelinCookies(page)
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func fillInput(page *rod.Page, xpath, value string) error {
 
 // extractMichelinCookies fetches cookies from the page and filters to michelin.com
 func extractMichelinCookies(page *rod.Page) ([]Cookie, error) {
-	log.WithField("url", michelinURL).Debug("fetching cookies from page")
+	log.WithField("url", michelinURL).Debug("requesting cookies from page")
 	rawCookies, err := page.Cookies([]string{michelinURL})
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve cookies: %w", err)
@@ -252,7 +252,7 @@ func extractMichelinCookies(page *rod.Page) ([]Cookie, error) {
 		return nil, errors.New("no michelin.com cookies found after login — credentials may be wrong or the site structure changed")
 	}
 
-	log.WithField("count", len(out)).Info("michelin cookies extracted")
+	log.WithField("count", len(out)).Info("cookies extracted")
 	return out, nil
 }
 
@@ -287,6 +287,6 @@ func writeCookies(cfg *Config) error {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
-	log.WithField("path", path).Info("config written successfully")
+	log.WithField("path", path).Info("config written")
 	return nil
 }
