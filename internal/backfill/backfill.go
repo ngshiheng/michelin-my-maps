@@ -179,8 +179,8 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			if err != nil {
 				log.WithFields(log.Fields{
 					"error":       err,
-					"wayback_url": snapshotURL,
 					"url":         url,
+					"wayback_url": snapshotURL,
 				}).Debug("failed to visit snapshot URL")
 				continue
 			}
@@ -191,7 +191,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			"cdx_api":        r.Request.URL,
 			"snapshot_count": snapshot,
 			"status_code":    r.StatusCode,
-		}).Info("process cdx api")
+		}).Info("processing cdx api")
 	})
 }
 
