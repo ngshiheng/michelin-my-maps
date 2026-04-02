@@ -20,9 +20,9 @@ import (
 func defaultConfig() *client.Config {
 	return &client.Config{
 		AllowedDomains: []string{"guide.michelin.com"},
-		CachePath:      "cache/scrape",
-		DatabasePath:   "data/michelin.db",
-		StoragePath:    client.DefaultStoragePath(),
+		CachePath:      client.DefaultCacheScrape,
+		DatabasePath:   client.DefaultDataPath,
+		StoragePath:    client.DefaultStoragePath,
 		Delay:          2 * time.Second,
 		MaxRetry:       3,
 		MaxURLs:        30_000,

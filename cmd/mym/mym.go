@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/backfill"
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/client"
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/login"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/scraper"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/session"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	helpLongFlag     = "--help"
-	helpShortFlag    = "-h"
-	versionLongFlag  = "--version"
-	versionShortFlag = "-v"
+	defaultBrowserTimeout = 60 * time.Second
+	helpLongFlag          = "--help"
+	helpShortFlag         = "-h"
+	versionLongFlag       = "--version"
+	versionShortFlag      = "-v"
 )
 
 const (
@@ -173,7 +173,7 @@ func handleLogin(args []string) error {
 	email := loginCmd.String("email", "", "email to use for login")
 	password := loginCmd.String("password", "", "password for login (use with caution)")
 	headless := loginCmd.Bool("headless", true, "run browser headless")
-	timeout := loginCmd.Duration("timeout", 60*time.Second, "login flow timeout")
+	timeout := loginCmd.Duration("timeout", defaultBrowserTimeout, "login flow timeout")
 
 	if err := loginCmd.Parse(args); err != nil {
 		return err
@@ -184,12 +184,8 @@ func handleLogin(args []string) error {
 	}
 
 	ctx := context.Background()
-	store, err := client.NewSQLiteStorage(client.DefaultStoragePath())
-	if err != nil {
-		return fmt.Errorf("failed to initialize session storage: %w", err)
-	}
 	log.Info("running login command")
-	return login.Login(ctx, *email, *password, *headless, *timeout, store)
+	return session.PerformLogin(ctx, *email, *password, *headless, *timeout)
 }
 
 // main is the entry point for the mym CLI tool

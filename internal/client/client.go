@@ -19,7 +19,13 @@ import (
 	collysqlite "github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
-const defaultStoragePath = "data/colly_storage.db"
+const (
+	// Path defaults for scraper/backfill state and caching
+	DefaultCacheScrape  = "cache/scrape"
+	DefaultCacheWayback = "cache/wayback"
+	DefaultDataPath     = "data/michelin.db"
+	DefaultStoragePath  = "data/colly.db"
+)
 
 // Config defines the minimal config needed for Colly.
 type Config struct {
@@ -41,15 +47,10 @@ type Colly struct {
 	config    *Config
 }
 
-// DefaultStoragePath returns the default sqlite storage path for Colly state.
-func DefaultStoragePath() string {
-	return defaultStoragePath
-}
-
 // NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly.
 func NewSQLiteStorage(storagePath string) (collystorage.Storage, error) {
 	if strings.TrimSpace(storagePath) == "" {
-		storagePath = defaultStoragePath
+		storagePath = DefaultStoragePath
 	}
 
 	dir := filepath.Dir(storagePath)

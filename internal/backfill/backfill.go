@@ -20,9 +20,9 @@ import (
 func defaultConfig() *client.Config {
 	return &client.Config{
 		AllowedDomains: []string{"web.archive.org"},
-		CachePath:      "cache/wayback",
-		DatabasePath:   "data/michelin.db",
-		StoragePath:    client.DefaultStoragePath(),
+		CachePath:      client.DefaultCacheWayback,
+		DatabasePath:   client.DefaultDataPath,
+		StoragePath:    client.DefaultStoragePath,
 		Delay:          1 * time.Second,
 		MaxRetry:       3,
 		MaxURLs:        300_000,

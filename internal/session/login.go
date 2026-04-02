@@ -1,4 +1,4 @@
-package login
+package session
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -13,7 +15,9 @@ import (
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/gocolly/colly/v2/storage"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/client"
 	log "github.com/sirupsen/logrus"
+	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
 const (
@@ -21,9 +25,32 @@ const (
 	michelinDomain = "michelin.com"
 )
 
-// Login logs in via browser and seeds store with the resulting session cookies.
-// Pass the same store to colly's collector.SetStorage() for downstream scraping.
-func Login(ctx context.Context, email, password string, headless bool, timeout time.Duration, store storage.Storage) error {
+// PerformLogin is the unified entry point: creates storage and runs login flow.
+func PerformLogin(ctx context.Context, email, password string, headless bool, timeout time.Duration) error {
+	store, err := newStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize session storage: %w", err)
+	}
+	return login(ctx, email, password, headless, timeout, store)
+}
+
+// newStorage creates and initializes the sqlite storage backend for session management
+func newStorage() (storage.Storage, error) {
+	storagePath := client.DefaultStoragePath
+	dir := filepath.Dir(storagePath)
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		return nil, err
+	}
+
+	store := &sqlite3.Storage{Filename: storagePath}
+	if err := store.Init(); err != nil {
+		return nil, err
+	}
+	return store, nil
+}
+
+// login logs in via browser and seeds store with the resulting session cookies
+func login(ctx context.Context, email, password string, headless bool, timeout time.Duration, store storage.Storage) error {
 	if email == "" || password == "" {
 		return errors.New("email and password are required")
 	}
@@ -78,7 +105,7 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 }
 
 // launchBrowser starts a new browser instance and returns it together with a
-// cleanup function that the caller must defer.
+// cleanup function that the caller must defer
 func launchBrowser(headless bool) (*rod.Browser, func(), error) {
 	urlStr, err := launcher.New().Headless(headless).Launch()
 	if err != nil {
