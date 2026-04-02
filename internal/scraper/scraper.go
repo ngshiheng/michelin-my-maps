@@ -257,13 +257,13 @@ func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
 		"url":           r.Request.URL,
 	}
 
+	if err := s.client.ClearCache(r.Request); err != nil {
+		log.WithFields(fields).WithError(err).Warn("failed to clear cache")
+	}
+
 	if attempt >= s.config.MaxRetry {
 		log.WithFields(fields).Error("request challenged and max retries reached")
 		return
-	}
-
-	if err := s.client.ClearCache(r.Request); err != nil {
-		log.WithFields(fields).WithError(err).Warn("failed to clear cached response")
 	}
 
 	backoff := time.Duration(attempt) * s.config.Delay
@@ -313,7 +313,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("failed to clear cache")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay

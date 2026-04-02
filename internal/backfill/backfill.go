@@ -297,7 +297,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache for request")
+				log.WithFields(fields).Error("failed to clear cache")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
