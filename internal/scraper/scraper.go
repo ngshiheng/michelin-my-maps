@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +16,14 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/storage"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/utils"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	xPathRestaurantCard         = "//div[contains(@class, 'card__menu selection-card')]"
+	xPathRestaurantCardLink     = "//a[@class='link']"
+	xPathRestaurantCardLocation = "//div[@class='card__menu-footer--score pl-text']"
+	xPathPaginationArrow        = "//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']"
+	xPathDetailRoot             = "html"
 )
 
 // defaultConfig returns a default config for the scraper.
@@ -52,7 +62,7 @@ func New() (*Scraper, error) {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
-	cl, err := client.New(&client.Config{
+	clientCfg := &client.Config{
 		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
 		StoragePath:    cfg.StoragePath,
@@ -60,7 +70,9 @@ func New() (*Scraper, error) {
 		RandomDelay:    cfg.RandomDelay,
 		ThreadCount:    cfg.ThreadCount,
 		MaxURLs:        cfg.MaxURLs,
-	})
+	}
+
+	cl, err := client.New(clientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
@@ -129,9 +141,16 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
+		r.Ctx.Put("cache_enabled", cacheEnabled)
+		r.Ctx.Put("cache_hit", cacheHit)
+
 		cookies := s.client.GetCookies(r.URL.String())
+
 		log.WithFields(log.Fields{
 			"attempt_count":   attempt,
+			"cache_enabled":   cacheEnabled,
+			"cache_hit":       cacheHit,
 			"cookie_count":    len(cookies),
 			"request_headers": utils.FlattenHeaders(r.Headers),
 			"url":             r.URL,
@@ -140,39 +159,42 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 
 	collector.OnResponse(func(r *colly.Response) {
 		if r.StatusCode == http.StatusAccepted {
-			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(log.Fields{
-					"error": err,
-					"url":   r.Request.URL,
-				}).Warn("failed to clear cached response")
-			}
-			log.WithFields(log.Fields{
-				"url":         r.Request.URL,
-				"status_code": r.StatusCode,
-			}).Warn("request challenged")
+			s.retryAccepted(r, "restaurant listing page")
 			return
 		}
 
 		log.WithFields(log.Fields{
-			"url":         r.Request.URL,
-			"status_code": r.StatusCode,
+			"cache_enabled": r.Ctx.GetAny("cache_enabled"),
+			"cache_hit":     r.Ctx.GetAny("cache_hit"),
+			"url":           r.Request.URL,
+			"status_code":   r.StatusCode,
 		}).Info("processing restaurant listing page")
 	})
 
-	collector.OnXML("//div[contains(@class, 'card__menu selection-card')]", func(e *colly.XMLElement) {
+	collector.OnXML(xPathRestaurantCard, func(e *colly.XMLElement) {
 		// In 202, this won't run; no need to handle this codepath
-		url := e.Request.AbsoluteURL(e.ChildAttr("//a[@class='link']", "href"))
-		location := e.ChildText("//div[@class='card__menu-footer--score pl-text']")
+		url := e.Request.AbsoluteURL(e.ChildAttr(xPathRestaurantCardLink, "href"))
+		location := e.ChildText(xPathRestaurantCardLocation)
 		e.Request.Ctx.Put("location", location)
 		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
 	})
 
-	collector.OnXML("//li[@class='arrow']/a[@class='btn btn-outline-secondary btn-sm']", func(e *colly.XMLElement) {
-		// In 202, this won't run; no need to handle this codepath
+	collector.OnXML(xPathPaginationArrow, func(e *colly.XMLElement) {
+		// In 202, this won't run; no need to handle this codepath.
+		// xpathPaginationArrow matches both prev and next arrows. AllowURLRevisit
+		// is enabled on the collector (required for 202 challenge retries), so
+		// Colly won't deduplicate URLs. Without the guard below, following the
+		// prev-arrow from page N back to page N-1 would cause an infinite loop.
+		// We prevent this by only visiting a link whose page number is strictly
+		// greater than the current page (i.e. forward-only navigation).
+		nextURL := e.Request.AbsoluteURL(e.Attr("href"))
+		if listingPageNumber(nextURL) <= listingPageNumber(e.Request.URL.String()) {
+			return
+		}
 		log.WithFields(log.Fields{
-			"url": e.Attr("href"),
+			"url": nextURL,
 		}).Debug("queuing next page")
-		e.Request.Visit(e.Attr("href"))
+		e.Request.Visit(nextURL)
 	})
 }
 
@@ -185,27 +207,30 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
+		r.Ctx.Put("cache_enabled", cacheEnabled)
+		r.Ctx.Put("cache_hit", cacheHit)
 		cookies := s.client.GetCookies(r.URL.String())
+
 		log.WithFields(log.Fields{
 			"attempt_count":   attempt,
+			"cache_enabled":   cacheEnabled,
+			"cache_hit":       cacheHit,
 			"cookie_count":    len(cookies),
 			"request_headers": utils.FlattenHeaders(r.Headers),
 			"url":             r.URL,
 		}).Debug("requesting restaurant detail")
 	})
 
-	detailCollector.OnXML("html", func(e *colly.XMLElement) {
-		if e.Response.StatusCode == http.StatusAccepted {
-			if err := s.client.ClearCache(e.Request); err != nil {
-				log.WithFields(log.Fields{
-					"error": err,
-				}).Warn("failed to clear cached response")
-			}
+	detailCollector.OnResponse(func(r *colly.Response) {
+		if r.StatusCode == http.StatusAccepted {
+			s.retryAccepted(r, "restaurant detail")
+		}
+	})
 
-			log.WithFields(log.Fields{
-				"url":         e.Request.URL,
-				"status_code": e.Response.StatusCode,
-			}).Warn("request challenged")
+	detailCollector.OnXML(xPathDetailRoot, func(e *colly.XMLElement) {
+		if e.Response.StatusCode == http.StatusAccepted {
+			// 202 retries are handled in OnResponse; ignore this response body.
 			return
 		}
 
@@ -214,6 +239,41 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithError(err).Error("failed to handle restaurant extraction")
 		}
 	})
+}
+
+func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
+	attempt := 1
+	if v := r.Ctx.GetAny("attempt_count"); v != nil {
+		if a, ok := v.(int); ok {
+			attempt = a
+		}
+	}
+
+	fields := log.Fields{
+		"attempt_count": attempt,
+		"max_retry":     s.config.MaxRetry,
+		"request_type":  requestType,
+		"status_code":   r.StatusCode,
+		"url":           r.Request.URL,
+	}
+
+	if attempt >= s.config.MaxRetry {
+		log.WithFields(fields).Error("request challenged and max retries reached")
+		return
+	}
+
+	if err := s.client.ClearCache(r.Request); err != nil {
+		log.WithFields(fields).WithError(err).Warn("failed to clear cached response")
+	}
+
+	backoff := time.Duration(attempt) * s.config.Delay
+	log.WithFields(fields).Warnf("request challenged, retry after %v", backoff)
+	time.Sleep(backoff)
+
+	r.Ctx.Put("attempt_count", attempt+1)
+	if err := r.Request.Retry(); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to retry challenged request")
+	}
 }
 
 // createErrorHandler creates a reusable error handler for collectors with retry logic.
@@ -228,13 +288,12 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt_count":    attempt,
-			"error":            err,
-			"status_code":      r.StatusCode,
-			"url":              r.Request.URL,
-			"request_headers":  utils.FlattenHeaders(r.Request.Headers),
-			"cookie_count":     len(cookies),
-			"response_headers": utils.FlattenHeaders(r.Headers),
+			"attempt_count":   attempt,
+			"error":           err,
+			"status_code":     r.StatusCode,
+			"url":             r.Request.URL,
+			"request_headers": utils.FlattenHeaders(r.Request.Headers),
+			"cookie_count":    len(cookies),
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
@@ -267,4 +326,24 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)
 		}
 	}
+}
+
+// listingPageNumber extracts the page number from a Michelin listing URL.
+// URLs without an explicit page component (e.g. "/en/restaurants/2-stars-michelin")
+// are treated as page 1. This is used by the pagination handler to distinguish
+// forward (next) from backward (prev) arrow links without any stateful tracking.
+func listingPageNumber(rawURL string) int {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return 1
+	}
+	segments := strings.Split(strings.Trim(u.Path, "/"), "/")
+	for i, seg := range segments {
+		if seg == "page" && i+1 < len(segments) {
+			if n, err := strconv.Atoi(segments[i+1]); err == nil {
+				return n
+			}
+		}
+	}
+	return 1
 }

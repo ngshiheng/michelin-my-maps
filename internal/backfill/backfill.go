@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	neturl "net/url"
 	"strings"
 	"time"
 
@@ -16,6 +15,8 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/utils"
 	log "github.com/sirupsen/logrus"
 )
+
+const xPathDetailRoot = "html"
 
 // defaultConfig returns a default config for Wayback backfill
 func defaultConfig() *client.Config {
@@ -35,7 +36,8 @@ func defaultConfig() *client.Config {
 		// 2 threads provides useful queue parallelism (two restaurants looked
 		// up simultaneously) while keeping the aggregate request rate
 		// below Wayback's limits.
-		ThreadCount: 2,
+		ThreadCount:    2,
+		RequestTimeout: 20 * time.Second,
 	}
 }
 
@@ -60,6 +62,8 @@ func New(ignoreCache bool) (*Scraper, error) {
 		CachePath:      cfg.CachePath,
 		StoragePath:    cfg.StoragePath,
 		Delay:          cfg.Delay,
+		RequestTimeout: cfg.RequestTimeout,
+		MaxRetry:       cfg.MaxRetry,
 		RandomDelay:    cfg.RandomDelay,
 		ThreadCount:    cfg.ThreadCount,
 		MaxURLs:        cfg.MaxURLs,
@@ -100,11 +104,12 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.setupDetailHandlers(ctx, detailCollector)
 
 	for _, r := range restaurants {
-		api := "https://web.archive.org/cdx/search/cdx?url=" + neturl.QueryEscape(r.URL) + "&output=json&fl=timestamp,original"
+		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
 		if err := s.client.EnqueueURL(api); err != nil {
 			return err
 		}
 	}
+
 	if err := s.client.Run(); err != nil {
 		return err
 	}
@@ -126,7 +131,7 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	s.setupHandlers(collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	api := "https://web.archive.org/cdx/search/cdx?url=" + neturl.QueryEscape(url) + "&output=json&fl=timestamp,original"
+	api := "https://web.archive.org/cdx/search/cdx?url=" + url + "&output=json&fl=timestamp,original"
 	if err := s.client.EnqueueURL(api); err != nil {
 		return err
 	}
@@ -147,9 +152,15 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
+		r.Ctx.Put("cache_enabled", cacheEnabled)
+		r.Ctx.Put("cache_hit", cacheHit)
+
 		cookies := s.client.GetCookies(r.URL.String())
 		log.WithFields(log.Fields{
 			"attempt_count":   attempt,
+			"cache_enabled":   cacheEnabled,
+			"cache_hit":       cacheHit,
 			"cookie_count":    len(cookies),
 			"request_headers": utils.FlattenHeaders(r.Headers),
 			"url":             r.URL,
@@ -207,6 +218,8 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 
 		log.WithFields(log.Fields{
 			"cdx_api":        r.Request.URL,
+			"cache_enabled":  r.Ctx.GetAny("cache_enabled"),
+			"cache_hit":      r.Ctx.GetAny("cache_hit"),
 			"snapshot_count": snapshot,
 			"status_code":    r.StatusCode,
 		}).Info("processing cdx api")
@@ -222,16 +235,22 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			r.Ctx.Put("attempt_count", 1)
 			attempt = 1
 		}
+		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
+		r.Ctx.Put("cache_enabled", cacheEnabled)
+		r.Ctx.Put("cache_hit", cacheHit)
 		cookies := s.client.GetCookies(r.URL.String())
+
 		log.WithFields(log.Fields{
 			"attempt_count":   attempt,
+			"cache_enabled":   cacheEnabled,
+			"cache_hit":       cacheHit,
 			"cookie_count":    len(cookies),
 			"request_headers": utils.FlattenHeaders(r.Headers),
 			"url":             r.URL,
 		}).Debug("requesting wayback snapshot")
 	})
 
-	detailCollector.OnXML("html", func(e *colly.XMLElement) {
+	detailCollector.OnXML(xPathDetailRoot, func(e *colly.XMLElement) {
 		err := handlers.Handle(ctx, e, s.repository)
 		if err != nil {
 			log.WithError(err).Error("failed to handle restaurant extraction")
@@ -251,13 +270,12 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt_count":    attempt,
-			"cookie_count":     len(cookies),
-			"error":            err,
-			"request_headers":  utils.FlattenHeaders(r.Request.Headers),
-			"response_headers": utils.FlattenHeaders(r.Headers),
-			"status_code":      r.StatusCode,
-			"url":              r.Request.URL,
+			"attempt_count":   attempt,
+			"cookie_count":    len(cookies),
+			"error":           err,
+			"request_headers": utils.FlattenHeaders(r.Request.Headers),
+			"status_code":     r.StatusCode,
+			"url":             r.Request.URL,
 		}
 
 		if strings.Contains(err.Error(), "already visited") {

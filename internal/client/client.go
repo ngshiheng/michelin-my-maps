@@ -3,7 +3,8 @@ package client
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -14,13 +15,12 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
-	collystorage "github.com/gocolly/colly/v2/storage"
+	"github.com/gocolly/colly/v2/storage"
 	log "github.com/sirupsen/logrus"
-	collysqlite "github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
+	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
 const (
-	// Path defaults for scraper/backfill state and caching
 	DefaultCacheScrape  = "cache/scrape"
 	DefaultCacheWayback = "cache/wayback"
 	DefaultDataPath     = "data/michelin.db"
@@ -34,6 +34,7 @@ type Config struct {
 	DatabasePath   string
 	StoragePath    string
 	Delay          time.Duration
+	RequestTimeout time.Duration
 	MaxRetry       int
 	MaxURLs        int
 	RandomDelay    time.Duration
@@ -45,10 +46,11 @@ type Colly struct {
 	collector *colly.Collector
 	queue     *queue.Queue
 	config    *Config
+	storage   storage.Storage
 }
 
 // NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly
-func NewSQLiteStorage(storagePath string) (collystorage.Storage, error) {
+func NewSQLiteStorage(storagePath string) (storage.Storage, error) {
 	if strings.TrimSpace(storagePath) == "" {
 		storagePath = DefaultStoragePath
 	}
@@ -58,16 +60,43 @@ func NewSQLiteStorage(storagePath string) (collystorage.Storage, error) {
 		return nil, err
 	}
 
-	store := &collysqlite.Storage{Filename: storagePath}
+	store := &sqlite3.Storage{Filename: storagePath}
 	if err := store.Init(); err != nil {
 		return nil, err
 	}
 	return store, nil
 }
 
+// SaveCookies persists cookies to the given storage under the specified host.
+// Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert).
+func SaveCookies(store storage.Storage, host string, cookies []*http.Cookie) error {
+	if clearable, ok := store.(interface{ Clear() error }); ok {
+		if err := clearable.Clear(); err != nil {
+			log.WithError(err).Warn("failed to clear storage before seeding cookies")
+		}
+	}
+	if err := store.Init(); err != nil {
+		return fmt.Errorf("failed to reinitialize storage: %w", err)
+	}
+	u := &url.URL{Host: host}
+	lines := make([]string, len(cookies))
+	for i, c := range cookies {
+		lines[i] = c.String()
+	}
+	store.SetCookies(u, strings.Join(lines, "\n"))
+	return nil
+}
+
+// Storage returns the underlying storage backend.
+func (w *Colly) Storage() storage.Storage {
+	return w.storage
+}
+
 // New creates a new web client instance
 func New(cfg *Config) (*Colly, error) {
-	opts := []colly.CollectorOption{}
+	opts := []colly.CollectorOption{
+		colly.AllowURLRevisit(), // disables colly's internal URL dedup
+	}
 
 	if cfg.CachePath != "" {
 		opts = append(opts, colly.CacheDir(filepath.Join(cfg.CachePath)))
@@ -76,6 +105,9 @@ func New(cfg *Config) (*Colly, error) {
 	opts = append(opts, colly.AllowedDomains(cfg.AllowedDomains...))
 
 	c := colly.NewCollector(opts...)
+	if cfg.RequestTimeout > 0 {
+		c.SetRequestTimeout(cfg.RequestTimeout)
+	}
 
 	if err := c.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
@@ -94,11 +126,6 @@ func New(cfg *Config) (*Colly, error) {
 	}
 	c.SetStorage(store)
 
-	michelinURL, _ := url.Parse("https://guide.michelin.com")
-	if strings.TrimSpace(store.Cookies(michelinURL)) == "" {
-		return nil, errors.New("login is required")
-	}
-
 	q, err := queue.New(
 		cfg.ThreadCount,
 		&queue.InMemoryQueueStorage{MaxSize: cfg.MaxURLs},
@@ -111,6 +138,7 @@ func New(cfg *Config) (*Colly, error) {
 		collector: c,
 		queue:     q,
 		config:    cfg,
+		storage:   store,
 	}, nil
 }
 
@@ -155,6 +183,22 @@ func (w *Colly) ClearCache(r *colly.Request) error {
 		return err
 	}
 	return nil
+}
+
+// IsCached reports whether cache is enabled and whether a URL exists in cache.
+func (w *Colly) IsCached(urlStr string) (cacheEnabled bool, cacheHit bool) {
+	if w == nil || w.config == nil || strings.TrimSpace(w.config.CachePath) == "" {
+		return false, false
+	}
+
+	sum := sha1.Sum([]byte(urlStr))
+	hash := hex.EncodeToString(sum[:])
+	filename := path.Join(w.config.CachePath, hash[:2], hash)
+
+	if _, err := os.Stat(filename); err == nil {
+		return true, true
+	}
+	return true, false
 }
 
 // EnqueueURL adds a URL to the queue for processing

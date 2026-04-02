@@ -10,6 +10,7 @@ import (
 
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/auth"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/backfill"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/client"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/scraper"
 	log "github.com/sirupsen/logrus"
 )
@@ -189,7 +190,19 @@ func handleLogin(args []string) error {
 
 	ctx := context.Background()
 	log.Info("running login command")
-	return auth.Login(ctx, *email, *password, *headless, *timeout)
+	cookies, err := auth.Login(ctx, *email, *password, *headless, *timeout)
+	if err != nil {
+		return err
+	}
+	store, err := client.NewSQLiteStorage(client.DefaultStoragePath)
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	if err := client.SaveCookies(store, "guide.michelin.com", cookies); err != nil {
+		return fmt.Errorf("failed to persist session cookies: %w", err)
+	}
+	log.WithField("cookie_count", len(cookies)).Info("session stored")
+	return nil
 }
 
 // main is the entry point for the mym CLI tool
@@ -200,6 +213,6 @@ func main() {
 	time.Local = time.UTC
 
 	if err := run(); err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalf("error: %v", err)
 	}
 }

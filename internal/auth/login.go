@@ -5,103 +5,50 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
-	"github.com/gocolly/colly/v2/storage"
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/client"
 	log "github.com/sirupsen/logrus"
-	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
 const (
 	michelinURL    = "https://guide.michelin.com"
 	michelinDomain = "michelin.com"
+
+	xPathProfileIcon = "//img[contains(@class,'js-img-profile-menu')]"
+	xPathLoginLink   = "//a[contains(normalize-space(.),'Login') and contains(@class,'js-auth__social-sign-in-button')]"
+	xPathEmailInput  = "//div[@class='form-group']//input[@id='emailId' or @name='email']"
+	xPathContinueBtn = "//button[contains(normalize-space(.),'Continue') and contains(@class,'js-auth__sign-in-continue-button')]"
+	xPathPassword    = "//input[@type='password' and contains(@class,'js-account-pass')]"
+	xPathSignInBtn   = "//button[contains(normalize-space(.),'Sign In') and contains(@class,'js-auth__sign-in-button')]"
 )
 
-// Login is the unified entry point: creates storage and runs login flow
-func Login(ctx context.Context, email, password string, headless bool, timeout time.Duration) error {
-	store, err := newStorage()
-	if err != nil {
-		return fmt.Errorf("failed to initialize session storage: %w", err)
-	}
-	return login(ctx, email, password, headless, timeout, store)
-}
-
-// newStorage creates and initializes the sqlite storage backend for session management
-func newStorage() (storage.Storage, error) {
-	storagePath := client.DefaultStoragePath
-	dir := filepath.Dir(storagePath)
-	if err := os.MkdirAll(dir, 0750); err != nil {
-		return nil, err
-	}
-
-	store := &sqlite3.Storage{Filename: storagePath}
-	if err := store.Init(); err != nil {
-		return nil, err
-	}
-	return store, nil
-}
-
-// login logs in via browser and seeds store with the resulting session cookies
-func login(ctx context.Context, email, password string, headless bool, timeout time.Duration, store storage.Storage) error {
+// Login logs in via browser and returns the resulting michelin.com session cookies.
+func Login(ctx context.Context, email, password string, headless bool, timeout time.Duration) ([]*http.Cookie, error) {
 	if email == "" || password == "" {
-		return errors.New("email and password are required")
-	}
-	if store == nil {
-		return errors.New("storage is required")
-	}
-
-	if err := store.Init(); err != nil {
-		return fmt.Errorf("failed to initialize storage: %w", err)
+		return nil, errors.New("email and password are required")
 	}
 
 	browser, cleanup, err := launchBrowser(headless)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer cleanup()
 
 	page, err := browser.Context(ctx).Page(proto.TargetCreateTarget{URL: michelinURL})
 	if err != nil {
-		return fmt.Errorf("failed to open page: %w", err)
+		return nil, fmt.Errorf("failed to open page: %w", err)
 	}
 
 	if err := performLogin(page.Timeout(timeout), email, password); err != nil {
 		log.WithError(err).Error("login flow failed")
-		return err
+		return nil, err
 	}
 
-	cookies, err := extractMichelinCookies(page)
-	if err != nil {
-		return err
-	}
-
-	// colly-sqlite3-storage appends cookie rows, so clear stale state when supported.
-	if clearable, ok := store.(interface{ Clear() error }); ok {
-		if err := clearable.Clear(); err != nil {
-			log.WithError(err).Warn("failed to clear storage before session seed")
-		}
-	}
-	if err := store.Init(); err != nil {
-		return fmt.Errorf("failed to reinitialize storage: %w", err)
-	}
-
-	u, _ := url.Parse(michelinURL)
-	lines := make([]string, len(cookies))
-	for i, c := range cookies {
-		lines[i] = c.String()
-	}
-	store.SetCookies(u, strings.Join(lines, "\n"))
-
-	log.WithField("cookie_count", len(cookies)).Info("session stored")
-	return nil
+	return extractCookies(page)
 }
 
 // launchBrowser starts a new browser instance and returns it together with a
@@ -125,22 +72,22 @@ func performLogin(page *rod.Page, email, password string) error {
 		fn   func() error
 	}{
 		{"click profile icon", func() error {
-			return clickElement(page, "//img[contains(@class,'js-img-profile-menu')]")
+			return clickElement(page, xPathProfileIcon)
 		}},
 		{"click login link", func() error {
-			return clickElement(page, "//a[contains(normalize-space(.),'Login') and contains(@class,'js-auth__social-sign-in-button')]")
+			return clickElement(page, xPathLoginLink)
 		}},
 		{"fill email", func() error {
-			return fillInput(page, "//div[@class='form-group']//input[@id='emailId' or @name='email']", email)
+			return fillInput(page, xPathEmailInput, email)
 		}},
 		{"click continue", func() error {
-			return clickElement(page, "//button[contains(normalize-space(.),'Continue') and contains(@class,'js-auth__sign-in-continue-button')]")
+			return clickElement(page, xPathContinueBtn)
 		}},
 		{"fill password", func() error {
-			return fillInput(page, "//input[@type='password' and contains(@class,'js-account-pass')]", password)
+			return fillInput(page, xPathPassword, password)
 		}},
 		{"click sign in", func() error {
-			return clickElement(page, "//button[contains(normalize-space(.),'Sign In') and contains(@class,'js-auth__sign-in-button')]")
+			return clickElement(page, xPathSignInBtn)
 		}},
 		{"wait for idle", func() error {
 			return page.WaitIdle(2 * time.Second)
@@ -185,16 +132,27 @@ func fillInput(page *rod.Page, xpath, value string) error {
 	return nil
 }
 
-// extractMichelinCookies fetches cookies from the page and filters to michelin.com.
-func extractMichelinCookies(page *rod.Page) ([]*http.Cookie, error) {
-	rawCookies, err := page.Cookies([]string{michelinURL})
+// extractCookies fetches cookies from the page and filters to michelin.com
+func extractCookies(page *rod.Page) ([]*http.Cookie, error) {
+	info, err := page.Info()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read page info for cookie retrieval: %w", err)
+	}
+
+	requestURLs := []string{michelinURL}
+	if info != nil && strings.TrimSpace(info.URL) != "" {
+		requestURLs = append(requestURLs, info.URL)
+	}
+
+	rawCookies, err := page.Cookies(requestURLs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve cookies: %w", err)
 	}
 
 	out := make([]*http.Cookie, 0, len(rawCookies))
 	for _, c := range rawCookies {
-		if !strings.Contains(c.Domain, michelinDomain) {
+		normalizedDomain := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(c.Domain)), ".")
+		if normalizedDomain != michelinDomain && !strings.HasSuffix(normalizedDomain, "."+michelinDomain) {
 			continue
 		}
 
