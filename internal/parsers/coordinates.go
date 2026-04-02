@@ -87,7 +87,7 @@ func parseGoogleMapsCoordinates(src string) (lat, lng string) {
 
 	q := u.Query().Get("q")
 	parts := strings.Split(q, ",")
-	if len(parts) > 2 {
+	if len(parts) != 2 {
 		return "", ""
 	}
 
