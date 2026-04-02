@@ -27,7 +27,7 @@ const (
 	DefaultStoragePath  = "data/colly.db"
 )
 
-// Config defines the minimal config needed for Colly.
+// Config defines the minimal config needed for Colly
 type Config struct {
 	AllowedDomains []string
 	CachePath      string
@@ -40,14 +40,14 @@ type Config struct {
 	ThreadCount    int
 }
 
-// Colly provides HTTP client functionality for web scraping.
+// Colly provides HTTP client functionality for web scraping
 type Colly struct {
 	collector *colly.Collector
 	queue     *queue.Queue
 	config    *Config
 }
 
-// NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly.
+// NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly
 func NewSQLiteStorage(storagePath string) (collystorage.Storage, error) {
 	if strings.TrimSpace(storagePath) == "" {
 		storagePath = DefaultStoragePath
@@ -65,7 +65,7 @@ func NewSQLiteStorage(storagePath string) (collystorage.Storage, error) {
 	return store, nil
 }
 
-// New creates a new web client instance.
+// New creates a new web client instance
 func New(cfg *Config) (*Colly, error) {
 	opts := []colly.CollectorOption{}
 
@@ -133,7 +133,7 @@ func (w *Colly) GetCookies(urlStr string) map[string]string {
 	return out
 }
 
-// GetDetailCollector creates a cloned collector for detail page scraping.
+// GetDetailCollector creates a cloned collector for detail page scraping
 func (w *Colly) GetDetailCollector() *colly.Collector {
 	dc := w.collector.Clone()
 	extensions.RandomUserAgent(dc)
@@ -141,7 +141,7 @@ func (w *Colly) GetDetailCollector() *colly.Collector {
 	return dc
 }
 
-// ClearCache removes the cache file for a given colly.Request.
+// ClearCache removes the cache file for a given colly.Request
 func (w *Colly) ClearCache(r *colly.Request) error {
 	if w.config == nil || w.config.CachePath == "" {
 		return nil
@@ -157,19 +157,23 @@ func (w *Colly) ClearCache(r *colly.Request) error {
 	return nil
 }
 
-// EnqueueURL adds a URL to the queue for processing.
-func (w *Colly) EnqueueURL(url string) {
+// EnqueueURL adds a URL to the queue for processing
+func (w *Colly) EnqueueURL(url string) error {
 	if err := w.queue.AddURL(url); err != nil {
 		log.WithFields(log.Fields{
 			"url":   url,
 			"error": err,
 		}).Warn("failed to enqueue url")
+		return err
 	}
+	return nil
 }
 
-// Run starts the web scraping process.
-func (w *Colly) Run() {
+// Run starts the web scraping process
+func (w *Colly) Run() error {
 	if err := w.queue.Run(w.collector); err != nil {
 		log.WithError(err).Warn("queue run error")
+		return err
 	}
+	return nil
 }

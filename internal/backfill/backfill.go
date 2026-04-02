@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	neturl "net/url"
 	"strings"
 	"time"
 
@@ -23,11 +24,18 @@ func defaultConfig() *client.Config {
 		CachePath:      client.DefaultCacheWayback,
 		DatabasePath:   client.DefaultDataPath,
 		StoragePath:    client.DefaultStoragePath,
-		Delay:          1 * time.Second,
-		MaxRetry:       3,
-		MaxURLs:        300_000,
-		RandomDelay:    2 * time.Second,
-		ThreadCount:    3,
+		// Wayback CDX guidance is < 60 requests/minute. 1.0-1.5s pacing
+		// yields ~40-60 req/minute with jitter while remaining conservative.
+		Delay:    1 * time.Second,
+		MaxRetry: 3,
+		// ~28k restaurants × 1 CDX URL each; 50k gives safe headroom
+		// without over-allocating an in-memory queue.
+		MaxURLs:     50_000,
+		RandomDelay: 500 * time.Millisecond,
+		// 2 threads provides useful queue parallelism (two restaurants looked
+		// up simultaneously) while keeping the aggregate request rate
+		// below Wayback's limits.
+		ThreadCount: 2,
 	}
 }
 
@@ -92,10 +100,14 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.setupDetailHandlers(ctx, detailCollector)
 
 	for _, r := range restaurants {
-		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
-		s.client.EnqueueURL(api)
+		api := "https://web.archive.org/cdx/search/cdx?url=" + neturl.QueryEscape(r.URL) + "&output=json&fl=timestamp,original"
+		if err := s.client.EnqueueURL(api); err != nil {
+			return err
+		}
 	}
-	s.client.Run()
+	if err := s.client.Run(); err != nil {
+		return err
+	}
 
 	// TODO: add summary of results
 	log.Info("completed backfill")
@@ -114,9 +126,13 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	s.setupHandlers(collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	api := "https://web.archive.org/cdx/search/cdx?url=" + url + "&output=json&fl=timestamp,original"
-	s.client.EnqueueURL(api)
-	s.client.Run()
+	api := "https://web.archive.org/cdx/search/cdx?url=" + neturl.QueryEscape(url) + "&output=json&fl=timestamp,original"
+	if err := s.client.EnqueueURL(api); err != nil {
+		return err
+	}
+	if err := s.client.Run(); err != nil {
+		return err
+	}
 
 	log.Info("completed backfill for one restaurant")
 	return nil

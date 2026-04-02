@@ -25,9 +25,14 @@ func defaultConfig() *client.Config {
 		StoragePath:    client.DefaultStoragePath,
 		Delay:          2 * time.Second,
 		MaxRetry:       3,
-		MaxURLs:        30_000,
-		RandomDelay:    2 * time.Second,
-		ThreadCount:    1,
+		// Queue only holds the 5 listing seed URLs; keep small to avoid
+		// misleading over-allocation.
+		MaxURLs:     100,
+		RandomDelay: 3 * time.Second, // 2–5 s jitter; wider spread reduces WAF fingerprinting
+		// ThreadCount: 1 is intentional – guide.michelin.com uses AWS WAF;
+		// parallelising seed requests would make all 5 listing pages land
+		// simultaneously
+		ThreadCount: 1,
 	}
 }
 
@@ -86,9 +91,13 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	}
 
 	for _, url := range michelinGuideURLs {
-		s.client.EnqueueURL(url)
+		if err := s.client.EnqueueURL(url); err != nil {
+			return err
+		}
 	}
-	s.client.Run()
+	if err := s.client.Run(); err != nil {
+		return err
+	}
 
 	// TODO: add summary of results
 	log.Info("completed scraping")

@@ -8,9 +8,9 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/auth"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/backfill"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/scraper"
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/session"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -185,7 +185,7 @@ func handleLogin(args []string) error {
 
 	ctx := context.Background()
 	log.Info("running login command")
-	return session.PerformLogin(ctx, *email, *password, *headless, *timeout)
+	return auth.PerformLogin(ctx, *email, *password, *headless, *timeout)
 }
 
 // main is the entry point for the mym CLI tool
