@@ -25,8 +25,8 @@ const (
 	michelinDomain = "michelin.com"
 )
 
-// PerformLogin is the unified entry point: creates storage and runs login flow.
-func PerformLogin(ctx context.Context, email, password string, headless bool, timeout time.Duration) error {
+// Login is the unified entry point: creates storage and runs login flow
+func Login(ctx context.Context, email, password string, headless bool, timeout time.Duration) error {
 	store, err := newStorage()
 	if err != nil {
 		return fmt.Errorf("failed to initialize session storage: %w", err)

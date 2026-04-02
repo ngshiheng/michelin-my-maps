@@ -105,6 +105,10 @@ func setupLogging(levelStr string) error {
 	}
 
 	log.SetLevel(level)
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.RFC3339,
+	})
 	log.SetOutput(os.Stdout)
 	return nil
 }
@@ -185,7 +189,7 @@ func handleLogin(args []string) error {
 
 	ctx := context.Background()
 	log.Info("running login command")
-	return auth.PerformLogin(ctx, *email, *password, *headless, *timeout)
+	return auth.Login(ctx, *email, *password, *headless, *timeout)
 }
 
 // main is the entry point for the mym CLI tool
