@@ -2,75 +2,38 @@ package login
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
+	"github.com/gocolly/colly/v2/storage"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
 	michelinURL    = "https://guide.michelin.com"
 	michelinDomain = "michelin.com"
-	configDir      = ".mym"
-	configFile     = "config.json"
 )
 
-// Cookie represents a simplified cookie for serialization
-type Cookie struct {
-	Name     string     `json:"name"`
-	Value    string     `json:"value"`
-	Domain   string     `json:"domain"`
-	Path     string     `json:"path"`
-	Expires  *time.Time `json:"expires,omitempty"`
-	Secure   bool       `json:"secure"`
-	HttpOnly bool       `json:"http_only"`
-}
-
-// Config is the canonical shape written to $HOME/.mym/config.json
-type Config struct {
-	Version   int           `json:"version"`
-	CreatedAt time.Time     `json:"created_at"`
-	Source    string        `json:"source"`
-	Account   AccountConfig `json:"account"`
-	Cookies   []Cookie      `json:"cookies"`
-}
-
-// AccountConfig holds per-account metadata inside Config
-type AccountConfig struct {
-	Email     string    `json:"email"`
-	LastLogin time.Time `json:"last_login"`
-}
-
-// ConfigPath returns the absolute path to $HOME/.mym/config.json.
-func ConfigPath() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("could not resolve home directory: %w", err)
-	}
-	return filepath.Join(home, configDir, configFile), nil
-}
-
-// Login launches a browser, performs login on guide.michelin.com, persists the
-// session to $HOME/.mym/config.json, and returns the resulting Config.
-// The provided ctx is used to cancel the entire operation; timeout additionally
-// caps each element-wait
-func Login(ctx context.Context, email, password string, headless bool, timeout time.Duration) error {
+// Login logs in via browser and seeds store with the resulting session cookies.
+// Pass the same store to colly's collector.SetStorage() for downstream scraping.
+func Login(ctx context.Context, email, password string, headless bool, timeout time.Duration, store storage.Storage) error {
 	if email == "" || password == "" {
 		return errors.New("email and password are required")
 	}
+	if store == nil {
+		return errors.New("storage is required")
+	}
 
-	log.WithFields(log.Fields{
-		"headless": headless,
-		"timeout":  timeout,
-	}).Debug("running login flow")
+	if err := store.Init(); err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
 
 	browser, cleanup, err := launchBrowser(headless)
 	if err != nil {
@@ -78,65 +41,57 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 	}
 	defer cleanup()
 
-	browser = browser.Context(ctx)
-
-	log.WithField("url", michelinURL).Debug("opening page")
-	page, err := browser.Page(proto.TargetCreateTarget{URL: michelinURL})
+	page, err := browser.Context(ctx).Page(proto.TargetCreateTarget{URL: michelinURL})
 	if err != nil {
 		return fmt.Errorf("failed to open page: %w", err)
 	}
 
-	page = page.Timeout(timeout)
-
-	if err := performLogin(page, email, password); err != nil {
+	if err := performLogin(page.Timeout(timeout), email, password); err != nil {
 		log.WithError(err).Error("login flow failed")
 		return err
 	}
 
-	log.Info("login succeeded; extracting cookies")
 	cookies, err := extractMichelinCookies(page)
 	if err != nil {
 		return err
 	}
 
-	now := time.Now().UTC()
-	cfg := &Config{
-		Version:   1,
-		CreatedAt: now,
-		Source:    "rod",
-		Account: AccountConfig{
-			Email:     email,
-			LastLogin: now,
-		},
-		Cookies: cookies,
+	// colly-sqlite3-storage appends cookie rows, so clear stale state when supported.
+	if clearable, ok := store.(interface{ Clear() error }); ok {
+		if err := clearable.Clear(); err != nil {
+			log.WithError(err).Warn("failed to clear storage before session seed")
+		}
+	}
+	if err := store.Init(); err != nil {
+		return fmt.Errorf("failed to reinitialize storage: %w", err)
 	}
 
-	if err := writeCookies(cfg); err != nil {
-		// Non-fatal: cookies are still valid even if we can't persist them.
-		log.WithError(err).Warn("login succeeded but failed to write config")
+	u, _ := url.Parse(michelinURL)
+	lines := make([]string, len(cookies))
+	for i, c := range cookies {
+		lines[i] = c.String()
 	}
+	store.SetCookies(u, strings.Join(lines, "\n"))
 
+	log.WithField("cookie_count", len(cookies)).Info("session stored")
 	return nil
 }
 
 // launchBrowser starts a new browser instance and returns it together with a
-// cleanup function that the caller must defer
+// cleanup function that the caller must defer.
 func launchBrowser(headless bool) (*rod.Browser, func(), error) {
-	log.WithField("headless", headless).Debug("launching browser")
 	urlStr, err := launcher.New().Headless(headless).Launch()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to launch browser: %w", err)
 	}
 
 	browser := rod.New().ControlURL(urlStr).MustConnect()
-	log.Debug("browser connected")
 	return browser, func() {
-		log.Debug("closing browser")
 		_ = browser.Close()
 	}, nil
 }
 
-// performLogin drives the multi-step login flow
+// performLogin drives the multi-step login flow.
 func performLogin(page *rod.Page, email, password string) error {
 	steps := []struct {
 		name string
@@ -166,19 +121,14 @@ func performLogin(page *rod.Page, email, password string) error {
 	}
 
 	for _, step := range steps {
-		log.WithField("step", step.name).Debug("executing login step")
 		if err := step.fn(); err != nil {
-			log.WithFields(log.Fields{
-				"step": step.name,
-			}).WithError(err).Warn("login step failed")
 			return fmt.Errorf("login step %q failed: %w", step.name, err)
 		}
-		log.WithField("step", step.name).Debug("login step completed")
 	}
 	return nil
 }
 
-// clickElement finds an element by XPath, waits for it to be visible, then clicks it
+// clickElement finds an element by XPath, waits for it to be visible, then clicks it.
 func clickElement(page *rod.Page, xpath string) error {
 	el, err := page.ElementX(xpath)
 	if err != nil {
@@ -193,7 +143,7 @@ func clickElement(page *rod.Page, xpath string) error {
 	return nil
 }
 
-// fillInput finds an input by XPath, waits for it to be visible, then types the value
+// fillInput finds an input by XPath, waits for it to be visible, then types the value.
 func fillInput(page *rod.Page, xpath, value string) error {
 	el, err := page.ElementX(xpath)
 	if err != nil {
@@ -208,85 +158,35 @@ func fillInput(page *rod.Page, xpath, value string) error {
 	return nil
 }
 
-// extractMichelinCookies fetches cookies from the page and filters to michelin.com
-func extractMichelinCookies(page *rod.Page) ([]Cookie, error) {
-	log.WithField("url", michelinURL).Debug("requesting cookies from page")
+// extractMichelinCookies fetches cookies from the page and filters to michelin.com.
+func extractMichelinCookies(page *rod.Page) ([]*http.Cookie, error) {
 	rawCookies, err := page.Cookies([]string{michelinURL})
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve cookies: %w", err)
 	}
 
-	log.WithField("total", len(rawCookies)).Debug("raw cookies retrieved, filtering to michelin.com")
-
-	var out []Cookie
+	out := make([]*http.Cookie, 0, len(rawCookies))
 	for _, c := range rawCookies {
 		if !strings.Contains(c.Domain, michelinDomain) {
-			log.WithFields(log.Fields{
-				"name":   c.Name,
-				"domain": c.Domain,
-			}).Debug("skipping cookie (domain mismatch)")
 			continue
 		}
 
-		cookie := Cookie{
+		hc := &http.Cookie{
 			Name:     c.Name,
-			Value:    c.Value,
+			Value:    strings.ReplaceAll(c.Value, `"`, ""), // strip invalid quote chars
 			Domain:   c.Domain,
 			Path:     c.Path,
 			Secure:   c.Secure,
 			HttpOnly: c.HTTPOnly,
 		}
 		if c.Expires != 0 {
-			t := time.Unix(int64(c.Expires), 0).UTC()
-			cookie.Expires = &t
+			hc.Expires = time.Unix(int64(c.Expires), 0).UTC()
 		}
-		log.WithFields(log.Fields{
-			"name":   c.Name,
-			"domain": c.Domain,
-		}).Debug("accepted cookie")
-		out = append(out, cookie)
+		out = append(out, hc)
 	}
 
 	if len(out) == 0 {
-		log.Warn("no michelin.com cookies found after login")
-		return nil, errors.New("no michelin.com cookies found after login — credentials may be wrong or the site structure changed")
+		return nil, errors.New("no michelin.com cookies after login: credentials may be wrong or site structure changed")
 	}
-
-	log.WithField("count", len(out)).Info("cookies extracted")
 	return out, nil
-}
-
-// writeCookies serialises cfg as indented JSON to $HOME/.mym/config.json.
-// It creates the directory if it does not exist
-func writeCookies(cfg *Config) error {
-	path, err := ConfigPath()
-	if err != nil {
-		return err
-	}
-
-	dir := filepath.Dir(path)
-	log.WithField("dir", dir).Debug("ensuring config directory exists")
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		return fmt.Errorf("failed to create config directory %q: %w", dir, err)
-	}
-
-	log.WithField("path", path).Debug("writing config file")
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf("failed to open config file: %w", err)
-	}
-	defer func() {
-		if cerr := f.Close(); cerr != nil {
-			log.WithError(cerr).Warn("failed to close cookie file")
-		}
-	}()
-
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(cfg); err != nil {
-		return fmt.Errorf("failed to write config: %w", err)
-	}
-
-	log.WithField("path", path).Info("config written")
-	return nil
 }

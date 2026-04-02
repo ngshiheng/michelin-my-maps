@@ -3,10 +3,7 @@ package client
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"path"
@@ -17,31 +14,19 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
+	collystorage "github.com/gocolly/colly/v2/storage"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/publicsuffix"
+	collysqlite "github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
-const cookieConfigPath = ".mym/config.json"
+const defaultStoragePath = "data/colly_storage.db"
 
-type cookie struct {
-	Name     string     `json:"name"`
-	Value    string     `json:"value"`
-	Domain   string     `json:"domain"`
-	Path     string     `json:"path"`
-	Expires  *time.Time `json:"expires,omitempty"`
-	Secure   bool       `json:"secure"`
-	HttpOnly bool       `json:"http_only"`
-}
-
-type cookieConfig struct {
-	Cookies []cookie `json:"cookies"`
-}
-
-// Config defines the minimal config needed for Colly
+// Config defines the minimal config needed for Colly.
 type Config struct {
 	AllowedDomains []string
 	CachePath      string
 	DatabasePath   string
+	StoragePath    string
 	Delay          time.Duration
 	MaxRetry       int
 	MaxURLs        int
@@ -49,14 +34,37 @@ type Config struct {
 	ThreadCount    int
 }
 
-// Colly provides HTTP client functionality for web scraping
+// Colly provides HTTP client functionality for web scraping.
 type Colly struct {
 	collector *colly.Collector
 	queue     *queue.Queue
 	config    *Config
 }
 
-// New creates a new web client instance
+// DefaultStoragePath returns the default sqlite storage path for Colly state.
+func DefaultStoragePath() string {
+	return defaultStoragePath
+}
+
+// NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly.
+func NewSQLiteStorage(storagePath string) (collystorage.Storage, error) {
+	if strings.TrimSpace(storagePath) == "" {
+		storagePath = defaultStoragePath
+	}
+
+	dir := filepath.Dir(storagePath)
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		return nil, err
+	}
+
+	store := &collysqlite.Storage{Filename: storagePath}
+	if err := store.Init(); err != nil {
+		return nil, err
+	}
+	return store, nil
+}
+
+// New creates a new web client instance.
 func New(cfg *Config) (*Colly, error) {
 	opts := []colly.CollectorOption{}
 
@@ -79,8 +87,15 @@ func New(cfg *Config) (*Colly, error) {
 	extensions.RandomUserAgent(c)
 	extensions.Referer(c)
 
-	if err := attachCookies(c); err != nil {
+	store, err := NewSQLiteStorage(cfg.StoragePath)
+	if err != nil {
 		return nil, err
+	}
+	c.SetStorage(store)
+
+	michelinURL, _ := url.Parse("https://guide.michelin.com")
+	if strings.TrimSpace(store.Cookies(michelinURL)) == "" {
+		return nil, errors.New("login is required")
 	}
 
 	q, err := queue.New(
@@ -98,64 +113,7 @@ func New(cfg *Config) (*Colly, error) {
 	}, nil
 }
 
-// attachCookies loads cookies from $HOME/.mym/config.json and injects them into
-// the collector's cookie jar. Returns nil (no-op) if the file does not exist.
-func attachCookies(c *colly.Collector) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Open(filepath.Join(home, cookieConfigPath))
-	if err != nil {
-		return errors.New("login is required")
-	}
-	defer func() {
-		if cerr := f.Close(); cerr != nil {
-			log.WithError(cerr).Warn("failed to close cookie file")
-		}
-	}()
-
-	var cfg cookieConfig
-	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
-		return err
-	}
-	if len(cfg.Cookies) == 0 {
-		return errors.New("no cookies found")
-	}
-
-	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	if err != nil {
-		return err
-	}
-
-	// Group cookies by domain so a single SetCookies call covers each origin.
-	byDomain := make(map[string][]*http.Cookie, len(cfg.Cookies))
-	for _, ck := range cfg.Cookies {
-		hc := &http.Cookie{
-			Name:     ck.Name,
-			Value:    strings.ReplaceAll(ck.Value, `"`, ""), // strip cookie values containing double-quote chars
-			Domain:   ck.Domain,
-			Path:     ck.Path,
-			Secure:   ck.Secure,
-			HttpOnly: ck.HttpOnly,
-		}
-		if ck.Expires != nil {
-			hc.Expires = *ck.Expires
-		}
-		byDomain[ck.Domain] = append(byDomain[ck.Domain], hc)
-	}
-
-	for domain, cookies := range byDomain {
-		u := &url.URL{Scheme: "https", Host: domain}
-		jar.SetCookies(u, cookies)
-	}
-
-	c.SetCookieJar(jar)
-	return nil
-}
-
-// GetCollector returns the colly collector for direct access
+// GetCollector returns the colly collector for direct access.
 func (w *Colly) GetCollector() *colly.Collector {
 	return w.collector
 }
@@ -174,7 +132,7 @@ func (w *Colly) GetCookies(urlStr string) map[string]string {
 	return out
 }
 
-// GetDetailCollector creates a cloned collector for detail page scraping
+// GetDetailCollector creates a cloned collector for detail page scraping.
 func (w *Colly) GetDetailCollector() *colly.Collector {
 	dc := w.collector.Clone()
 	extensions.RandomUserAgent(dc)
@@ -182,7 +140,7 @@ func (w *Colly) GetDetailCollector() *colly.Collector {
 	return dc
 }
 
-// ClearCache removes the cache file for a given colly.Request
+// ClearCache removes the cache file for a given colly.Request.
 func (w *Colly) ClearCache(r *colly.Request) error {
 	if w.config == nil || w.config.CachePath == "" {
 		return nil
@@ -198,7 +156,7 @@ func (w *Colly) ClearCache(r *colly.Request) error {
 	return nil
 }
 
-// EnqueueURL adds a URL to the queue for processing
+// EnqueueURL adds a URL to the queue for processing.
 func (w *Colly) EnqueueURL(url string) {
 	if err := w.queue.AddURL(url); err != nil {
 		log.WithFields(log.Fields{
@@ -208,7 +166,7 @@ func (w *Colly) EnqueueURL(url string) {
 	}
 }
 
-// Run starts the web scraping process
+// Run starts the web scraping process.
 func (w *Colly) Run() {
 	if err := w.queue.Run(w.collector); err != nil {
 		log.WithError(err).Warn("queue run error")

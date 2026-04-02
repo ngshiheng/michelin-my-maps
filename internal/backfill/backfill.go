@@ -22,6 +22,7 @@ func defaultConfig() *client.Config {
 		AllowedDomains: []string{"web.archive.org"},
 		CachePath:      "cache/wayback",
 		DatabasePath:   "data/michelin.db",
+		StoragePath:    client.DefaultStoragePath(),
 		Delay:          1 * time.Second,
 		MaxRetry:       3,
 		MaxURLs:        300_000,
@@ -49,6 +50,7 @@ func New(ignoreCache bool) (*Scraper, error) {
 	clientCfg := &client.Config{
 		AllowedDomains: cfg.AllowedDomains,
 		CachePath:      cfg.CachePath,
+		StoragePath:    cfg.StoragePath,
 		Delay:          cfg.Delay,
 		RandomDelay:    cfg.RandomDelay,
 		ThreadCount:    cfg.ThreadCount,

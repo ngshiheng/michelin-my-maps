@@ -22,6 +22,7 @@ func defaultConfig() *client.Config {
 		AllowedDomains: []string{"guide.michelin.com"},
 		CachePath:      "cache/scrape",
 		DatabasePath:   "data/michelin.db",
+		StoragePath:    client.DefaultStoragePath(),
 		Delay:          2 * time.Second,
 		MaxRetry:       3,
 		MaxURLs:        30_000,
@@ -49,6 +50,7 @@ func New() (*Scraper, error) {
 	cl, err := client.New(&client.Config{
 		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
+		StoragePath:    cfg.StoragePath,
 		Delay:          cfg.Delay,
 		RandomDelay:    cfg.RandomDelay,
 		ThreadCount:    cfg.ThreadCount,
