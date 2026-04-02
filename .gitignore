@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-mym
+bin/
 
 # Test binary, built with `go test -c`
 *.test
@@ -25,3 +25,4 @@ mym
 
 # macOS
 .DS_Store
+
