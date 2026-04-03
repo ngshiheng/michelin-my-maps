@@ -35,7 +35,6 @@ type Config struct {
 	StoragePath     string
 	Delay           time.Duration
 	MaxRetry        int
-	MaxURLs         int
 	RandomDelay     time.Duration
 	RequestTimeout  time.Duration
 	ThreadCount     int
@@ -191,7 +190,7 @@ func (w *Colly) EnqueueURL(url string) error {
 	return nil
 }
 
-// RunQueue drains the queue by dispatching each request to dc.
+// RunQueue drains the queue by dispatching each request to dc
 func (w *Colly) RunQueue(dc *colly.Collector) error {
 	if err := w.queue.Run(dc); err != nil {
 		log.WithError(err).Warn("queue run error")

@@ -31,17 +31,13 @@ const (
 // defaultConfig returns a default config for the scraper.
 func defaultConfig() *client.Config {
 	return &client.Config{
-		AllowedDomains:  []string{"guide.michelin.com"},
-		AllowURLRevisit: true,
-		CachePath:       client.DefaultCacheScrape,
-		DatabasePath:    client.DefaultDataPath,
-		StoragePath:     client.DefaultStoragePath,
-		Delay:           2 * time.Second,
-		MaxRetry:        3,
-		// Queue only holds the 5 listing seed URLs; keep small to avoid
-		// misleading over-allocation.
-		MaxURLs:     100,
-		RandomDelay: 3 * time.Second, // 2–5 s jitter; wider spread reduces WAF fingerprinting
+		AllowedDomains: []string{"guide.michelin.com"},
+		CachePath:      client.DefaultCacheScrape,
+		DatabasePath:   client.DefaultDataPath,
+		StoragePath:    client.DefaultStoragePath,
+		Delay:          2 * time.Second,
+		MaxRetry:       3,
+		RandomDelay:    3 * time.Second, // 2–5 s jitter; wider spread reduces WAF fingerprinting
 		// ThreadCount: 1 is intentional – guide.michelin.com uses AWS WAF;
 		// parallelising seed requests would make all 5 listing pages land
 		// simultaneously
@@ -72,7 +68,6 @@ func New() (*Scraper, error) {
 		Delay:          cfg.Delay,
 		RandomDelay:    cfg.RandomDelay,
 		ThreadCount:    cfg.ThreadCount,
-		MaxURLs:        cfg.MaxURLs,
 	}
 
 	cl, err := client.New(clientCfg)

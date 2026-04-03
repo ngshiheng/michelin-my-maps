@@ -21,18 +21,14 @@ const xPathDetailRoot = "html"
 // defaultConfig returns a default config for Wayback backfill
 func defaultConfig() *client.Config {
 	return &client.Config{
-		AllowedDomains:  []string{"web.archive.org"},
-		AllowURLRevisit: true,
-		CachePath:       client.DefaultCacheWayback,
-		DatabasePath:    client.DefaultDataPath,
-		StoragePath:     client.DefaultStoragePath,
+		AllowedDomains: []string{"web.archive.org"},
+		CachePath:      client.DefaultCacheWayback,
+		DatabasePath:   client.DefaultDataPath,
+		StoragePath:    client.DefaultStoragePath,
 		// Wayback CDX guidance is < 60 requests/minute. 1.0-1.5s pacing
 		// yields ~40-60 req/minute with jitter while remaining conservative.
-		Delay:    1 * time.Second,
-		MaxRetry: 3,
-		// ~28k restaurants × 1 CDX URL each; 50k gives safe headroom
-		// without over-allocating an in-memory queue.
-		MaxURLs:     50_000,
+		Delay:       1 * time.Second,
+		MaxRetry:    3,
 		RandomDelay: 500 * time.Millisecond,
 		// 2 threads provides useful queue parallelism (two restaurants looked
 		// up simultaneously) while keeping the aggregate request rate
@@ -67,7 +63,6 @@ func New(ignoreCache bool) (*Scraper, error) {
 		MaxRetry:       cfg.MaxRetry,
 		RandomDelay:    cfg.RandomDelay,
 		ThreadCount:    cfg.ThreadCount,
-		MaxURLs:        cfg.MaxURLs,
 	}
 	if ignoreCache {
 		log.Debug("ignoring cache")
