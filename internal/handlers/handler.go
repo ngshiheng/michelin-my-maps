@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/parsers"
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/storage"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/parsers"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/storage"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,19 +22,17 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	if data.WaybackURL != "" {
 		restaurant, err = repo.FindRestaurantByURL(ctx, data.URL)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"error":       err,
+			log.WithError(err).WithFields(log.Fields{
 				"wayback_url": data.WaybackURL,
 				"url":         data.URL,
-			}).Debug("restaurant not found, will create from Wayback data")
+			}).Debug("restaurant not found, recreating from wayback data")
 		}
 	}
 
 	if data.Price == "" {
 		log.WithFields(log.Fields{
-			"price":       data.Price,
-			"wayback_url": e.Request.URL.String(),
-		}).Error("skip award: empty price")
+			"wayback_url": e.Request.URL,
+		}).Warn("skipping award, price is empty")
 		return nil
 	}
 
@@ -61,10 +59,9 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	}
 
 	if err := repo.SaveRestaurant(ctx, restaurant); err != nil {
-		log.WithFields(log.Fields{
-			"id":    restaurant.ID,
-			"error": err,
-			"url":   data.URL,
+		log.WithError(err).WithFields(log.Fields{
+			"id":  restaurant.ID,
+			"url": data.URL,
 		}).Error("failed to save restaurant")
 		return err
 	}
@@ -79,9 +76,8 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	}
 
 	if err := repo.SaveAward(ctx, award); err != nil {
-		log.WithFields(log.Fields{
+		log.WithError(err).WithFields(log.Fields{
 			"id":          restaurant.ID,
-			"error":       err,
 			"wayback_url": data.WaybackURL,
 			"url":         data.URL,
 		}).Error("failed to save restaurant award")
@@ -93,7 +89,7 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 		"name":        restaurant.Name,
 		"url":         data.URL,
 		"year":        data.Year,
-		"wayback":     data.WaybackURL != "",
+		"has_wayback": data.WaybackURL != "",
 	}).Debug("saved restaurant and award")
 
 	return nil

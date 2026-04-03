@@ -85,3 +85,28 @@ func TestSplitUnpack(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitUnpackMultiDelimiter(t *testing.T) {
+	delimiters := []string{" · ", " • ", " - ", " | "}
+	tests := []struct {
+		input       string
+		wantPrice   string
+		wantCuisine string
+	}{
+		{"$$$ · French", "$$$", "French"},
+		{"$$ • Japanese", "$$", "Japanese"},
+		{"$$ - Italian", "$$", "Italian"},
+		{"$ | Chinese", "$", "Chinese"},
+		// no delimiter found → price is empty, full string is cuisine
+		{"French", "", "French"},
+		{"", "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			price, cuisine := SplitUnpackMultiDelimiter(tt.input, delimiters)
+			if price != tt.wantPrice || cuisine != tt.wantCuisine {
+				t.Errorf("SplitUnpackMultiDelimiter(%q) = (%q, %q); want (%q, %q)", tt.input, price, cuisine, tt.wantPrice, tt.wantCuisine)
+			}
+		})
+	}
+}

@@ -7,6 +7,8 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
+const xPathScript = "//script"
+
 // parseDLayerValue parses a value from a dLayer script.
 // Supported: Only extracts from assignment syntax, not object literals.
 // Example (supported):
@@ -31,7 +33,7 @@ func FindDLayerScript(e *colly.XMLElement) string {
 
 // findScript searches for a <script> tag whose content matches the given condition.
 func findScript(e *colly.XMLElement, condition func(string) bool) string {
-	scripts := e.ChildTexts("//script")
+	scripts := e.ChildTexts(xPathScript)
 	for _, script := range scripts {
 		if condition(script) {
 			return script

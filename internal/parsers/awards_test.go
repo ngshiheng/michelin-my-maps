@@ -3,7 +3,7 @@ package parsers
 import (
 	"testing"
 
-	"github.com/ngshiheng/michelin-my-maps/v3/internal/models"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 )
 
 func TestParseDistinction(t *testing.T) {
@@ -46,6 +46,28 @@ func TestDecodeHTMLEntities(t *testing.T) {
 			got := decodeHTMLEntities(tt.input)
 			if got != tt.expected {
 				t.Errorf("decodeHTMLEntities(%q) = %q; want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestParseGreenStar(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"green star", "true"},
+		{"MICHELIN Green Star", "true"},
+		{"has a Green Star award", "true"},
+		{"1 Star", "false"},
+		{"Bib Gourmand", "false"},
+		{"", "false"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := parseGreenStar(tt.input)
+			if got != tt.expected {
+				t.Errorf("parseGreenStar(%q) = %q; want %q", tt.input, got, tt.expected)
 			}
 		})
 	}

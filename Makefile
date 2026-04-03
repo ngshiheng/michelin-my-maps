@@ -13,7 +13,7 @@ help:   ## display this help message.
 ##@ Development
 .PHONY: test
 test:   ## run all the tests.
-	@go test ./... -v -count=1
+	@go test ./... -count=1 | grep -v 'no test files'
 
 .PHONY: lint
 lint:   ## run lint with golangci-lint in docker.
@@ -22,7 +22,7 @@ lint:   ## run lint with golangci-lint in docker.
 	
 .PHONY: build
 build:  ## build go binary to current directory.
-	@go build cmd/mym/mym.go
+	@go build -o bin/ cmd/mym/mym.go
 	
 .PHONY: install
 install:    ## install go binary to $GOPATH/bin.

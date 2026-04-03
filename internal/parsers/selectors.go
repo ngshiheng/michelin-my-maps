@@ -120,14 +120,14 @@ var RestaurantSelectors = map[string][]string{
 var AwardSelectors = map[string][]string{
 	"distinction": {
 		"//div[@class='data-sheet__classification-item--content'][2]",
-		"//ul[contains(@class,'restaurant-details__classification--list')]//li",                 // Legacy 2020-2023
+		"//ul[contains(@class,'restaurant-details__classification--list')]//li",                 // 2020-2023 page variant
 		"//div[contains(@class,'restaurant__classification')]//p[contains(@class,'flex-fill')]", // Older fallback
 		"//div[contains(@class,'classification')]",                                              // Generic fallback
 	},
 	"price": {
 		"//div[contains(@class,'data-sheet__block--text')][2]",                     // Modern
 		"//div[@class='col-lg-12']/p",                                              // ???
-		"//*[contains(@class,'restaurant-details__heading-price')]",                // Legacy
+		"//*[contains(@class,'restaurant-details__heading-price')]",                // Older page variant
 		"//span[contains(@class,'mg-price') or contains(@class,'mg-euro-circle')]", // Price spans
 		"//div[contains(@class,'data-sheet__block--text')]",                        // Generic block text
 		"//p[contains(@class,'restaurant__services-none')]",                        // Price unavailable message
@@ -139,7 +139,7 @@ var AwardSelectors = map[string][]string{
 	},
 	"publishedDate": {
 		"//script[@type='application/ld+json']",                              // JSON-LD (highest priority)
-		"//div[contains(@class,'restaurant-details__heading--label-title')]", // Legacy date
+		"//div[contains(@class,'restaurant-details__heading--label-title')]", // Older date markup
 		"//div[contains(@class,'label-text')]",                               // Older date
 		"//meta[@name='description']",                                        // Meta fallback
 	},

@@ -21,8 +21,11 @@ var (
 		"2006-01-02T15:04",
 		"2006-01-02",
 	}
-	dateXPath = "//div[contains(@class,'restaurant-details__heading--label-title')] | //div[contains(@class,'label-text')]"
-	metaXPath = "//meta[@name='description']"
+)
+
+const (
+	xPathDate = "//div[contains(@class,'restaurant-details__heading--label-title')] | //div[contains(@class,'label-text')]"
+	xPathMeta = "//meta[@name='description']"
 )
 
 // ExtractPublishedYear tries JSON-LD, then XPath, then meta, returning the first valid year.
@@ -30,10 +33,10 @@ func ExtractPublishedYear(e *colly.XMLElement) int {
 	if year := extractYearFromJSONLD(e); year != 0 {
 		return year
 	}
-	if year := extractYearFromXPath(e, dateXPath); year != 0 {
+	if year := extractYearFromXPath(e, xPathDate); year != 0 {
 		return year
 	}
-	if year := extractYearFromMeta(e, metaXPath, "content"); year != 0 {
+	if year := extractYearFromMeta(e, xPathMeta, "content"); year != 0 {
 		return year
 	}
 	return 0

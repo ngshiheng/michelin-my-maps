@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-mym
+bin/
 
 # Test binary, built with `go test -c`
 *.test
@@ -18,13 +18,19 @@ mym
 # Go Colly cache
 *cache*/
 
-# SQLite
+# SQLite database files
 *.db
-*.db-shm
+*.sqlite
+*.sqlite3
+
+# SQLite temporary/lock files
 *.db-wal
+*.db-journal
+*.db-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite-shm
 
-# Cline
-.clinerules
-memory-bank/
 
+# macOS
 .DS_Store
