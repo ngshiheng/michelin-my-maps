@@ -152,10 +152,11 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 
 // Run scrapes a single restaurant URL for its details.
 func (s *Scraper) Run(ctx context.Context, url string) error {
+	log.WithField("url", url).Debug("running scrape for restaurant")
+
 	detailCollector := s.client.GetDetailCollector()
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	log.WithField("url", url).Info("scraping restaurant")
 	err := detailCollector.Visit(url)
 	if err != nil {
 		log.WithError(err).Error("failed to visit restaurant URL")

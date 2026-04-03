@@ -117,9 +117,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 
 // Run runs the backfill workflow for a single restaurant URL
 func (s *Scraper) Run(ctx context.Context, url string) error {
-	log.WithFields(log.Fields{
-		"url": url,
-	}).Debug("running backfill for restaurant")
+	log.WithFields(log.Fields{"url": url}).Debug("running backfill for restaurant")
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
@@ -128,10 +126,8 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	s.setupDetailHandlers(ctx, detailCollector)
 
 	api := "https://web.archive.org/cdx/search/cdx?url=" + url + "&output=json&fl=timestamp,original"
-	if err := s.client.EnqueueURL(api); err != nil {
-		return err
-	}
-	if err := s.client.RunQueue(collector); err != nil {
+	if err := collector.Visit(api); err != nil {
+		log.WithError(err).Error("failed to visit restaurant URL")
 		return err
 	}
 
@@ -166,19 +162,22 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		var rows [][]string
 		if err := json.Unmarshal(r.Body, &rows); err != nil {
 			log.WithFields(log.Fields{
-				"url":     url,
-				"cdx_api": r.Request.URL,
-				"error":   err,
+				"url":         url,
+				"status_code": r.StatusCode,
+				"cdx_api":     r.Request.URL,
+				"error":       err,
 			}).Warn("failed to parse cdx api response")
 			return
 		}
 
 		if len(rows) <= 1 {
 			log.WithFields(log.Fields{
-				"url":     url,
-				"rows":    rows,
-				"cdx_api": r.Request.URL,
+				"url":         url,
+				"rows":        rows,
+				"status_code": r.StatusCode,
+				"cdx_api":     r.Request.URL,
 			}).Debug("no snapshots found")
+			// FIXME: this is currently cached because CDX api returns 200
 			return
 		}
 
