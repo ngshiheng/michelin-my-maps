@@ -180,8 +180,7 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt": attempt,
-
+			"attempt":   attempt,
 			"cache_hit": cacheHit,
 			"url":       r.URL,
 		}).Info("requesting restaurant listing page")
@@ -198,7 +197,7 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 			"cache_hit":   r.Ctx.GetAny("cache_hit"),
 			"url":         r.Request.URL,
 			"status_code": r.StatusCode,
-		}).Info("fetched listing page, enqueuing restaurant details")
+		}).Debug("fetched listing page, enqueuing restaurant details")
 	})
 
 	collector.OnXML(xPathRestaurantCard, func(e *colly.XMLElement) {
@@ -285,11 +284,10 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt": attempt,
-
+			"attempt":   attempt,
 			"cache_hit": cacheHit,
 			"url":       r.URL,
-		}).Debug("requesting restaurant details")
+		}).Info("requesting restaurant details")
 	})
 
 	detailCollector.OnResponse(func(r *colly.Response) {

@@ -149,8 +149,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt": attempt,
-
+			"attempt":   attempt,
 			"cache_hit": cacheHit,
 			"url":       r.URL,
 		}).Debug("requesting cdx api")
@@ -231,8 +230,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt": attempt,
-
+			"attempt":   attempt,
 			"cache_hit": cacheHit,
 			"url":       r.URL,
 		}).Debug("requesting wayback snapshot")
