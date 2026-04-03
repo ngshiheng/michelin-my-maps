@@ -143,23 +143,20 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 	collector.OnError(s.createErrorHandler())
 
 	collector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt_count")
+		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
-			r.Ctx.Put("attempt_count", 1)
+			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
 		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
 		r.Ctx.Put("cache_enabled", cacheEnabled)
 		r.Ctx.Put("cache_hit", cacheHit)
 
-		cookies := s.client.GetCookies(r.URL.String())
 		log.WithFields(log.Fields{
-			"attempt_count":   attempt,
-			"cache_enabled":   cacheEnabled,
-			"cache_hit":       cacheHit,
-			"cookie_count":    len(cookies),
-			"request_headers": utils.FlattenHeaders(r.Headers),
-			"url":             r.URL,
+			"attempt":       attempt,
+			"cache_enabled": cacheEnabled,
+			"cache_hit":     cacheHit,
+			"url":           r.URL,
 		}).Debug("requesting cdx api")
 	})
 
@@ -213,11 +210,11 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		}
 
 		log.WithFields(log.Fields{
-			"cdx_api":        r.Request.URL,
-			"cache_enabled":  r.Ctx.GetAny("cache_enabled"),
-			"cache_hit":      r.Ctx.GetAny("cache_hit"),
-			"snapshot_count": snapshot,
-			"status_code":    r.StatusCode,
+			"cache_enabled": r.Ctx.GetAny("cache_enabled"),
+			"cache_hit":     r.Ctx.GetAny("cache_hit"),
+			"cdx_api":       r.Request.URL,
+			"snapshot":      snapshot,
+			"status_code":   r.StatusCode,
 		}).Info("processing cdx api")
 	})
 }
@@ -226,23 +223,20 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	detailCollector.OnError(s.createErrorHandler())
 
 	detailCollector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt_count")
+		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
-			r.Ctx.Put("attempt_count", 1)
+			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
 		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
 		r.Ctx.Put("cache_enabled", cacheEnabled)
 		r.Ctx.Put("cache_hit", cacheHit)
-		cookies := s.client.GetCookies(r.URL.String())
 
 		log.WithFields(log.Fields{
-			"attempt_count":   attempt,
-			"cache_enabled":   cacheEnabled,
-			"cache_hit":       cacheHit,
-			"cookie_count":    len(cookies),
-			"request_headers": utils.FlattenHeaders(r.Headers),
-			"url":             r.URL,
+			"attempt":       attempt,
+			"cache_enabled": cacheEnabled,
+			"cache_hit":     cacheHit,
+			"url":           r.URL,
 		}).Debug("requesting wayback snapshot")
 	})
 
@@ -258,7 +252,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
-		if v := r.Ctx.GetAny("attempt_count"); v != nil {
+		if v := r.Ctx.GetAny("attempt"); v != nil {
 			if a, ok := v.(int); ok {
 				attempt = a
 			}
@@ -266,8 +260,8 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt_count":   attempt,
-			"cookie_count":    len(cookies),
+			"attempt":         attempt,
+			"cookie":          len(cookies),
 			"error":           err,
 			"request_headers": utils.FlattenHeaders(r.Request.Headers),
 			"status_code":     r.StatusCode,
@@ -300,7 +294,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
 			time.Sleep(backoff)
 
-			r.Ctx.Put("attempt_count", attempt+1)
+			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
 			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)

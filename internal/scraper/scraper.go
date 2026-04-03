@@ -170,24 +170,20 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 	collector.OnError(s.createErrorHandler())
 
 	collector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt_count")
+		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
-			r.Ctx.Put("attempt_count", 1)
+			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
 		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
 		r.Ctx.Put("cache_enabled", cacheEnabled)
 		r.Ctx.Put("cache_hit", cacheHit)
 
-		cookies := s.client.GetCookies(r.URL.String())
-
 		log.WithFields(log.Fields{
-			"attempt_count":   attempt,
-			"cache_enabled":   cacheEnabled,
-			"cache_hit":       cacheHit,
-			"cookie_count":    len(cookies),
-			"request_headers": utils.FlattenHeaders(r.Headers),
-			"url":             r.URL,
+			"attempt":       attempt,
+			"cache_enabled": cacheEnabled,
+			"cache_hit":     cacheHit,
+			"url":           r.URL,
 		}).Debug("requesting restaurant listing page")
 	})
 
@@ -240,13 +236,48 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 	})
 }
 
+func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
+	attempt := 1
+	if v := r.Ctx.GetAny("attempt"); v != nil {
+		if a, ok := v.(int); ok {
+			attempt = a
+		}
+	}
+
+	fields := log.Fields{
+		"attempt":      attempt,
+		"max_retry":    s.config.MaxRetry,
+		"request_type": requestType,
+		"status_code":  r.StatusCode,
+		"url":          r.Request.URL,
+	}
+
+	if err := s.client.ClearCache(r.Request); err != nil {
+		log.WithFields(fields).WithError(err).Warn("failed to clear cache")
+	}
+
+	if attempt >= s.config.MaxRetry {
+		log.WithFields(fields).Error("request challenged and max retries reached")
+		return
+	}
+
+	backoff := time.Duration(attempt) * s.config.Delay
+	log.WithFields(fields).Warnf("request challenged, retry after %v", backoff)
+	time.Sleep(backoff)
+
+	r.Ctx.Put("attempt", attempt+1)
+	if err := r.Request.Retry(); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to retry challenged request")
+	}
+}
+
 func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
 	detailCollector.OnError(s.createErrorHandler())
 
 	detailCollector.OnRequest(func(r *colly.Request) {
-		attempt := r.Ctx.GetAny("attempt_count")
+		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
-			r.Ctx.Put("attempt_count", 1)
+			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
 		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
@@ -280,46 +311,11 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	})
 }
 
-func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
-	attempt := 1
-	if v := r.Ctx.GetAny("attempt_count"); v != nil {
-		if a, ok := v.(int); ok {
-			attempt = a
-		}
-	}
-
-	fields := log.Fields{
-		"attempt_count": attempt,
-		"max_retry":     s.config.MaxRetry,
-		"request_type":  requestType,
-		"status_code":   r.StatusCode,
-		"url":           r.Request.URL,
-	}
-
-	if err := s.client.ClearCache(r.Request); err != nil {
-		log.WithFields(fields).WithError(err).Warn("failed to clear cache")
-	}
-
-	if attempt >= s.config.MaxRetry {
-		log.WithFields(fields).Error("request challenged and max retries reached")
-		return
-	}
-
-	backoff := time.Duration(attempt) * s.config.Delay
-	log.WithFields(fields).Warnf("request challenged, retry after %v", backoff)
-	time.Sleep(backoff)
-
-	r.Ctx.Put("attempt_count", attempt+1)
-	if err := r.Request.Retry(); err != nil {
-		log.WithFields(fields).WithError(err).Error("failed to retry challenged request")
-	}
-}
-
 // createErrorHandler creates a reusable error handler for collectors with retry logic.
 func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
-		if v := r.Ctx.GetAny("attempt_count"); v != nil {
+		if v := r.Ctx.GetAny("attempt"); v != nil {
 			if a, ok := v.(int); ok {
 				attempt = a
 			}
@@ -327,12 +323,12 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt_count":   attempt,
+			"attempt":         attempt,
+			"cookie":          len(cookies),
 			"error":           err,
+			"request_headers": utils.FlattenHeaders(r.Request.Headers),
 			"status_code":     r.StatusCode,
 			"url":             r.Request.URL,
-			"request_headers": utils.FlattenHeaders(r.Request.Headers),
-			"cookie_count":    len(cookies),
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
@@ -367,7 +363,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
 			time.Sleep(backoff)
 
-			r.Ctx.Put("attempt_count", attempt+1)
+			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
 			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)

@@ -200,7 +200,7 @@ func handleLogin(args []string) error {
 	if err := app.InitCookies(cookies); err != nil {
 		return fmt.Errorf("failed to persist session cookies: %w", err)
 	}
-	log.WithField("cookie_count", len(cookies)).Info("session stored")
+	log.WithField("cookie", len(cookies)).Info("session stored")
 	return nil
 }
 
