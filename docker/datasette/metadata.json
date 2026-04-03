@@ -368,6 +368,12 @@
                     "title": "Green Star Growth Trends",
                     "description": "Track the rise of Michelin Green Stars over time. Filter by start year, end year. Sorted by year.",
                     "params": ["start_year", "end_year"]
+                },
+                "new_award_entries": {
+                    "sql": "WITH latest_scrape AS (SELECT DATE(MAX(created_at)) AS added_on FROM restaurant_awards) SELECT (SELECT added_on FROM latest_scrape) AS added_on, r.location, COUNT(*) AS total_new, SUM(CASE WHEN ra.distinction = '3 Stars' THEN 1 ELSE 0 END) AS three_stars, SUM(CASE WHEN ra.distinction = '2 Stars' THEN 1 ELSE 0 END) AS two_stars, SUM(CASE WHEN ra.distinction = '1 Star' THEN 1 ELSE 0 END) AS one_star, SUM(CASE WHEN ra.distinction = 'Bib Gourmand' THEN 1 ELSE 0 END) AS bib_gourmand, SUM(CASE WHEN ra.distinction = 'Selected Restaurants' THEN 1 ELSE 0 END) AS selected_restaurants, SUM(CASE WHEN ra.green_star = 1 THEN 1 ELSE 0 END) AS green_star FROM restaurant_awards ra JOIN restaurants r ON ra.restaurant_id = r.id WHERE DATE(ra.created_at) = (SELECT added_on FROM latest_scrape) AND (:location IS NULL OR :location = '' OR LOWER(r.location) LIKE LOWER('%' || :location || '%')) GROUP BY r.location ORDER BY three_stars DESC, two_stars DESC, one_star DESC, total_new DESC LIMIT COALESCE(NULLIF(:limit, ''), 50)",
+                    "title": "New Award Entries",
+                    "description": "From the latest scrape date, shows how many new award entries were added per location with a full star breakdown. Filter by location. Default limit: 50.",
+                    "params": ["location", "limit"]
                 }
             },
             "tables": {
