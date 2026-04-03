@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"path"
@@ -13,6 +14,7 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
+	"github.com/gocolly/colly/v2/storage"
 	log "github.com/sirupsen/logrus"
 	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
@@ -49,9 +51,10 @@ type Colly struct {
 
 // New creates a new web client instance
 func New(cfg *Config) (*Colly, error) {
-	// Build collector options conditionally so cache can be disabled when CachePath is empty
+	// We build collector options conditionally so cache can be disabled when CachePath is empty
 	opts := []colly.CollectorOption{
-		colly.AllowURLRevisit(), // disables colly's internal URL dedup
+		colly.Async(false),      // SQLite only support one write at a time
+		colly.AllowURLRevisit(), // disables colly's internal URL dedup so that it won't mess with our cache
 	}
 
 	if cfg.CachePath != "" {
@@ -60,42 +63,59 @@ func New(cfg *Config) (*Colly, error) {
 
 	opts = append(opts, colly.AllowedDomains(cfg.AllowedDomains...))
 
-	c := colly.NewCollector(opts...)
+	collector := colly.NewCollector(opts...)
 	if cfg.RequestTimeout > 0 {
-		c.SetRequestTimeout(cfg.RequestTimeout)
+		collector.SetRequestTimeout(cfg.RequestTimeout)
 	}
 
-	if err := c.Limit(&colly.LimitRule{
+	if err := collector.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
 		Delay:       cfg.Delay,
 		RandomDelay: cfg.RandomDelay,
-		Parallelism: 5,
 	}); err != nil {
 		return nil, err
 	}
 
-	extensions.RandomUserAgent(c)
-	extensions.Referer(c)
+	extensions.RandomUserAgent(collector)
+	extensions.Referer(collector)
 
-	storage := &sqlite3.Storage{Filename: cfg.StoragePath}
+	collyStorage := &sqlite3.Storage{Filename: cfg.StoragePath}
 
-	err := c.SetStorage(storage)
+	err := collector.SetStorage(collyStorage)
 	if err != nil {
 		return nil, err
 	}
 
-	q, err := queue.New(
+	// colly-sqlite3-storage.SetCookies uses plain INSERT (not UPSERT), so
+	// Set-Cookie responses accumulate stale rows; reads always return the
+	// oldest row.
+	// The fix here is to seed an in-memory jar from sqlite once at startup,
+	// then let Go's standard jar handle all subsequent Set-Cookie updates.
+	// sqlite storage continues serving visited-URL dedup and the queue.
+	memJar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, domain := range cfg.AllowedDomains {
+		u := &url.URL{Scheme: "https", Host: domain}
+		if raw := collyStorage.Cookies(u); raw != "" {
+			memJar.SetCookies(u, storage.UnstringifyCookies(raw))
+		}
+	}
+	collector.SetCookieJar(memJar)
+
+	queue, err := queue.New(
 		cfg.ThreadCount,
-		storage,
+		collyStorage,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Colly{
-		collector: c,
-		queue:     q,
-		storage:   storage,
+		collector: collector,
+		queue:     queue,
+		storage:   collyStorage,
 		config:    cfg,
 	}, nil
 }

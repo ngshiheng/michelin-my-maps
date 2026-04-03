@@ -90,6 +90,7 @@ func New() (*Scraper, error) {
 
 // InitCookies persists Michelin Guide session cookies to the cookie storage.
 // Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert)
+// We need to Init -> Clear -> Init because Clear does not do DROP TABLE IF EXISTS
 func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 	url := &url.URL{Host: "guide.michelin.com"}
 
@@ -100,8 +101,12 @@ func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	if store.Cookies(url) != "" {
-		store.Clear()
+	if err := store.Clear(); err != nil {
+		return fmt.Errorf("failed to clear storage: %w", err)
+	}
+
+	if err := store.Init(); err != nil {
+		return fmt.Errorf("failed to re-initialize storage: %w", err)
 	}
 
 	lines := make([]string, len(cookies))
@@ -139,9 +144,6 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 			log.WithField("url", url).WithError(err).Error("failed to visit seed url")
 		}
 	}
-	// No-op in sync mode (each Visit returns only after its full pagination
-	// chain completes), but guards phase 2 if Async is ever enabled.
-	collector.Wait()
 
 	// Phase 2: drain all ~18k detail page URLs accumulated in colly.db queue.
 	if err := s.client.RunQueue(detailCollector); err != nil {
@@ -164,7 +166,7 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 		log.WithError(err).Error("failed to visit restaurant URL")
 		return err
 	}
-	detailCollector.Wait()
+
 	log.Info("completed scraping for one restaurant")
 	return nil
 }

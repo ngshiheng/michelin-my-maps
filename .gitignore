@@ -18,11 +18,19 @@ bin/
 # Go Colly cache
 *cache*/
 
-# SQLite
+# SQLite database files
 *.db
-*.db-shm
+*.sqlite
+*.sqlite3
+
+# SQLite temporary/lock files
 *.db-wal
+*.db-journal
+*.db-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite-shm
+
 
 # macOS
 .DS_Store
-
