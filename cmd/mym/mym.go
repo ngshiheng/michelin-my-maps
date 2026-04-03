@@ -199,7 +199,7 @@ func handleLogin(args []string) error {
 	if err := app.InitCookies(cookies); err != nil {
 		return fmt.Errorf("failed to persist session cookies: %w", err)
 	}
-	log.WithField("cookie", len(cookies)).Info("session stored")
+	log.WithField("cookie_count", len(cookies)).Info("session stored")
 	return nil
 }
 
@@ -211,6 +211,6 @@ func main() {
 	time.Local = time.UTC
 
 	if err := run(); err != nil {
-		log.Fatalf("error: %v", err)
+		log.WithError(err).Fatal("command failed")
 	}
 }

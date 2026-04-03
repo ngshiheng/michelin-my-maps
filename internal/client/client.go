@@ -181,10 +181,7 @@ func (w *Colly) IsCached(urlStr string) (cacheEnabled bool, cacheHit bool) {
 // EnqueueURL adds a URL to the queue for processing
 func (w *Colly) EnqueueURL(url string) error {
 	if err := w.queue.AddURL(url); err != nil {
-		log.WithFields(log.Fields{
-			"url":   url,
-			"error": err,
-		}).Warn("failed to enqueue url")
+		log.WithError(err).WithField("url", url).Warn("failed to enqueue url")
 		return err
 	}
 	return nil
@@ -193,7 +190,7 @@ func (w *Colly) EnqueueURL(url string) error {
 // RunQueue drains the queue by dispatching each request to dc
 func (w *Colly) RunQueue(dc *colly.Collector) error {
 	if err := w.queue.Run(dc); err != nil {
-		log.WithError(err).Warn("queue run error")
+		log.WithError(err).Warn("failed to run queue")
 		return err
 	}
 	return nil

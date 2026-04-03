@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -43,6 +44,7 @@ type Scraper struct {
 	client     *client.Colly
 	config     *client.Config
 	repository storage.RestaurantRepository
+	scraped    atomic.Int64
 }
 
 // New creates a new Scraper with default config and repository
@@ -111,13 +113,13 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	}
 
 	// TODO: add summary of results
-	log.Info("completed backfill")
+	log.WithField("scraped", s.scraped.Load()).Info("completed backfill")
 	return nil
 }
 
 // Run runs the backfill workflow for a single restaurant URL
 func (s *Scraper) Run(ctx context.Context, url string) error {
-	log.WithFields(log.Fields{"url": url}).Debug("running backfill for restaurant")
+	log.WithField("url", url).Debug("running backfill for restaurant")
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
@@ -127,11 +129,11 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 
 	api := "https://web.archive.org/cdx/search/cdx?url=" + url + "&output=json&fl=timestamp,original"
 	if err := collector.Visit(api); err != nil {
-		log.WithError(err).Error("failed to visit restaurant URL")
+		log.WithError(err).WithField("url", url).Error("failed to visit restaurant URL")
 		return err
 	}
 
-	log.Info("completed backfill for one restaurant")
+	log.WithField("url", url).Debug("completed backfill for one restaurant")
 	return nil
 }
 
@@ -160,11 +162,10 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 
 		var rows [][]string
 		if err := json.Unmarshal(r.Body, &rows); err != nil {
-			log.WithFields(log.Fields{
+			log.WithError(err).WithFields(log.Fields{
 				"url":         url,
 				"status_code": r.StatusCode,
 				"cdx_api":     r.Request.URL,
-				"error":       err,
 			}).Warn("failed to parse cdx api response")
 			return
 		}
@@ -197,23 +198,22 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			snapshotURL := fmt.Sprintf("https://web.archive.org/web/%sid_/%s", ts, url)
 			err := detailCollector.Visit(snapshotURL)
 			if err != nil {
-				log.WithFields(log.Fields{
-					"error":       err,
+				log.WithError(err).WithFields(log.Fields{
 					"url":         url,
 					"wayback_url": snapshotURL,
-				}).Debug("failed to visit snapshot URL")
+				}).Warn("failed to visit snapshot URL")
 				continue
 			}
 			snapshot++
 		}
 
 		log.WithFields(log.Fields{
-
 			"cache_hit":   r.Ctx.GetAny("cache_hit"),
 			"cdx_api":     r.Request.URL,
 			"snapshot":    snapshot,
 			"status_code": r.StatusCode,
-		}).Info("processing cdx api")
+			"url":         url,
+		}).Debug("processing cdx api")
 	})
 }
 
@@ -239,7 +239,11 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	detailCollector.OnXML(xPathDetailRoot, func(e *colly.XMLElement) {
 		err := handlers.Handle(ctx, e, s.repository)
 		if err != nil {
-			log.WithError(err).Error("failed to handle restaurant extraction")
+			log.WithError(err).WithField("url", e.Request.URL).Error("failed to handle restaurant extraction")
+			return
+		}
+		if n := s.scraped.Add(1); n%100 == 0 {
+			log.WithField("scraped", n).Info("backfill in progress")
 		}
 	})
 }
@@ -256,16 +260,14 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt":         attempt,
-			"cookie":          len(cookies),
-			"error":           err,
-			"request_headers": utils.FlattenHeaders(r.Request.Headers),
-			"status_code":     r.StatusCode,
-			"url":             r.Request.URL,
+			"attempt":      attempt,
+			"cookie_count": len(cookies),
+			"status_code":  r.StatusCode,
+			"url":          r.Request.URL,
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithFields(fields).Debug("already visited, skip retry")
+			log.WithError(err).WithFields(fields).Debug("already visited, skip retry")
 			return
 		}
 
@@ -273,27 +275,27 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
 		switch r.StatusCode {
 		case http.StatusForbidden:
-			log.WithFields(fields).Debug("request forbidden, skip retry")
+			log.WithError(err).WithFields(fields).Debug("request forbidden, skip retry")
 			return
 		case http.StatusNotFound:
-			log.WithFields(fields).Debug("request not found, skip retry")
+			log.WithError(err).WithFields(fields).Debug("request not found, skip retry")
 			return
 		}
 
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache")
+				log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed to clear cache")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
+			log.WithFields(fields).WithField("backoff", backoff).Debug("failed request, retrying")
 			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)
+			log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed request, max retries reached")
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -50,6 +51,7 @@ type Scraper struct {
 	client     *client.Colly
 	config     *client.Config
 	repository storage.RestaurantRepository
+	scraped    atomic.Int64
 }
 
 // New returns a new Scraper with default settings.
@@ -141,12 +143,12 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	}
 
 	// Phase 2: drain all ~18k detail page URLs accumulated in colly.db queue.
+	log.Info("starting detail scrape, draining queue")
 	if err := s.client.RunQueue(detailCollector); err != nil {
 		return err
 	}
 
-	// TODO: add summary of results
-	log.Info("completed scraping")
+	log.WithField("scraped", s.scraped.Load()).Info("completed scraping")
 	return nil
 }
 
@@ -159,11 +161,11 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 
 	err := detailCollector.Visit(url)
 	if err != nil {
-		log.WithError(err).Error("failed to visit restaurant URL")
+		log.WithError(err).WithField("url", url).Error("failed to visit restaurant URL")
 		return err
 	}
 
-	log.Info("completed scraping for one restaurant")
+	log.WithField("url", url).Debug("completed scraping for one restaurant")
 	return nil
 }
 
@@ -193,7 +195,6 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 		}
 
 		log.WithFields(log.Fields{
-
 			"cache_hit":   r.Ctx.GetAny("cache_hit"),
 			"url":         r.Request.URL,
 			"status_code": r.StatusCode,
@@ -209,10 +210,7 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 		// process it with detailCollector. EnqueueURLWithContext is required
 		// (instead of queue.AddURL) to carry the location through the queue.
 		if err := s.client.EnqueueURLWithContext(url, location); err != nil {
-			log.WithFields(log.Fields{
-				"url":   url,
-				"error": err,
-			}).Warn("failed to enqueue detail url")
+			log.WithError(err).WithField("url", url).Warn("failed to enqueue detail url")
 		}
 	})
 
@@ -228,9 +226,7 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 		if getListingPageNumber(nextURL) <= getListingPageNumber(e.Request.URL.String()) {
 			return
 		}
-		log.WithFields(log.Fields{
-			"url": nextURL,
-		}).Debug("visiting next page")
+		log.WithField("url", nextURL).Debug("visiting next page")
 		e.Request.Visit(nextURL)
 	})
 }
@@ -261,7 +257,7 @@ func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
 	}
 
 	backoff := time.Duration(attempt) * s.config.Delay
-	log.WithFields(fields).Warnf("request challenged, retry after %v", backoff)
+	log.WithFields(fields).WithField("backoff", backoff).Warn("request challenged, retrying")
 	time.Sleep(backoff)
 
 	r.Ctx.Put("attempt", attempt+1)
@@ -304,7 +300,11 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 		err := handlers.Handle(ctx, e, s.repository)
 		if err != nil {
-			log.WithError(err).Error("failed to handle restaurant extraction")
+			log.WithError(err).WithField("url", e.Request.URL).Error("failed to handle restaurant extraction")
+			return
+		}
+		if n := s.scraped.Add(1); n%100 == 0 {
+			log.WithField("scraped", n).Info("scraping in progress")
 		}
 	})
 }
@@ -321,16 +321,14 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
 		fields := log.Fields{
-			"attempt":         attempt,
-			"cookie":          len(cookies),
-			"error":           err,
-			"request_headers": utils.FlattenHeaders(r.Request.Headers),
-			"status_code":     r.StatusCode,
-			"url":             r.Request.URL,
+			"attempt":      attempt,
+			"cookie_count": len(cookies),
+			"status_code":  r.StatusCode,
+			"url":          r.Request.URL,
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithFields(fields).Warn("already visited, skip retry")
+			log.WithError(err).WithFields(fields).Debug("already visited, skip retry")
 			return
 		}
 
@@ -338,33 +336,33 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		// context.Canceled means the program is shutting down — retrying is pointless
 		// and delays shutdown by burning through all MaxRetry attempts.
 		if errors.Is(err, context.Canceled) {
-			log.WithFields(fields).Debug("context canceled, skip retry")
+			log.WithError(err).WithFields(fields).Debug("context canceled, skip retry")
 			return
 		}
 
 		switch r.StatusCode {
 		case http.StatusTooManyRequests:
-			log.WithFields(fields).Debug("request rate limited, skip retry")
+			log.WithError(err).WithFields(fields).Warn("request rate limited, skip retry")
 			return
 		case http.StatusNotFound:
-			log.WithFields(fields).Debug("request not found, skip retry")
+			log.WithError(err).WithFields(fields).Debug("request not found, skip retry")
 			return
 		}
 
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithFields(fields).Error("failed to clear cache")
+				log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed to clear cache")
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).Debugf("failed request, retry after %v", backoff)
+			log.WithFields(fields).WithField("backoff", backoff).Debug("failed request, retrying")
 			time.Sleep(backoff)
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithFields(fields).Errorf("failed request after %d attempts", attempt)
+			log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed request, max retries reached")
 		}
 	}
 }
