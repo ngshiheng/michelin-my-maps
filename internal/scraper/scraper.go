@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -172,11 +173,13 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 	})
 
 	collector.OnXML(xPathRestaurantCard, func(e *colly.XMLElement) {
-		// In 202, this won't run; no need to handle this codepath
+		// In 202, this won't run; no need to handle this codepath.
+		// Use a fresh context per detail request so that attempt_count
+		// from one restaurant's retries does not leak into the next.
 		url := e.Request.AbsoluteURL(e.ChildAttr(xPathRestaurantCardLink, "href"))
-		location := e.ChildText(xPathRestaurantCardLocation)
-		e.Request.Ctx.Put("location", location)
-		detailCollector.Request(e.Request.Method, url, nil, e.Request.Ctx, nil)
+		ctx := colly.NewContext()
+		ctx.Put("location", e.ChildText(xPathRestaurantCardLocation))
+		detailCollector.Request(e.Request.Method, url, nil, ctx, nil)
 	})
 
 	collector.OnXML(xPathPaginationArrow, func(e *colly.XMLElement) {
@@ -298,6 +301,14 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 
 		if strings.Contains(err.Error(), "already visited") {
 			log.WithFields(fields).Warn("already visited, skip retry")
+			return
+		}
+
+		// status 0 means no HTTP response was received (transport-level failure).
+		// context.Canceled means the program is shutting down — retrying is pointless
+		// and delays shutdown by burning through all MaxRetry attempts.
+		if errors.Is(err, context.Canceled) {
+			log.WithFields(fields).Debug("context canceled, skip retry")
 			return
 		}
 
