@@ -179,8 +179,8 @@ func TestMemJarPropagatesRotatedCookies(t *testing.T) {
 		sent = append(sent, val)
 	})
 
-	for range 3 {
-		if err := cl.collector.Visit(srv.URL); err != nil {
+	for i := range 3 {
+		if err := cl.collector.Visit(srv.URL + "/" + string(rune('a'+i))); err != nil {
 			t.Fatalf("Visit: %v", err)
 		}
 	}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -124,21 +123,40 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	s.setupHandlers(ctx, collector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	// Phase 1: visit all 5 seed listing pages. Each page visit follows pagination
-	// via e.Request.Visit (synchronous, collector's WaitGroup tracks it) and
-	// enqueues discovered detail page URLs into colly.db via EnqueueURLWithContext.
-	// TODO: allow user to specify initial URL
-	michelinGuideURLs := map[string]string{
-		models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
-		models.TwoStars:            "https://guide.michelin.com/en/restaurants/2-stars-michelin",
-		models.OneStar:             "https://guide.michelin.com/en/restaurants/1-star-michelin",
-		models.BibGourmand:         "https://guide.michelin.com/en/restaurants/bib-gourmand",
-		models.SelectedRestaurants: "https://guide.michelin.com/en/restaurants/the-plate-michelin",
+	queueSize, err := s.client.QueueSize()
+	if err != nil {
+		return fmt.Errorf("failed to check queue size: %w", err)
 	}
 
-	for _, url := range michelinGuideURLs {
-		if err := collector.Visit(url); err != nil {
-			log.WithField("url", url).WithError(err).Error("failed to visit seed url")
+	if queueSize > 0 {
+		// Resume an interrupted run: the queue still has unprocessed detail URLs
+		// from the previous Phase 1. Skip Phase 1 to avoid appending duplicate
+		// rows (AddRequest has no dedup — it's a plain INSERT).
+		log.WithField("queue_size", queueSize).Info("non-empty queue detected, resuming detail scrape")
+	} else {
+		// Fresh start (first run, or resuming after a fully completed prior run).
+		// Clear visited so seed listing pages can be re-visited; on a truly first
+		// run the table is already empty so this is a no-op.
+		if err := s.client.ClearVisited(); err != nil {
+			return fmt.Errorf("failed to clear visited table: %w", err)
+		}
+
+		// Phase 1: visit all 5 seed listing pages. Each page visit follows pagination
+		// via e.Request.Visit (synchronous, collector's WaitGroup tracks it) and
+		// enqueues discovered detail page URLs into colly.db via EnqueueURLWithContext.
+		// TODO: allow user to specify initial URL
+		michelinGuideURLs := map[string]string{
+			models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
+			models.TwoStars:            "https://guide.michelin.com/en/restaurants/2-stars-michelin",
+			models.OneStar:             "https://guide.michelin.com/en/restaurants/1-star-michelin",
+			models.BibGourmand:         "https://guide.michelin.com/en/restaurants/bib-gourmand",
+			models.SelectedRestaurants: "https://guide.michelin.com/en/restaurants/the-plate-michelin",
+		}
+
+		for _, url := range michelinGuideURLs {
+			if err := collector.Visit(url); err != nil {
+				log.WithField("url", url).WithError(err).Error("failed to visit seed url")
+			}
 		}
 	}
 
@@ -216,16 +234,10 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 
 	collector.OnXML(xPathPaginationArrow, func(e *colly.XMLElement) {
 		// In 202, this won't run; no need to handle this codepath.
-		// xPathPaginationArrow matches both prev and next arrows. AllowURLRevisit
-		// is enabled on the collector (required for 202 challenge retries), so
-		// Colly won't deduplicate URLs. Without the guard below, following the
-		// prev-arrow from page N back to page N-1 would cause an infinite loop.
-		// We prevent this by only visiting a link whose page number is strictly
-		// greater than the current page (i.e. forward-only navigation)
+		// xPathPaginationArrow matches both prev and next arrows. Prev-page links
+		// are skipped naturally: those pages are already in the visited table, so
+		// Visit returns AlreadyVisitedError and the error handler drops it silently.
 		nextURL := e.Request.AbsoluteURL(e.Attr("href"))
-		if getListingPageNumber(nextURL) <= getListingPageNumber(e.Request.URL.String()) {
-			return
-		}
 		log.WithField("url", nextURL).Debug("visiting next page")
 		e.Request.Visit(nextURL)
 	})
@@ -365,24 +377,4 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 			log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed request, max retries reached")
 		}
 	}
-}
-
-// getListingPageNumber extracts the page number from a Michelin listing URL.
-// URLs without an explicit page component (e.g. "/en/restaurants/2-stars-michelin")
-// are treated as page 1. This is used by the pagination handler to distinguish
-// forward (next) from backward (prev) arrow links without any stateful tracking
-func getListingPageNumber(rawURL string) int {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return 1
-	}
-	segments := strings.Split(strings.Trim(u.Path, "/"), "/")
-	for i, seg := range segments {
-		if seg == "page" && i+1 < len(segments) {
-			if n, err := strconv.Atoi(segments[i+1]); err == nil {
-				return n
-			}
-		}
-	}
-	return 1
 }

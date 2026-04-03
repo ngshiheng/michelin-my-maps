@@ -2,6 +2,7 @@ package client
 
 import (
 	"crypto/sha1"
+	"database/sql"
 	"encoding/hex"
 	"net/http/cookiejar"
 	"net/url"
@@ -28,16 +29,15 @@ const (
 
 // Config defines the minimal config needed for Colly
 type Config struct {
-	AllowedDomains  []string
-	AllowURLRevisit bool
-	CachePath       string
-	DatabasePath    string
-	StoragePath     string
-	Delay           time.Duration
-	MaxRetry        int
-	RandomDelay     time.Duration
-	RequestTimeout  time.Duration
-	ThreadCount     int
+	AllowedDomains []string
+	CachePath      string
+	DatabasePath   string
+	StoragePath    string
+	Delay          time.Duration
+	MaxRetry       int
+	RandomDelay    time.Duration
+	RequestTimeout time.Duration
+	ThreadCount    int
 }
 
 // Colly provides HTTP client functionality for web scraping
@@ -52,8 +52,7 @@ type Colly struct {
 func New(cfg *Config) (*Colly, error) {
 	// We build collector options conditionally so cache can be disabled when CachePath is empty
 	opts := []colly.CollectorOption{
-		colly.Async(false),      // SQLite only support one write at a time
-		colly.AllowURLRevisit(), // disables colly's internal URL dedup so that it won't mess with our cache
+		colly.Async(false), // SQLite WAL only supports one write at a time
 	}
 
 	if cfg.CachePath != "" {
@@ -194,6 +193,23 @@ func (w *Colly) RunQueue(dc *colly.Collector) error {
 		return err
 	}
 	return nil
+}
+
+// QueueSize returns the number of pending requests in the queue.
+func (w *Colly) QueueSize() (int, error) {
+	return w.queue.Size()
+}
+
+// ClearVisited removes all rows from the visited table so that a fresh Phase 1
+// run can re-visit seed listing pages that were marked visited in a prior completed run.
+func (w *Colly) ClearVisited() error {
+	db, err := sql.Open("sqlite3", w.config.StoragePath)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec("DELETE FROM visited")
+	return err
 }
 
 // EnqueueURLWithContext enqueues a GET request that carries a colly.Context
