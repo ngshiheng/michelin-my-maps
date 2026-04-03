@@ -17,6 +17,7 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/storage"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/utils"
 	log "github.com/sirupsen/logrus"
+	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
 const (
@@ -30,12 +31,13 @@ const (
 // defaultConfig returns a default config for the scraper.
 func defaultConfig() *client.Config {
 	return &client.Config{
-		AllowedDomains: []string{"guide.michelin.com"},
-		CachePath:      client.DefaultCacheScrape,
-		DatabasePath:   client.DefaultDataPath,
-		StoragePath:    client.DefaultStoragePath,
-		Delay:          2 * time.Second,
-		MaxRetry:       3,
+		AllowedDomains:  []string{"guide.michelin.com"},
+		AllowURLRevisit: true,
+		CachePath:       client.DefaultCacheScrape,
+		DatabasePath:    client.DefaultDataPath,
+		StoragePath:     client.DefaultStoragePath,
+		Delay:           2 * time.Second,
+		MaxRetry:        3,
 		// Queue only holds the 5 listing seed URLs; keep small to avoid
 		// misleading over-allocation.
 		MaxURLs:     100,
@@ -84,6 +86,26 @@ func New() (*Scraper, error) {
 		repository: repo,
 	}
 	return s, nil
+}
+
+// SaveCookies persists Michelin Guide session cookies to the cookie storage.
+// Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert).
+func (s *Scraper) SaveCookies(cookies []*http.Cookie) error {
+	store := &sqlite3.Storage{Filename: s.config.StoragePath}
+	defer store.Close()
+	if err := store.Init(); err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+
+	u := &url.URL{Host: "guide.michelin.com"}
+	lines := make([]string, len(cookies))
+
+	for i, c := range cookies {
+		lines[i] = c.String()
+	}
+
+	store.SetCookies(u, strings.Join(lines, "\n"))
+	return nil
 }
 
 // RunAll crawls Michelin Guide restaurant information from the configured URLs.

@@ -21,10 +21,11 @@ const xPathDetailRoot = "html"
 // defaultConfig returns a default config for Wayback backfill
 func defaultConfig() *client.Config {
 	return &client.Config{
-		AllowedDomains: []string{"web.archive.org"},
-		CachePath:      client.DefaultCacheWayback,
-		DatabasePath:   client.DefaultDataPath,
-		StoragePath:    client.DefaultStoragePath,
+		AllowedDomains:  []string{"web.archive.org"},
+		AllowURLRevisit: true,
+		CachePath:       client.DefaultCacheWayback,
+		DatabasePath:    client.DefaultDataPath,
+		StoragePath:     client.DefaultStoragePath,
 		// Wayback CDX guidance is < 60 requests/minute. 1.0-1.5s pacing
 		// yields ~40-60 req/minute with jitter while remaining conservative.
 		Delay:    1 * time.Second,

@@ -10,7 +10,6 @@ import (
 
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/auth"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/backfill"
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/client"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/scraper"
 	log "github.com/sirupsen/logrus"
 )
@@ -194,11 +193,11 @@ func handleLogin(args []string) error {
 	if err != nil {
 		return err
 	}
-	store, err := client.NewSQLiteStorage(client.DefaultStoragePath)
+	app, err := scraper.New()
 	if err != nil {
-		return fmt.Errorf("failed to initialize storage: %w", err)
+		return fmt.Errorf("failed to create scraper: %w", err)
 	}
-	if err := client.SaveCookies(store, "guide.michelin.com", cookies); err != nil {
+	if err := app.SaveCookies(cookies); err != nil {
 		return fmt.Errorf("failed to persist session cookies: %w", err)
 	}
 	log.WithField("cookie_count", len(cookies)).Info("session stored")

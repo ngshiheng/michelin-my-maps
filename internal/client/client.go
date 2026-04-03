@@ -3,9 +3,6 @@ package client
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
-	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,7 +12,6 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/gocolly/colly/v2/storage"
 	log "github.com/sirupsen/logrus"
 	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
@@ -29,16 +25,17 @@ const (
 
 // Config defines the minimal config needed for Colly
 type Config struct {
-	AllowedDomains []string
-	CachePath      string
-	DatabasePath   string
-	StoragePath    string
-	Delay          time.Duration
-	RequestTimeout time.Duration
-	MaxRetry       int
-	MaxURLs        int
-	RandomDelay    time.Duration
-	ThreadCount    int
+	AllowedDomains  []string
+	AllowURLRevisit bool
+	CachePath       string
+	DatabasePath    string
+	StoragePath     string
+	Delay           time.Duration
+	MaxRetry        int
+	MaxURLs         int
+	RandomDelay     time.Duration
+	RequestTimeout  time.Duration
+	ThreadCount     int
 }
 
 // Colly provides HTTP client functionality for web scraping
@@ -46,65 +43,11 @@ type Colly struct {
 	collector *colly.Collector
 	queue     *queue.Queue
 	config    *Config
-	storage   storage.Storage
-}
-
-// NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly.
-//
-// NOTE: the sqlite3 backend (colly-sqlite3-storage) uses plain INSERT for SetCookies
-// and QueryRow (first row only) for Cookies — it never upserts. Server-refreshed
-// cookies are written to a new row but never read back; requests always carry the
-// original seeded token. FIXME: replace with a backend that upserts by host.
-//
-// NOTE on 202 after ~1h: aws-waf-token has a 4-day cookie Expires, so cookie expiry
-// is NOT the cause. The WAF token blob contains an internal cryptographic timestamp
-// validated server-side; AWS WAF re-challenges after ~1h of scraping activity
-// regardless of the cookie's Expires field. Fixing cookie persistence alone will not
-// prevent this — the WAF re-challenge requires a new token issued via browser/JS.
-func NewSQLiteStorage(storagePath string) (storage.Storage, error) {
-	if strings.TrimSpace(storagePath) == "" {
-		storagePath = DefaultStoragePath
-	}
-
-	dir := filepath.Dir(storagePath)
-	if err := os.MkdirAll(dir, 0750); err != nil {
-		return nil, err
-	}
-
-	store := &sqlite3.Storage{Filename: storagePath}
-	if err := store.Init(); err != nil {
-		return nil, err
-	}
-	return store, nil
-}
-
-// SaveCookies persists cookies to the given storage under the specified host.
-// Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert).
-func SaveCookies(store storage.Storage, host string, cookies []*http.Cookie) error {
-	if clearable, ok := store.(interface{ Clear() error }); ok {
-		if err := clearable.Clear(); err != nil {
-			log.WithError(err).Warn("failed to clear storage before seeding cookies")
-		}
-	}
-	if err := store.Init(); err != nil {
-		return fmt.Errorf("failed to reinitialize storage: %w", err)
-	}
-	u := &url.URL{Host: host}
-	lines := make([]string, len(cookies))
-	for i, c := range cookies {
-		lines[i] = c.String()
-	}
-	store.SetCookies(u, strings.Join(lines, "\n"))
-	return nil
-}
-
-// Storage returns the underlying storage backend.
-func (w *Colly) Storage() storage.Storage {
-	return w.storage
 }
 
 // New creates a new web client instance
 func New(cfg *Config) (*Colly, error) {
+	// Build collector options conditionally so cache can be disabled when CachePath is empty
 	opts := []colly.CollectorOption{
 		colly.AllowURLRevisit(), // disables colly's internal URL dedup
 	}
@@ -131,15 +74,16 @@ func New(cfg *Config) (*Colly, error) {
 	extensions.RandomUserAgent(c)
 	extensions.Referer(c)
 
-	store, err := NewSQLiteStorage(cfg.StoragePath)
+	storage := &sqlite3.Storage{Filename: cfg.StoragePath}
+
+	err := c.SetStorage(storage)
 	if err != nil {
 		return nil, err
 	}
-	c.SetStorage(store)
 
 	q, err := queue.New(
 		cfg.ThreadCount,
-		&queue.InMemoryQueueStorage{MaxSize: cfg.MaxURLs},
+		storage,
 	)
 	if err != nil {
 		return nil, err
@@ -149,7 +93,6 @@ func New(cfg *Config) (*Colly, error) {
 		collector: c,
 		queue:     q,
 		config:    cfg,
-		storage:   store,
 	}, nil
 }
 
