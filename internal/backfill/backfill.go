@@ -201,7 +201,7 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 				log.WithError(err).WithFields(log.Fields{
 					"url":         url,
 					"wayback_url": snapshotURL,
-				}).Warn("failed to visit snapshot URL")
+				}).Debug("failed to visit snapshot URL")
 				continue
 			}
 			snapshot++
