@@ -222,6 +222,6 @@ func (r *SQLiteRepository) ListRestaurants(ctx context.Context) ([]models.Restau
 		return nil, fmt.Errorf("failed to list restaurants: %w", err)
 	}
 
-	log.WithField("count", len(restaurants)).Debug("fetched restaurants")
+	log.WithField("count", len(restaurants)).Debug("fetched restaurants from database")
 	return restaurants, nil
 }

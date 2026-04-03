@@ -175,16 +175,15 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
-		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
-		r.Ctx.Put("cache_enabled", cacheEnabled)
+		_, cacheHit := s.client.IsCached(r.URL.String())
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt":       attempt,
-			"cache_enabled": cacheEnabled,
-			"cache_hit":     cacheHit,
-			"url":           r.URL,
-		}).Debug("requesting restaurant listing page")
+			"attempt": attempt,
+
+			"cache_hit": cacheHit,
+			"url":       r.URL,
+		}).Info("requesting restaurant listing page")
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
@@ -194,10 +193,10 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 		}
 
 		log.WithFields(log.Fields{
-			"cache_enabled": r.Ctx.GetAny("cache_enabled"),
-			"cache_hit":     r.Ctx.GetAny("cache_hit"),
-			"url":           r.Request.URL,
-			"status_code":   r.StatusCode,
+
+			"cache_hit":   r.Ctx.GetAny("cache_hit"),
+			"url":         r.Request.URL,
+			"status_code": r.StatusCode,
 		}).Info("fetched listing page, enqueuing restaurant details")
 	})
 
@@ -280,16 +279,16 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
-		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
-		r.Ctx.Put("cache_enabled", cacheEnabled)
+		_, cacheHit := s.client.IsCached(r.URL.String())
+
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt":       attempt,
-			"cache_enabled": cacheEnabled,
-			"cache_hit":     cacheHit,
-			"url":           r.URL,
-		}).Info("scraping restaurant")
+			"attempt": attempt,
+
+			"cache_hit": cacheHit,
+			"url":       r.URL,
+		}).Debug("requesting restaurant details")
 	})
 
 	detailCollector.OnResponse(func(r *colly.Response) {

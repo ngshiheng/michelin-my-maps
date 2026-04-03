@@ -65,7 +65,7 @@ func New(ignoreCache bool) (*Scraper, error) {
 		ThreadCount:    cfg.ThreadCount,
 	}
 	if ignoreCache {
-		log.Debug("ignoring cache")
+		log.Debug("running with no cache")
 		clientCfg.CachePath = ""
 	}
 
@@ -148,15 +148,15 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
-		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
-		r.Ctx.Put("cache_enabled", cacheEnabled)
+		_, cacheHit := s.client.IsCached(r.URL.String())
+
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt":       attempt,
-			"cache_enabled": cacheEnabled,
-			"cache_hit":     cacheHit,
-			"url":           r.URL,
+			"attempt": attempt,
+
+			"cache_hit": cacheHit,
+			"url":       r.URL,
 		}).Debug("requesting cdx api")
 	})
 
@@ -210,11 +210,11 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		}
 
 		log.WithFields(log.Fields{
-			"cache_enabled": r.Ctx.GetAny("cache_enabled"),
-			"cache_hit":     r.Ctx.GetAny("cache_hit"),
-			"cdx_api":       r.Request.URL,
-			"snapshot":      snapshot,
-			"status_code":   r.StatusCode,
+
+			"cache_hit":   r.Ctx.GetAny("cache_hit"),
+			"cdx_api":     r.Request.URL,
+			"snapshot":    snapshot,
+			"status_code": r.StatusCode,
 		}).Info("processing cdx api")
 	})
 }
@@ -228,15 +228,14 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			r.Ctx.Put("attempt", 1)
 			attempt = 1
 		}
-		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
-		r.Ctx.Put("cache_enabled", cacheEnabled)
+		_, cacheHit := s.client.IsCached(r.URL.String())
 		r.Ctx.Put("cache_hit", cacheHit)
 
 		log.WithFields(log.Fields{
-			"attempt":       attempt,
-			"cache_enabled": cacheEnabled,
-			"cache_hit":     cacheHit,
-			"url":           r.URL,
+			"attempt": attempt,
+
+			"cache_hit": cacheHit,
+			"url":       r.URL,
 		}).Debug("requesting wayback snapshot")
 	})
 
