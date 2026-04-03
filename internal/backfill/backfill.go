@@ -111,7 +111,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 		}
 	}
 
-	if err := s.client.Run(); err != nil {
+	if err := s.client.RunQueue(collector); err != nil {
 		return err
 	}
 
@@ -136,7 +136,7 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	if err := s.client.EnqueueURL(api); err != nil {
 		return err
 	}
-	if err := s.client.Run(); err != nil {
+	if err := s.client.RunQueue(collector); err != nil {
 		return err
 	}
 

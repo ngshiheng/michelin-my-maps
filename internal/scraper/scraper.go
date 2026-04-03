@@ -88,23 +88,29 @@ func New() (*Scraper, error) {
 	return s, nil
 }
 
-// SaveCookies persists Michelin Guide session cookies to the cookie storage.
-// Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert).
-func (s *Scraper) SaveCookies(cookies []*http.Cookie) error {
+// InitCookies persists Michelin Guide session cookies to the cookie storage.
+// Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert)
+func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
+	url := &url.URL{Host: "guide.michelin.com"}
+
 	store := &sqlite3.Storage{Filename: s.config.StoragePath}
 	defer store.Close()
+
 	if err := store.Init(); err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	u := &url.URL{Host: "guide.michelin.com"}
+	if store.Cookies(url) != "" {
+		store.Clear()
+	}
+
 	lines := make([]string, len(cookies))
 
 	for i, c := range cookies {
 		lines[i] = c.String()
 	}
 
-	store.SetCookies(u, strings.Join(lines, "\n"))
+	store.SetCookies(url, strings.Join(lines, "\n"))
 	return nil
 }
 
@@ -113,9 +119,12 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
 
-	s.setupHandlers(ctx, collector, detailCollector)
+	s.setupHandlers(ctx, collector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
+	// Phase 1: visit all 5 seed listing pages. Each page visit follows pagination
+	// via e.Request.Visit (synchronous, collector's WaitGroup tracks it) and
+	// enqueues discovered detail page URLs into colly.db via EnqueueURLWithContext.
 	// TODO: allow user to specify initial URL
 	michelinGuideURLs := map[string]string{
 		models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
@@ -126,11 +135,16 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	}
 
 	for _, url := range michelinGuideURLs {
-		if err := s.client.EnqueueURL(url); err != nil {
-			return err
+		if err := collector.Visit(url); err != nil {
+			log.WithField("url", url).WithError(err).Error("failed to visit seed url")
 		}
 	}
-	if err := s.client.Run(); err != nil {
+	// No-op in sync mode (each Visit returns only after its full pagination
+	// chain completes), but guards phase 2 if Async is ever enabled.
+	collector.Wait()
+
+	// Phase 2: drain all ~18k detail page URLs accumulated in colly.db queue.
+	if err := s.client.RunQueue(detailCollector); err != nil {
 		return err
 	}
 
@@ -155,7 +169,7 @@ func (s *Scraper) Run(ctx context.Context, url string) error {
 	return nil
 }
 
-func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector, detailCollector *colly.Collector) {
+func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector) {
 	collector.OnError(s.createErrorHandler())
 
 	collector.OnRequest(func(r *colly.Request) {
@@ -191,17 +205,23 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 			"cache_hit":     r.Ctx.GetAny("cache_hit"),
 			"url":           r.Request.URL,
 			"status_code":   r.StatusCode,
-		}).Info("processing restaurant listing page")
+		}).Info("fetched listing page, enqueuing restaurant details")
 	})
 
 	collector.OnXML(xPathRestaurantCard, func(e *colly.XMLElement) {
 		// In 202, this won't run; no need to handle this codepath.
-		// Use a fresh context per detail request so that attempt_count
-		// from one restaurant's retries does not leak into the next.
 		url := e.Request.AbsoluteURL(e.ChildAttr(xPathRestaurantCardLink, "href"))
-		ctx := colly.NewContext()
-		ctx.Put("location", e.ChildText(xPathRestaurantCardLocation))
-		detailCollector.Request(e.Request.Method, url, nil, ctx, nil)
+		location := e.ChildText(xPathRestaurantCardLocation)
+
+		// Enqueue the detail URL into colly.db so phase 2 (RunQueue) can
+		// process it with detailCollector. EnqueueURLWithContext is required
+		// (instead of queue.AddURL) to carry the location through the queue.
+		if err := s.client.EnqueueURLWithContext(url, location); err != nil {
+			log.WithFields(log.Fields{
+				"url":   url,
+				"error": err,
+			}).Warn("failed to enqueue detail url")
+		}
 	})
 
 	collector.OnXML(xPathPaginationArrow, func(e *colly.XMLElement) {
@@ -218,7 +238,7 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 		}
 		log.WithFields(log.Fields{
 			"url": nextURL,
-		}).Debug("queuing next page")
+		}).Debug("visiting next page")
 		e.Request.Visit(nextURL)
 	})
 }
@@ -235,16 +255,13 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		cacheEnabled, cacheHit := s.client.IsCached(r.URL.String())
 		r.Ctx.Put("cache_enabled", cacheEnabled)
 		r.Ctx.Put("cache_hit", cacheHit)
-		cookies := s.client.GetCookies(r.URL.String())
 
 		log.WithFields(log.Fields{
-			"attempt_count":   attempt,
-			"cache_enabled":   cacheEnabled,
-			"cache_hit":       cacheHit,
-			"cookie_count":    len(cookies),
-			"request_headers": utils.FlattenHeaders(r.Headers),
-			"url":             r.URL,
-		}).Debug("requesting restaurant detail")
+			"attempt":       attempt,
+			"cache_enabled": cacheEnabled,
+			"cache_hit":     cacheHit,
+			"url":           r.URL,
+		}).Info("scraping restaurant")
 	})
 
 	detailCollector.OnResponse(func(r *colly.Response) {

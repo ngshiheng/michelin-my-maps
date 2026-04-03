@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -42,6 +43,7 @@ type Config struct {
 type Colly struct {
 	collector *colly.Collector
 	queue     *queue.Queue
+	storage   *sqlite3.Storage
 	config    *Config
 }
 
@@ -67,6 +69,7 @@ func New(cfg *Config) (*Colly, error) {
 		DomainGlob:  "*",
 		Delay:       cfg.Delay,
 		RandomDelay: cfg.RandomDelay,
+		Parallelism: 5,
 	}); err != nil {
 		return nil, err
 	}
@@ -92,6 +95,7 @@ func New(cfg *Config) (*Colly, error) {
 	return &Colly{
 		collector: c,
 		queue:     q,
+		storage:   storage,
 		config:    cfg,
 	}, nil
 }
@@ -167,11 +171,35 @@ func (w *Colly) EnqueueURL(url string) error {
 	return nil
 }
 
-// Run starts the web scraping process
-func (w *Colly) Run() error {
-	if err := w.queue.Run(w.collector); err != nil {
+// RunQueue drains the queue by dispatching each request to dc.
+func (w *Colly) RunQueue(dc *colly.Collector) error {
+	if err := w.queue.Run(dc); err != nil {
 		log.WithError(err).Warn("queue run error")
 		return err
 	}
 	return nil
+}
+
+// EnqueueURLWithContext enqueues a GET request that carries a colly.Context
+// (e.g. location) through the queue boundary into the next phase.
+// queue.AddURL cannot be used here because it always creates a bare request
+// with no context; serializing a Request directly is the only way to preserve
+// the extra fields across the SQLite queue.
+func (w *Colly) EnqueueURLWithContext(rawURL, location string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return err
+	}
+	ctx := colly.NewContext()
+	ctx.Put("location", location)
+	r := &colly.Request{
+		URL:    u,
+		Method: "GET",
+		Ctx:    ctx,
+	}
+	data, err := r.Marshal()
+	if err != nil {
+		return err
+	}
+	return w.storage.AddRequest(data)
 }

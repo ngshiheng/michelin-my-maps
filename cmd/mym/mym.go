@@ -197,7 +197,7 @@ func handleLogin(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create scraper: %w", err)
 	}
-	if err := app.SaveCookies(cookies); err != nil {
+	if err := app.InitCookies(cookies); err != nil {
 		return fmt.Errorf("failed to persist session cookies: %w", err)
 	}
 	log.WithField("cookie_count", len(cookies)).Info("session stored")
