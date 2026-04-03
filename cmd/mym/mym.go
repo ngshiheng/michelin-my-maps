@@ -18,14 +18,13 @@ const (
 	defaultBrowserTimeout = 60 * time.Second
 	helpLongFlag          = "--help"
 	helpShortFlag         = "-h"
-	versionLongFlag       = "--version"
-	versionShortFlag      = "-v"
 )
 
 const (
 	commandBackfill = "backfill"
 	commandScrape   = "scrape"
 	commandLogin    = "login"
+	commandVersion  = "version"
 )
 
 // run contains the main application logic of the CLI tool
@@ -37,9 +36,6 @@ func run() error {
 
 	arg := os.Args[1]
 	switch arg {
-	case versionLongFlag, versionShortFlag:
-		printVersion()
-		return nil
 	case helpLongFlag, helpShortFlag:
 		printUsage()
 		return nil
@@ -53,6 +49,8 @@ func handleCommand(arg []string) error {
 	command := arg[1]
 
 	switch command {
+	case commandVersion:
+		return handleVersion()
 	case commandScrape:
 		return handleScrape(arg[2:])
 	case commandBackfill:
@@ -66,12 +64,12 @@ func handleCommand(arg []string) error {
 	}
 }
 
-// printVersion prints the application version information
-func printVersion() {
+// handleVersion prints the application version information
+func handleVersion() error {
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
-		fmt.Println("unable to determine build information.")
-		return
+		fmt.Println("unable to determine build information")
+		return nil
 	}
 
 	version := "development"
@@ -80,20 +78,21 @@ func printVersion() {
 	}
 
 	fmt.Printf("version: %s\n", version)
+	return nil
 }
 
 // printUsage prints the custom usage message
 func printUsage() {
 	fmt.Printf("usage: %s <command> [options]\n\n", os.Args[0])
 	fmt.Println("<command>")
-	fmt.Println("  scrape     scrape latest restaurant data or a single restaurant if <url> is provided.")
-	fmt.Println("  backfill   backfill restaurant data or a single restaurant if <url> is provided.")
-	fmt.Println("  login      login and store session cookies in sqlite storage.")
+	fmt.Println("  scrape     scrape latest restaurant data or a single restaurant if <url> is provided")
+	fmt.Println("  backfill   backfill restaurant data or a single restaurant if <url> is provided")
+	fmt.Println("  login      login and store session cookies in sqlite storage")
+	fmt.Println("  version    show version")
 	fmt.Println("")
 	fmt.Println("[options]")
-	fmt.Println("  -log <level>   set log level. (default: info)")
-	fmt.Println("  -help          show help.")
-	fmt.Println("  -version       show version.")
+	fmt.Println("  -log <level>   set log level")
+	fmt.Println("  -help          show help")
 	fmt.Println("")
 }
 
@@ -145,7 +144,7 @@ func handleScrape(args []string) error {
 func handleBackfill(args []string) error {
 	backfillCmd := flag.NewFlagSet(commandBackfill, flag.ExitOnError)
 	logLevel := backfillCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-	ignoreCache := backfillCmd.Bool("no-cache", false, "skip using Wayback cache")
+	ignoreCache := backfillCmd.Bool("no-cache", false, "skip using wayback cache")
 
 	if err := backfillCmd.Parse(args); err != nil {
 		return err
