@@ -181,14 +181,14 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 
 	collector.OnXML(xPathPaginationArrow, func(e *colly.XMLElement) {
 		// In 202, this won't run; no need to handle this codepath.
-		// xpathPaginationArrow matches both prev and next arrows. AllowURLRevisit
+		// xPathPaginationArrow matches both prev and next arrows. AllowURLRevisit
 		// is enabled on the collector (required for 202 challenge retries), so
 		// Colly won't deduplicate URLs. Without the guard below, following the
 		// prev-arrow from page N back to page N-1 would cause an infinite loop.
 		// We prevent this by only visiting a link whose page number is strictly
-		// greater than the current page (i.e. forward-only navigation).
+		// greater than the current page (i.e. forward-only navigation)
 		nextURL := e.Request.AbsoluteURL(e.Attr("href"))
-		if listingPageNumber(nextURL) <= listingPageNumber(e.Request.URL.String()) {
+		if getListingPageNumber(nextURL) <= getListingPageNumber(e.Request.URL.String()) {
 			return
 		}
 		log.WithFields(log.Fields{
@@ -328,11 +328,11 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 	}
 }
 
-// listingPageNumber extracts the page number from a Michelin listing URL.
+// getListingPageNumber extracts the page number from a Michelin listing URL.
 // URLs without an explicit page component (e.g. "/en/restaurants/2-stars-michelin")
 // are treated as page 1. This is used by the pagination handler to distinguish
-// forward (next) from backward (prev) arrow links without any stateful tracking.
-func listingPageNumber(rawURL string) int {
+// forward (next) from backward (prev) arrow links without any stateful tracking
+func getListingPageNumber(rawURL string) int {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return 1

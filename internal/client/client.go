@@ -49,7 +49,18 @@ type Colly struct {
 	storage   storage.Storage
 }
 
-// NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly
+// NewSQLiteStorage creates and initializes the sqlite storage backend used by Colly.
+//
+// NOTE: the sqlite3 backend (colly-sqlite3-storage) uses plain INSERT for SetCookies
+// and QueryRow (first row only) for Cookies — it never upserts. Server-refreshed
+// cookies are written to a new row but never read back; requests always carry the
+// original seeded token. FIXME: replace with a backend that upserts by host.
+//
+// NOTE on 202 after ~1h: aws-waf-token has a 4-day cookie Expires, so cookie expiry
+// is NOT the cause. The WAF token blob contains an internal cryptographic timestamp
+// validated server-side; AWS WAF re-challenges after ~1h of scraping activity
+// regardless of the cookie's Expires field. Fixing cookie persistence alone will not
+// prevent this — the WAF re-challenge requires a new token issued via browser/JS.
 func NewSQLiteStorage(storagePath string) (storage.Storage, error) {
 	if strings.TrimSpace(storagePath) == "" {
 		storagePath = DefaultStoragePath
