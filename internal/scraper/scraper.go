@@ -64,11 +64,12 @@ func New() (*Scraper, error) {
 	}
 
 	clientCfg := &client.Config{
-		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
-		StoragePath:    cfg.StoragePath,
+		CachePath:      cfg.CachePath,
 		Delay:          cfg.Delay,
+		MaxRetry:       cfg.MaxRetry,
 		RandomDelay:    cfg.RandomDelay,
+		StoragePath:    cfg.StoragePath,
 		ThreadCount:    cfg.ThreadCount,
 	}
 
