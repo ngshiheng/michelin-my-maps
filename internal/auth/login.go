@@ -26,7 +26,7 @@ const (
 	xPathSignInBtn   = "//button[contains(normalize-space(.),'Sign In') and contains(@class,'js-auth__sign-in-button')]"
 )
 
-// Login logs in via browser and returns the resulting michelin.com session cookies.
+// Login logs in via browser and returns the resulting michelin.com session cookies
 func Login(ctx context.Context, email, password string, headless bool, timeout time.Duration) ([]*http.Cookie, error) {
 	if email == "" || password == "" {
 		return nil, errors.New("email and password are required")
@@ -65,7 +65,7 @@ func launchBrowser(headless bool) (*rod.Browser, func(), error) {
 	}, nil
 }
 
-// performLogin drives the multi-step login flow.
+// performLogin drives the multi-step login flow
 func performLogin(page *rod.Page, email, password string) error {
 	steps := []struct {
 		name string

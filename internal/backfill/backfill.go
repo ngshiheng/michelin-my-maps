@@ -28,12 +28,9 @@ func defaultConfig() *client.Config {
 		StoragePath:    client.DefaultStoragePath,
 		// Wayback CDX guidance is < 60 requests/minute. 1.0-1.5s pacing
 		// yields ~40-60 req/minute with jitter while remaining conservative.
-		Delay:       1 * time.Second,
-		MaxRetry:    3,
-		RandomDelay: 500 * time.Millisecond,
-		// 2 threads provides useful queue parallelism (two restaurants looked
-		// up simultaneously) while keeping the aggregate request rate
-		// below Wayback's limits.
+		Delay:          1 * time.Second,
+		MaxRetry:       3,
+		RandomDelay:    500 * time.Millisecond,
 		ThreadCount:    2,
 		RequestTimeout: 20 * time.Second,
 	}
@@ -242,9 +239,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithError(err).WithField("url", e.Request.URL).Error("failed to handle restaurant extraction")
 			return
 		}
-		if n := s.scraped.Add(1); n%100 == 0 {
-			log.WithField("scraped", n).Info("backfill in progress")
-		}
+		s.scraped.Add(1)
 	})
 }
 
