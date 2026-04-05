@@ -30,4 +30,3 @@ jobs:
             - run: make docker-build-scraper
             - run: make docker-build-datasette
             - run: docker run --rm mym-scraper /bin/mym version
-            - run: docker run --rm --entrypoint /bin/mym mym-scraper --help

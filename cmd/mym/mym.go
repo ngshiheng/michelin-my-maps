@@ -60,7 +60,7 @@ func handleCommand(arg []string) error {
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: \"%s\"\n\n", command)
 		printUsage()
-		return nil
+		return fmt.Errorf("unknown command: %s", command)
 	}
 }
 
@@ -211,6 +211,6 @@ func main() {
 	time.Local = time.UTC
 
 	if err := run(); err != nil {
-		log.WithError(err).Fatal("command failed")
+		os.Exit(1)
 	}
 }
