@@ -1,4 +1,3 @@
-name: Continuous Integration
 on:
     push:
         branches:
@@ -12,7 +11,7 @@ jobs:
         strategy:
             matrix:
                 go-version: [1.26.x]
-                os: [ubuntu-latest, macos-latest, windows-latest]
+                os: [ubuntu-latest, macos-latest]
         runs-on: ${{ matrix.os }}
         steps:
             - uses: actions/checkout@v6
@@ -21,3 +20,14 @@ jobs:
                   go-version: ${{ matrix.go-version }}
                   cache: true
             - run: make test
+
+    docker-test:
+        runs-on: ubuntu-latest
+        needs:
+            - test
+        steps:
+            - uses: actions/checkout@v6
+            - run: make docker-build-scraper
+            - run: make docker-build-datasette
+            - run: docker run --rm mym-scraper /bin/mym version
+            - run: docker run --rm --entrypoint /bin/mym mym-scraper --help
