@@ -23,8 +23,7 @@
                 "title": "Michelin Analytics Hub",
                 "description": "High-level overview and trends across the Michelin Guide dataset with interactive filtering and real-time chart updates",
                 "settings": {
-                    "allow_fullscreen": true,
-                    "autorefresh": 30
+                    "allow_fullscreen": true
                 },
                 "layout": [
                     ["intro-text", "key-metrics"],
@@ -43,7 +42,7 @@
                     "end_year": {
                         "name": "End Year",
                         "type": "number",
-                        "default": 2025,
+                        "default": 2026,
                         "min": 2018,
                         "max": 2026
                     },
@@ -328,7 +327,7 @@
                     "params": ["name", "location", "cuisine", "distinction", "start_year", "end_year", "limit"]
                 },
                 "star_progression": {
-                    "sql": "WITH progression_data AS (SELECT r.id, r.name, r.location, r.cuisine, MIN(CASE WHEN ra.distinction = 'Selected Restaurants' THEN ra.year END) as first_selected_year, MIN(CASE WHEN ra.distinction = 'Bib Gourmand' THEN ra.year END) as first_bib_year, MIN(CASE WHEN ra.distinction LIKE '%Star%' THEN ra.year END) as first_star_year, MAX(CASE WHEN ra.distinction = '3 Stars' THEN ra.year END) as three_star_year, MAX(CASE WHEN ra.distinction LIKE '%Star%' THEN ra.distinction END) as highest_star FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id GROUP BY r.id), progression_calc AS (SELECT pd.*, CASE WHEN pd.three_star_year IS NOT NULL THEN (pd.three_star_year - COALESCE(pd.first_star_year, COALESCE(pd.first_bib_year, pd.first_selected_year))) WHEN pd.first_star_year IS NOT NULL AND (pd.first_bib_year IS NOT NULL OR pd.first_selected_year IS NOT NULL) THEN (pd.first_star_year - COALESCE(pd.first_bib_year, pd.first_selected_year)) ELSE NULL END as progression_years FROM progression_data pd WHERE (pd.three_star_year IS NOT NULL OR (pd.first_star_year IS NOT NULL AND (pd.first_bib_year IS NOT NULL OR pd.first_selected_year IS NOT NULL)))) SELECT pc.name, pc.location, pc.cuisine, pc.first_selected_year, pc.first_bib_year, pc.first_star_year, pc.three_star_year, pc.highest_star, ABS(pc.progression_years) as years_to_change, CASE WHEN pc.progression_years > 0 THEN 'Progression' ELSE 'Regression' END as progression_status FROM progression_calc pc WHERE pc.progression_years IS NOT NULL AND (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN pc.name = SUBSTR(:name, 2) ELSE LOWER(pc.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(pc.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(pc.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:progression_status IS NULL OR :progression_status = '' OR progression_status = :progression_status) ORDER BY pc.progression_years ASC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
+                    "sql": "WITH progression_data AS (SELECT r.id, r.name, r.location, r.cuisine, MIN(CASE WHEN ra.distinction = 'Selected Restaurants' THEN ra.year END) as first_selected_year, MIN(CASE WHEN ra.distinction = 'Bib Gourmand' THEN ra.year END) as first_bib_year, MIN(CASE WHEN ra.distinction LIKE '%Star%' THEN ra.year END) as first_star_year, MAX(CASE WHEN ra.distinction = '3 Stars' THEN ra.year END) as three_star_year, MAX(CASE WHEN ra.distinction LIKE '%Star%' THEN ra.distinction END) as highest_star FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id GROUP BY r.id), progression_calc AS (SELECT pd.*, CASE WHEN pd.three_star_year IS NOT NULL THEN (pd.three_star_year - COALESCE(pd.first_star_year, COALESCE(pd.first_bib_year, pd.first_selected_year))) WHEN pd.first_star_year IS NOT NULL AND (pd.first_bib_year IS NOT NULL OR pd.first_selected_year IS NOT NULL) THEN (pd.first_star_year - COALESCE(pd.first_bib_year, pd.first_selected_year)) ELSE NULL END as progression_years FROM progression_data pd WHERE (pd.three_star_year IS NOT NULL OR (pd.first_star_year IS NOT NULL AND (pd.first_bib_year IS NOT NULL OR pd.first_selected_year IS NOT NULL)))) SELECT pc.name, pc.location, pc.cuisine, pc.first_selected_year, pc.first_bib_year, pc.first_star_year, pc.three_star_year, pc.highest_star, ABS(pc.progression_years) as years_to_change, CASE WHEN pc.progression_years > 0 THEN 'Progression' ELSE 'Regression' END as progression_status FROM progression_calc pc WHERE pc.progression_years IS NOT NULL AND (CASE WHEN :name IS NULL OR :name = '' THEN 1=1 WHEN SUBSTR(:name, 1, 1) = '=' THEN pc.name = SUBSTR(:name, 2) ELSE LOWER(pc.name) LIKE LOWER('%' || :name || '%') END) AND (:location IS NULL OR :location = '' OR LOWER(pc.location) LIKE LOWER('%' || :location || '%')) AND (:cuisine IS NULL OR :cuisine = '' OR LOWER(pc.cuisine) LIKE LOWER('%' || :cuisine || '%')) AND (:progression_status IS NULL OR :progression_status = '' OR progression_status = :progression_status) ORDER BY years_to_change ASC LIMIT CASE WHEN :limit IS NULL OR :limit = '' THEN 50 ELSE :limit END",
                     "title": "Progression & Regression Pathways",
                     "description": "Shows how restaurants move between Selected Restaurants, Bib Gourmand, and Michelin Stars—including both progression and regression. 'progression_status' indicates direction; 'years_to_change' is the absolute number of years to progress or regress. Filter by name (exact match with '=' prefix), location, cuisine, progression_status (Progression/Regression). Default limit: 50.",
                     "params": ["name", "location", "cuisine", "progression_status", "limit"]
@@ -419,6 +418,7 @@
                         "distinction": "Type of Michelin distinction (e.g., 3 Stars, 2 Stars, 1 Star, Bib Gourmand, Selected Restaurants)",
                         "price": "Price range of the restaurant for this award year (e.g., $, $$, $$$)",
                         "green_star": "Boolean indicating whether the restaurant received a Michelin Green Star for sustainable gastronomy practices",
+                        "wayback_url": "Internet Archive Wayback Machine URL for this award year; empty for live scrapes, populated for historically backfilled records",
                         "created_at": "Timestamp when the award record was created",
                         "updated_at": "Timestamp when the award record was last updated"
                     }
