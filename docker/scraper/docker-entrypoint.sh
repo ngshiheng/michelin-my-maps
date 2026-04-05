@@ -23,7 +23,15 @@ main() {
 
 # Environment and dependency checks
 check_environment() {
+    check_env_var "DATASETTE_SERVICE_ID"
     check_env_var "GITHUB_TOKEN"
+    check_env_var "MINIO_ACCESS_KEY"
+    check_env_var "MINIO_BUCKET"
+    check_env_var "MINIO_ENDPOINT"
+    check_env_var "MINIO_SECRET_KEY"
+    check_env_var "MYM_EMAIL"
+    check_env_var "MYM_PASSWORD"
+    check_env_var "RAILWAY_API_TOKEN"
 }
 
 check_dependencies() {
@@ -93,9 +101,22 @@ run_mym() {
     echo "run mym"
     echo "database will be created at $DB_FILE"
 
-    # Remove cache
     rm -rf cache/
-    mym scrape -log warn
+
+    while true; do
+        mym scrape -log warn
+        exit_code=$?
+        if [ $exit_code -eq 0 ]; then
+            break
+        elif [ $exit_code -eq 2 ]; then
+            echo "session expired, re-logging in"
+            mym login
+        else
+            echo "error: mym scrape failed with exit code $exit_code. exit"
+            exit $exit_code
+        fi
+    done
+
     if [ ! -f "$DB_FILE" ]; then
         echo "error: $DB_FILE does not exist. exit"
         exit 1
@@ -153,5 +174,5 @@ check_csv_lines() {
     fi
 }
 
-# Run the main function
+# Entrypoint
 main "$@"
