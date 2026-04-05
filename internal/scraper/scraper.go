@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -28,7 +29,7 @@ const (
 	xPathDetailRoot             = "html"
 )
 
-// defaultConfig returns a default config for the scraper.
+// defaultConfig returns a default config for the scraper
 func defaultConfig() *client.Config {
 	return &client.Config{
 		AllowedDomains: []string{"guide.michelin.com"},
@@ -37,15 +38,15 @@ func defaultConfig() *client.Config {
 		StoragePath:    client.DefaultStoragePath,
 		Delay:          2 * time.Second,
 		MaxRetry:       3,
-		RandomDelay:    3 * time.Second, // 2–5 s jitter; wider spread reduces WAF fingerprinting
+		RandomDelay:    3 * time.Second, // 2–5 s jitter
 		// ThreadCount: 1 is intentional – guide.michelin.com uses AWS WAF;
-		// parallelising seed requests would make all 5 listing pages land
+		// parallelising seed requests would make all N listing pages land
 		// simultaneously
 		ThreadCount: 1,
 	}
 }
 
-// Scraper orchestrates the scraping process.
+// Scraper orchestrates the scraping process
 type Scraper struct {
 	client     *client.Colly
 	config     *client.Config
@@ -53,7 +54,7 @@ type Scraper struct {
 	scraped    atomic.Int64
 }
 
-// New returns a new Scraper with default settings.
+// New returns a new Scraper with default settings
 func New() (*Scraper, error) {
 	cfg := defaultConfig()
 
@@ -63,11 +64,12 @@ func New() (*Scraper, error) {
 	}
 
 	clientCfg := &client.Config{
-		CachePath:      cfg.CachePath,
 		AllowedDomains: cfg.AllowedDomains,
-		StoragePath:    cfg.StoragePath,
+		CachePath:      cfg.CachePath,
 		Delay:          cfg.Delay,
+		MaxRetry:       cfg.MaxRetry,
 		RandomDelay:    cfg.RandomDelay,
+		StoragePath:    cfg.StoragePath,
 		ThreadCount:    cfg.ThreadCount,
 	}
 
@@ -160,7 +162,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 		}
 	}
 
-	// Phase 2: drain all ~18k detail page URLs accumulated in colly.db queue.
+	// Phase 2: drain all ~18k detail page URLs accumulated in colly.db queue
 	log.Info("starting detail scrape, draining queue")
 	if err := s.client.RunQueue(detailCollector); err != nil {
 		return err
@@ -243,17 +245,10 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 	})
 }
 
+// retryAccepted handles a 202 response from Michelin Guide, which (almost)
+// always indicates session expiry
 func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
-	attempt := 1
-	if v := r.Ctx.GetAny("attempt"); v != nil {
-		if a, ok := v.(int); ok {
-			attempt = a
-		}
-	}
-
 	fields := log.Fields{
-		"attempt":      attempt,
-		"max_retry":    s.config.MaxRetry,
 		"request_type": requestType,
 		"status_code":  r.StatusCode,
 		"url":          r.Request.URL,
@@ -263,19 +258,8 @@ func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
 		log.WithFields(fields).WithError(err).Warn("failed to clear cache")
 	}
 
-	if attempt >= s.config.MaxRetry {
-		log.WithFields(fields).Error("request challenged and max retries reached")
-		return
-	}
-
-	backoff := time.Duration(attempt) * s.config.Delay
-	log.WithFields(fields).WithField("backoff", backoff).Warn("request challenged, retrying")
-	time.Sleep(backoff)
-
-	r.Ctx.Put("attempt", attempt+1)
-	if err := r.Request.Retry(); err != nil {
-		log.WithFields(fields).WithError(err).Error("failed to retry challenged request")
-	}
+	log.WithFields(fields).Error("session expired")
+	os.Exit(2)
 }
 
 func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
@@ -315,9 +299,7 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 			log.WithError(err).WithField("url", e.Request.URL).Error("failed to handle restaurant extraction")
 			return
 		}
-		if n := s.scraped.Add(1); n%100 == 0 {
-			log.WithField("scraped", n).Info("scraping in progress")
-		}
+		s.scraped.Add(1)
 	})
 }
 

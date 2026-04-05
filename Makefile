@@ -7,7 +7,7 @@ SQLITE := $(shell command -v sqlite3 2> /dev/null)
 .DEFAULT_GOAL := help
 .PHONY: help
 help:   ## display this help message.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m\t%s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m\t%s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
 ##@ Development
@@ -21,7 +21,7 @@ lint:   ## run lint with golangci-lint in docker.
 	docker run --rm -v $$(pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run -v
 	
 .PHONY: build
-build:  ## build go binary to current directory.
+build:  ## build go binary to bin/.
 	@go build -o bin/ cmd/mym/mym.go
 	
 .PHONY: install
@@ -33,21 +33,6 @@ install:    ## install go binary to $GOPATH/bin.
 scrape: ## scrape data and save it into /data directory.
 	@go run cmd/mym/mym.go scrape
 
-.PHONY: d-build-scraper
-d-build-scraper:   ## build scraper docker image.
-	$(DOCKER) build -t mym-scraper . -f docker/scraper/Dockerfile
-
-.PHONY: d-run-scraper
-d-run-scraper: ## run local development server in docker.
-	@$(DOCKER) stop mym-scraper || true && $(DOCKER) rm mym-scraper || true
-	$(DOCKER) run \
-        -e GITHUB_TOKEN=$(GITHUB_TOKEN) \
-        -e MINIO_ENDPOINT=$(MINIO_ENDPOINT) \
-        -e MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) \
-        -e MINIO_SECRET_KEY=$(MINIO_SECRET_KEY) \
-        -e MINIO_BUCKET=$(MINIO_BUCKET) \
-        --name mym-scraper mym-scraper
-
 .PHONY: datasette
 datasette:  ## run datasette with metadata.json for local development.
 	@if [ -z $(DATASETTE) ]; then echo "Datasette could not be found. See https://docs.datasette.io/en/stable/installation.html"; exit 2; fi
@@ -58,8 +43,28 @@ datasette:  ## run datasette with metadata.json for local development.
 	echo "Starting datasette on port $$PORT"; \
 	$(DATASETTE) --root data/michelin.db --metadata docker/datasette/metadata.json --port $$PORT
 
-.PHONY: d-build-datasette
-d-build-datasette:   ## build datasette docker image.
+##@ Docker
+.PHONY: docker-build-scraper
+docker-build-scraper:   ## build scraper docker image.
+	$(DOCKER) build -t mym-scraper . -f docker/scraper/Dockerfile
+
+.PHONY: docker-run-scraper
+docker-run-scraper: ## run scraper docker container.
+	@$(DOCKER) stop mym-scraper || true && $(DOCKER) rm mym-scraper || true
+	$(DOCKER) run \
+        -e DATASETTE_SERVICE_ID=$(DATASETTE_SERVICE_ID) \
+        -e GITHUB_TOKEN=$(GITHUB_TOKEN) \
+        -e MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) \
+        -e MINIO_BUCKET=$(MINIO_BUCKET) \
+        -e MINIO_ENDPOINT=$(MINIO_ENDPOINT) \
+        -e MINIO_SECRET_KEY=$(MINIO_SECRET_KEY) \
+        -e MYM_EMAIL=$(MYM_EMAIL) \
+        -e MYM_PASSWORD=$(MYM_PASSWORD) \
+        -e RAILWAY_API_TOKEN=$(RAILWAY_API_TOKEN) \
+        --name mym-scraper mym-scraper
+
+.PHONY: docker-build-datasette
+docker-build-datasette:   ## build datasette docker image.
 	@if [ -z $(DOCKER) ]; then echo "Docker could not be found. See https://docs.docker.com/"; exit 2; fi
 	$(DOCKER) build -t mym-datasette . -f docker/datasette/Dockerfile --platform linux/amd64
 

@@ -60,7 +60,7 @@ func handleCommand(arg []string) error {
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: \"%s\"\n\n", command)
 		printUsage()
-		return nil
+		return fmt.Errorf("unknown command: %s", command)
 	}
 }
 
@@ -173,8 +173,8 @@ func handleBackfill(args []string) error {
 func handleLogin(args []string) error {
 	loginCmd := flag.NewFlagSet("login", flag.ExitOnError)
 	logLevel := loginCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-	email := loginCmd.String("email", "", "email to use for login")
-	password := loginCmd.String("password", "", "password for login (use with caution)")
+	email := loginCmd.String("email", os.Getenv("MYM_EMAIL"), "email to use for login (falls back to MYM_EMAIL env var)")
+	password := loginCmd.String("password", os.Getenv("MYM_PASSWORD"), "password for login (falls back to MYM_PASSWORD env var)")
 	headless := loginCmd.Bool("headless", true, "run browser headless")
 	timeout := loginCmd.Duration("timeout", defaultBrowserTimeout, "login flow timeout")
 
@@ -211,6 +211,6 @@ func main() {
 	time.Local = time.UTC
 
 	if err := run(); err != nil {
-		log.WithError(err).Fatal("command failed")
+		os.Exit(1)
 	}
 }
