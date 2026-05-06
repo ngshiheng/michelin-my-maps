@@ -2,14 +2,12 @@
 
 set -eu
 
-# Configuration
 CSV_FILE="data/michelin_my_maps.csv"
 DB_FILE="data/michelin.db"
 MIN_CSV_LINES=18000
 
 REQUIRED_TOOLS="curl jq mym sqlite3 mc"
 
-# Main function
 main() {
     check_environment
     check_dependencies
@@ -102,6 +100,7 @@ run_mym() {
     echo "database will be created at $DB_FILE"
 
     rm -rf cache/
+    mym login
 
     while true; do
         mym scrape -log warn
