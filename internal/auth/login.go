@@ -55,7 +55,7 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 // launchBrowser starts a new browser instance and returns it together with a
 // cleanup function that the caller must defer
 func launchBrowser(headless bool) (*rod.Browser, func(), error) {
-	l := launcher.New().Headless(headless).Set("no-sandbox")
+	l := launcher.New().Headless(headless)
 
 	browserBin := os.Getenv("MYM_BROWSER_BIN")
 	if browserBin != "" {
