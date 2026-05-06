@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -54,12 +55,29 @@ func Login(ctx context.Context, email, password string, headless bool, timeout t
 // launchBrowser starts a new browser instance and returns it together with a
 // cleanup function that the caller must defer
 func launchBrowser(headless bool) (*rod.Browser, func(), error) {
-	urlStr, err := launcher.New().Headless(headless).Launch()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to launch browser: %w", err)
+	l := launcher.New().Headless(headless).Set("no-sandbox")
+
+	browserBin := os.Getenv("MYM_BROWSER_BIN")
+	if browserBin != "" {
+		l = l.Bin(browserBin)
 	}
 
-	browser := rod.New().ControlURL(urlStr).MustConnect()
+	log.WithFields(log.Fields{
+		"browser_bin": browserBin,
+		"headless":    headless,
+	}).Info("launching browser")
+
+	urlStr, err := l.Launch()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to launch browser (bin=%q): %w", browserBin, err)
+	}
+
+	browser := rod.New().ControlURL(urlStr)
+	if err := browser.Connect(); err != nil {
+		return nil, nil, fmt.Errorf("failed to connect to browser (bin=%q): %w", browserBin, err)
+	}
+	log.Debug("browser connected")
+
 	return browser, func() {
 		_ = browser.Close()
 	}, nil
@@ -95,9 +113,11 @@ func performLogin(page *rod.Page, email, password string) error {
 	}
 
 	for _, step := range steps {
+		log.WithField("step", step.name).Debug("executing login step")
 		if err := step.fn(); err != nil {
 			return fmt.Errorf("login step %q failed: %w", step.name, err)
 		}
+		log.WithField("step", step.name).Debug("login step completed")
 	}
 	return nil
 }
