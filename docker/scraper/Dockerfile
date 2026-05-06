@@ -26,7 +26,10 @@ FROM alpine:3.23
 RUN apk add --no-cache \
     sqlite \
     jq \
-    curl
+    curl \
+    chromium
+
+ENV MYM_BROWSER_BIN=/usr/bin/chromium
 
 RUN adduser -D -s /bin/sh appuser
 
