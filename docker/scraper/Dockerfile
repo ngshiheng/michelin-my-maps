@@ -30,6 +30,7 @@ RUN apk add --no-cache \
     chromium
 
 ENV MYM_BROWSER_BIN=/usr/bin/chromium
+ENV MYM_NO_SANDBOX=1
 
 RUN adduser -D -s /bin/sh appuser
 

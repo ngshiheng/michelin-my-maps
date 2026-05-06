@@ -62,9 +62,15 @@ func launchBrowser(headless bool) (*rod.Browser, func(), error) {
 		l = l.Bin(browserBin)
 	}
 
+	noSandbox := os.Getenv("MYM_NO_SANDBOX") == "1"
+	if noSandbox {
+		l = l.NoSandbox(true)
+	}
+
 	log.WithFields(log.Fields{
 		"browser_bin": browserBin,
 		"headless":    headless,
+		"no_sandbox":  noSandbox,
 	}).Info("launching browser")
 
 	urlStr, err := l.Launch()
