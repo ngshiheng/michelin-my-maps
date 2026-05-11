@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/go-rod/rod v0.116.2
 	github.com/gocolly/colly/v2 v2.3.0
-	github.com/nyaruka/phonenumbers v1.7.2
+	github.com/nyaruka/phonenumbers v1.7.4
 	github.com/sirupsen/logrus v1.9.4
 	github.com/velebak/colly-sqlite3-storage v0.0.0-20240410181914-45e8d740b550
 	gorm.io/driver/sqlite v1.6.0
