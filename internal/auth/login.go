@@ -16,15 +16,15 @@ import (
 )
 
 const (
-	michelinURL    = "https://guide.michelin.com"
+	michelinURL    = "https://guide.michelin.com/sg/en"
 	michelinDomain = "michelin.com"
 
 	xPathProfileIcon = "//img[contains(@class,'js-img-profile-menu')]"
-	xPathLoginLink   = "//a[contains(normalize-space(.),'Login') and contains(@class,'js-auth__social-sign-in-button')]"
-	xPathEmailInput  = "//div[@class='form-group']//input[@id='emailId' or @name='email']"
-	xPathContinueBtn = "//button[contains(normalize-space(.),'Continue') and contains(@class,'js-auth__sign-in-continue-button')]"
-	xPathPassword    = "//input[@type='password' and contains(@class,'js-account-pass')]"
-	xPathSignInBtn   = "//button[contains(normalize-space(.),'Sign In') and contains(@class,'js-auth__sign-in-button')]"
+	xPathLoginLink   = "//a[contains(text(), 'Sign In')]"
+	xPathEmailInput  = "//input[@id='emailId']"
+	xPathContinueBtn = "//button[contains(text(), 'Continue')]"
+	xPathPassword    = "//input[@name='password' and @type='password']"
+	xPathSignInBtn   = "//button[contains(text(), 'Sign In')]"
 )
 
 // Login logs in via browser and returns the resulting michelin.com session cookies
