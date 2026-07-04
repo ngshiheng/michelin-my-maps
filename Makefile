@@ -43,6 +43,30 @@ datasette:  ## run datasette with metadata.json for local development.
 	echo "Starting datasette on port $$PORT"; \
 	$(DATASETTE) --root data/michelin.db --metadata docker/datasette/metadata.json --port $$PORT
 
+.PHONY: changelog
+changelog:  ## show per-scrape changelog of new awards added per region (top 5 per run).
+	@if [ -z $(SQLITE) ]; then echo "sqlite3 could not be found."; exit 2; fi
+	@$(SQLITE) data/michelin.db \
+	"WITH ranked AS ( \
+	  SELECT \
+	    DATE(ra.created_at) AS scrape_date, \
+	    CASE WHEN r.location LIKE '%,%' \
+	      THEN TRIM(SUBSTR(r.location, INSTR(r.location, ',') + 1)) \
+	      ELSE r.location END AS region, \
+	    COUNT(*) AS new_awards, \
+	    ROW_NUMBER() OVER ( \
+	      PARTITION BY DATE(ra.created_at) \
+	      ORDER BY COUNT(*) DESC \
+	    ) AS rn \
+	  FROM restaurant_awards ra \
+	  JOIN restaurants r ON r.id = ra.restaurant_id \
+	  WHERE region NOT GLOB '*[0-9]*' \
+	  GROUP BY scrape_date, region \
+	) \
+	SELECT scrape_date, 'Added ' || new_awards || ' new awards for ' || region \
+	FROM ranked WHERE rn <= 5 \
+	ORDER BY scrape_date DESC, new_awards DESC;"
+
 ##@ Docker
 .PHONY: docker-build-scraper
 docker-build-scraper:   ## build scraper docker image.
