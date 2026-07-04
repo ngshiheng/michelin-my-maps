@@ -37,7 +37,7 @@ func ExtractPrice(e *colly.XMLElement) string {
 	if p := tryAwardSelectors(e, "price", parsePrice); p != "" {
 		return p
 	}
-	if p := parseDLayerValue(FindDLayerScript(e), "price"); p != "" {
+	if p := parseDLayerValue(findDLayerScript(e), "price"); p != "" {
 		return mapPrice(p)
 	}
 	return ""

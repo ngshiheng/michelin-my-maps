@@ -61,8 +61,5 @@ func (r *Restaurant) validate() error {
 	if strings.TrimSpace(r.URL) == "" {
 		return errors.New("URL cannot be empty")
 	}
-	if strings.TrimSpace(r.Description) == "" {
-		return errors.New("description cannot be empty")
-	}
 	return nil
 }

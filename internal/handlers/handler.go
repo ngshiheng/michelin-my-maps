@@ -79,7 +79,6 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 		log.WithError(err).WithFields(log.Fields{
 			"id":          restaurant.ID,
 			"wayback_url": data.WaybackURL,
-			"url":         data.URL,
 		}).Error("failed to save restaurant award")
 		return err
 	}
@@ -87,7 +86,6 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	log.WithFields(log.Fields{
 		"distinction": data.Distinction,
 		"name":        restaurant.Name,
-		"url":         data.URL,
 		"year":        data.Year,
 		"has_wayback": data.WaybackURL != "",
 	}).Debug("saved restaurant and award")
