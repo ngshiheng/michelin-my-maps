@@ -24,8 +24,7 @@ func parseDLayerValue(script, key string) string {
 	return ""
 }
 
-// FindDLayerScript searches for a dLayer script containing restaurant distinction data.
-func FindDLayerScript(e *colly.XMLElement) string {
+func findDLayerScript(e *colly.XMLElement) string {
 	return findScript(e, func(text string) bool {
 		return strings.Contains(text, "dLayer") && strings.Contains(text, "distinction")
 	})
