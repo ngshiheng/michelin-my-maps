@@ -17,24 +17,33 @@ var (
 )
 
 // ExtractDistinction extracts the restaurant's distinction and green star status from an XML element.
+// NOTE: Green Star award has ended (2026 - 2026)
 func ExtractDistinction(e *colly.XMLElement) (string, bool) {
-	distinction := tryAwardSelectors(e, "distinction", parseDistinction)
-	if distinction == "" {
-		distinction = models.SelectedRestaurants
-	}
 	greenStar := extractGreenStar(e)
-	return distinction, greenStar
+
+	if distinction := tryAwardSelectors(e, "distinction", parseDistinctionStrict); distinction != "" {
+		return distinction, greenStar
+	}
+
+	if distinction := extractDistinctionFromJSONLD(findAndParseJSONLD(e)); distinction != "" {
+		return distinction, greenStar
+	}
+
+	if distinction := parseDistinctionStrict(parseDLayerValue(findDLayerScript(e), "distinction")); distinction != "" {
+		return distinction, greenStar
+	}
+
+	return models.SelectedRestaurants, greenStar
 }
 
 func extractGreenStar(e *colly.XMLElement) bool {
 	greenStar := tryAwardSelectors(e, "greenStar", parseGreenStar) == "true"
 	if !greenStar {
-		greenStar = parseDLayerValue(FindDLayerScript(e), "greenstar") == "True"
+		greenStar = parseDLayerValue(findDLayerScript(e), "greenstar") == "True"
 	}
 	return greenStar
 }
 
-// parseGreenStar returns "true" if the text contains "green star", otherwise "false".
 func parseGreenStar(text string) string {
 	if strings.Contains(strings.ToLower(text), "green star") {
 		return "true"
@@ -42,8 +51,7 @@ func parseGreenStar(text string) string {
 	return "false"
 }
 
-// parseDistinction parses the award distinction from the given text.
-func parseDistinction(text string) string {
+func parseDistinctionStrict(text string) string {
 	distinction := strings.ToLower(text)
 	distinction = decodeHTMLEntities(distinction)
 	distinction = strings.Trim(distinction, " .!?,;:-")
@@ -61,15 +69,21 @@ func parseDistinction(text string) string {
 	case reSelected.MatchString(distinction):
 		return models.SelectedRestaurants
 	default:
-		return models.SelectedRestaurants
+		return ""
 	}
 }
 
-// decodeHTMLEntities removes bullet HTML entities and symbols from the text.
 func decodeHTMLEntities(text string) string {
 	replacer := strings.NewReplacer(
 		"&bull;", "",
 		"•", "",
 	)
 	return replacer.Replace(text)
+}
+
+func extractDistinctionFromJSONLD(ld *jsonLDRestaurant) string {
+	if ld == nil {
+		return ""
+	}
+	return ld.distinctionText()
 }
