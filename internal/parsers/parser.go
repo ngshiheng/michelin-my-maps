@@ -38,7 +38,7 @@ func Parse(e *colly.XMLElement) *ExtractedData {
 	price, cuisine := splitPriceAndCuisine(e)
 
 	data.Address = address
-	data.Description = firstNonEmpty(data.Description, tryRestaurantSelectors(e, "description", TrimWhiteSpaces))
+	data.Description = firstNonEmpty(tryRestaurantSelectors(e, "description", TrimWhiteSpaces), data.Description)
 	data.Name = firstNonEmpty(data.Name, tryRestaurantSelectors(e, "name", TrimWhiteSpaces))
 	data.WebsiteURL = tryRestaurantSelectorsAttr(e, "websiteURL", "href")
 	data.Distinction = firstNonEmpty(data.Distinction, distinction)
