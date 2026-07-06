@@ -32,13 +32,13 @@ func ExtractPublishedYear(e *colly.XMLElement) int {
 	if year := extractYearFromJSONLDAward(e); year != 0 {
 		return year
 	}
+	if year := extractYearFromJSONLDReview(e); year != 0 {
+		return year
+	}
 	if year := extractYearFromXPath(e, xPathDate); year != 0 {
 		return year
 	}
 	if year := extractYearFromMeta(e, xPathMeta, "content"); year != 0 {
-		return year
-	}
-	if year := extractYearFromJSONLDReview(e); year != 0 {
 		return year
 	}
 	return 0

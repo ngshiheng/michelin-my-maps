@@ -193,6 +193,8 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 	collector.OnError(s.createErrorHandler())
 
 	collector.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
+
 		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
 			r.Ctx.Put("attempt", 1)
@@ -266,6 +268,8 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	detailCollector.OnError(s.createErrorHandler())
 
 	detailCollector.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
+
 		attempt := r.Ctx.GetAny("attempt")
 		if attempt == nil {
 			r.Ctx.Put("attempt", 1)
