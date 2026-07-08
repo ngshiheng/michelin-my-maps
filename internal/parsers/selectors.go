@@ -85,12 +85,14 @@ var RestaurantSelectors = map[string][]string{
 		"//div[@id='opinion']//div[contains(@class,'tab__content-paragraph')]/p", // 20190818190359
 	},
 	"address": {
+		"(//div[contains(@class,'data-sheet__block--text')])[1]",
 		"//*[contains(@class,'data-sheet__block--text')][1]",
 		"//*[contains(@class,'restaurant-details__heading--address')]",
 		"//div[contains(@class,'collapse__block-title')]//span[contains(@class,'fa-map-marker-alt')]/following-sibling::span[contains(@class,'flex-fill')]", // 20190818190359
 		"//li[*[contains(@class,'fa-map-marker-alt')]]/text()[normalize-space()]",                                                                           // 20220125203424, 20211127004727
 	},
 	"priceAndCuisine": {
+		"(//div[contains(@class,'data-sheet__block--text')][2])[5]",
 		"//div[contains(@class,'data-sheet__block--text')][2]",
 		"//div[contains(@class,'restaurant-details__heading--price')]",
 		"//*[contains(@class,'restaurant-details__heading-price')]",

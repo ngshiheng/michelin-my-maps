@@ -116,6 +116,7 @@ func setupLogging(levelStr string) error {
 func handleScrape(args []string) error {
 	scrapeCmd := flag.NewFlagSet(commandScrape, flag.ExitOnError)
 	logLevel := scrapeCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
+	ignoreCache := scrapeCmd.Bool("no-cache", false, "skip using scrape cache")
 
 	if err := scrapeCmd.Parse(args); err != nil {
 		return err
@@ -127,7 +128,7 @@ func handleScrape(args []string) error {
 
 	urlArg := scrapeCmd.Arg(0)
 
-	app, err := scraper.New()
+	app, err := scraper.New(*ignoreCache)
 	if err != nil {
 		return fmt.Errorf("failed to create live scraper: %w", err)
 	}
@@ -177,6 +178,7 @@ func handleLogin(args []string) error {
 	password := loginCmd.String("password", os.Getenv("MYM_PASSWORD"), "password for login (falls back to MYM_PASSWORD env var)")
 	headless := loginCmd.Bool("headless", true, "run browser headless")
 	timeout := loginCmd.Duration("timeout", defaultBrowserTimeout, "login flow timeout")
+	ignoreCache := loginCmd.Bool("no-cache", false, "skip using wayback cache")
 
 	if err := loginCmd.Parse(args); err != nil {
 		return err
@@ -192,7 +194,7 @@ func handleLogin(args []string) error {
 	if err != nil {
 		return err
 	}
-	app, err := scraper.New()
+	app, err := scraper.New(*ignoreCache)
 	if err != nil {
 		return fmt.Errorf("failed to create scraper: %w", err)
 	}

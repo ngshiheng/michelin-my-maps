@@ -30,10 +30,11 @@ type ExtractedData struct {
 func Parse(e *colly.XMLElement) *ExtractedData {
 	url, waybackURL := parseRequestURL(e.Request.URL.String())
 	data := seedExtractedData(findAndParseJSONLD(e))
+
 	data.URL = url
 	data.WaybackURL = waybackURL
 
-	address := firstNonEmpty(data.Address, tryRestaurantSelectors(e, "address", NormalizeAddress))
+	address := firstNonEmpty(tryRestaurantSelectors(e, "address", NormalizeAddress), data.Address)
 	distinction, greenStar := ExtractDistinction(e)
 	price, cuisine := splitPriceAndCuisine(e)
 

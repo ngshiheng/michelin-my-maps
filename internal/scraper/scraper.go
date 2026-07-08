@@ -39,10 +39,7 @@ func defaultConfig() *client.Config {
 		Delay:          2 * time.Second,
 		MaxRetry:       3,
 		RandomDelay:    3 * time.Second, // 2–5 s jitter
-		// ThreadCount: 1 is intentional – guide.michelin.com uses AWS WAF;
-		// parallelising seed requests would make all N listing pages land
-		// simultaneously
-		ThreadCount: 1,
+		ThreadCount:    10,
 	}
 }
 
@@ -55,7 +52,7 @@ type Scraper struct {
 }
 
 // New returns a new Scraper with default settings
-func New() (*Scraper, error) {
+func New(ignoreCache bool) (*Scraper, error) {
 	cfg := defaultConfig()
 
 	repo, err := storage.NewSQLiteRepository(cfg.DatabasePath)
@@ -71,6 +68,10 @@ func New() (*Scraper, error) {
 		RandomDelay:    cfg.RandomDelay,
 		StoragePath:    cfg.StoragePath,
 		ThreadCount:    cfg.ThreadCount,
+	}
+	if ignoreCache {
+		log.Debug("running with no cache")
+		clientCfg.CachePath = ""
 	}
 
 	cl, err := client.New(clientCfg)
