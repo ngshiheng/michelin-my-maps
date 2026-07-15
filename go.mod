@@ -3,10 +3,10 @@ module github.com/ngshiheng/michelin-my-maps/v4
 go 1.26.4
 
 require (
-	github.com/antchfx/xmlquery v1.5.0
+	github.com/antchfx/xmlquery v1.5.1
 	github.com/go-rod/rod v0.116.2
 	github.com/gocolly/colly/v2 v2.3.0
-	github.com/nyaruka/phonenumbers v1.8.0
+	github.com/nyaruka/phonenumbers v1.8.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/velebak/colly-sqlite3-storage v0.0.0-20240410181914-45e8d740b550
 	gorm.io/driver/sqlite v1.6.0
@@ -17,7 +17,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.11.0 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/antchfx/htmlquery v1.3.5 // indirect
-	github.com/antchfx/xpath v1.3.5 // indirect
+	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
