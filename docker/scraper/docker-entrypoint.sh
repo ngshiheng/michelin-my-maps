@@ -19,7 +19,6 @@ main() {
     publish_to_github
 }
 
-# Environment and dependency checks
 check_environment() {
     check_env_var "DATASETTE_SERVICE_ID"
     check_env_var "GITHUB_TOKEN"
@@ -34,7 +33,7 @@ check_dependencies() {
     for tool in $REQUIRED_TOOLS; do
         check_cli_installed "$tool"
     done
-    # curl https://api.incolumitas.com/ | jq # FIXME: endpoint not available
+
     echo "check environment and dependencies passed"
 }
 
@@ -53,7 +52,7 @@ check_cli_installed() {
 }
 
 download_from_minio() {
-    echo "download $DB_FILE from MinIO (if exists)"
+    echo "downloading $DB_FILE from MinIO (if exists)"
     mkdir -p ./data/
     if [ -z "${MINIO_ENDPOINT:-}" ] || [ -z "${MINIO_ACCESS_KEY:-}" ] || [ -z "${MINIO_SECRET_KEY:-}" ] || [ -z "${MINIO_BUCKET:-}" ]; then
         echo "error: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET must be set."
@@ -68,7 +67,6 @@ download_from_minio() {
     fi
 }
 
-# Trigger Datasette redeploy on Railway
 trigger_datasette_redeploy() {
     if [ -z "${RAILWAY_API_TOKEN:-}" ] || [ -z "${DATASETTE_SERVICE_ID:-}" ]; then
         echo "skip Datasette redeploy: RAILWAY_API_TOKEN or DATASETTE_SERVICE_ID not set"
@@ -81,7 +79,6 @@ trigger_datasette_redeploy() {
         -d '{}'
 }
 
-# Upload SQLite to MinIO
 upload_to_minio() {
     echo "upload $DB_FILE to MinIO"
     if [ -z "${MINIO_ENDPOINT:-}" ] || [ -z "${MINIO_ACCESS_KEY:-}" ] || [ -z "${MINIO_SECRET_KEY:-}" ] || [ -z "${MINIO_BUCKET:-}" ]; then
@@ -92,15 +89,13 @@ upload_to_minio() {
     mc cp "$DB_FILE" "minio/$MINIO_BUCKET/$(basename "$DB_FILE")"
 }
 
-# Scraper function
 run_mym() {
-    echo "run mym"
     echo "database will be created at $DB_FILE"
 
     mym session
 
     while true; do
-        mym scrape -log warn
+        mym scrape
         exit_code=$?
         if [ $exit_code -eq 0 ]; then
             break
@@ -129,7 +124,6 @@ convert_sqlite_to_csv() {
     sqlite3 -header -csv "$DB_FILE" "SELECT r.name as Name, r.address as Address, r.location as Location, ra.price as Price, r.cuisine as Cuisine, r.longitude as Longitude, r.latitude as Latitude, r.phone_number as PhoneNumber, r.url as Url, r.website_url as WebsiteUrl, ra.distinction as Award, ra.green_star as GreenStar, r.facilities_and_services as FacilitiesAndServices, r.description as Description FROM restaurants r JOIN restaurant_awards ra ON r.id = ra.restaurant_id WHERE ra.year = ( SELECT MAX(year) FROM restaurant_awards ra2 WHERE ra2.restaurant_id = r.id ) AND DATE(r.updated_at) = DATE('now');" >"$CSV_FILE"
 }
 
-# Publishing functions
 publish_to_github() {
     echo "check CSV before publish to GitHub"
     if ! check_csv_lines; then
@@ -150,7 +144,6 @@ publish_to_github() {
             https://api.github.com/repos/ngshiheng/michelin-my-maps/contents/data/michelin_my_maps.csv
 }
 
-# Helper functions
 check_csv_lines() {
     echo "check CSV file line count"
 
@@ -170,5 +163,4 @@ check_csv_lines() {
     fi
 }
 
-# Entrypoint
 main "$@"

@@ -74,8 +74,6 @@ docker-run-scraper: ## run scraper docker container.
         -e MINIO_BUCKET=$(MINIO_BUCKET) \
         -e MINIO_ENDPOINT=$(MINIO_ENDPOINT) \
         -e MINIO_SECRET_KEY=$(MINIO_SECRET_KEY) \
-        -e MYM_EMAIL=$(MYM_EMAIL) \
-        -e MYM_PASSWORD=$(MYM_PASSWORD) \
         -e RAILWAY_API_TOKEN=$(RAILWAY_API_TOKEN) \
         --name mym-scraper mym-scraper
 
