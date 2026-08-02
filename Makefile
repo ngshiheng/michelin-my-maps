@@ -20,19 +20,11 @@ lint:   ## run lint with golangci-lint in docker.
 	@if [ -z $(DOCKER) ]; then echo "Docker could not be found. See https://docs.docker.com/"; exit 2; fi
 	docker run --rm -v $$(pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run -v
 	
-.PHONY: build
-build:  ## build go binary to bin/.
-	@go build -o bin/ cmd/mym/mym.go
-	
 .PHONY: install
 install:    ## install go binary to $GOPATH/bin.
 	@go install cmd/mym/mym.go
 
 ##@ Usage
-.PHONY: scrape
-scrape: ## scrape data and save it into /data directory.
-	@go run cmd/mym/mym.go scrape
-
 .PHONY: datasette
 datasette:  ## run datasette with metadata.json for local development.
 	@if [ -z $(DATASETTE) ]; then echo "Datasette could not be found. See https://docs.datasette.io/en/stable/installation.html"; exit 2; fi
