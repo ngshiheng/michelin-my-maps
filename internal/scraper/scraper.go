@@ -87,8 +87,8 @@ func New(ignoreCache bool) (*Scraper, error) {
 }
 
 // InitCookies persists Michelin Guide session cookies to the cookie storage.
-// Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert)
-// We need to Init -> Clear -> Init because Clear does not do DROP TABLE IF EXISTS
+// Existing cookie rows are cleared first since the sqlite3 backend uses plain
+// INSERT (not upsert). Queue and visited tables are preserved.
 func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 	url := &url.URL{Host: "guide.michelin.com"}
 
@@ -99,12 +99,8 @@ func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	if err := store.Clear(); err != nil {
-		return fmt.Errorf("failed to clear storage: %w", err)
-	}
-
-	if err := store.Init(); err != nil {
-		return fmt.Errorf("failed to re-initialize storage: %w", err)
+	if err := s.client.ClearCookies(url.Host); err != nil {
+		return fmt.Errorf("failed to clear cookies: %w", err)
 	}
 
 	lines := make([]string, len(cookies))
@@ -131,21 +127,15 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	}
 
 	if queueSize > 0 {
-		// Resume an interrupted run: the queue still has unprocessed detail URLs
-		// from the previous Phase 1. Skip Phase 1 to avoid appending duplicate
-		// rows (AddRequest has no dedup — it's a plain INSERT).
+		// Resume mode: pending detail URLs already exist in the queue.
 		slog.Info("non-empty queue detected, resuming detail scrape", "queue_size", queueSize)
 	} else {
-		// Fresh start (first run, or resuming after a fully completed prior run).
-		// Clear visited so seed listing pages can be re-visited; on a truly first
-		// run the table is already empty so this is a no-op.
+		// Fresh start: clear visited so seed listing pages can be crawled again.
 		if err := s.client.ClearVisited(); err != nil {
 			return fmt.Errorf("failed to clear visited table: %w", err)
 		}
 
-		// Phase 1: visit all 5 seed listing pages. Each page visit follows pagination
-		// via e.Request.Visit (synchronous, collector's WaitGroup tracks it) and
-		// enqueues discovered detail page URLs into colly.db via EnqueueURLWithContext.
+		// Phase 1: visit seed listing pages and enqueue discovered detail URLs.
 		// TODO: allow user to specify initial URL
 		michelinGuideURLs := map[string]string{
 			models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
@@ -169,7 +159,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 		return err
 	}
 
-	// Phase 2: drain all ~18k detail page URLs accumulated in colly.db queue
+	// Phase 2: drain queued detail page URLs.
 	slog.Info("starting detail scrape, draining queue")
 	if err := s.client.RunQueue(detailCollector); err != nil {
 		return err
@@ -232,13 +222,10 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 			return
 		}
 
-		// In 202, this won't run; no need to handle this codepath.
 		url := e.Request.AbsoluteURL(e.ChildAttr(xPathRestaurantCardLink, "href"))
 		location := e.ChildText(xPathRestaurantCardLocation)
 
-		// Enqueue the detail URL into colly.db so phase 2 (RunQueue) can
-		// process it with detailCollector. EnqueueURLWithContext is required
-		// (instead of queue.AddURL) to carry the location through the queue.
+		// Preserve location context for phase 2 processing.
 		if err := s.client.EnqueueURLWithContext(url, location); err != nil {
 			slog.Warn("failed to enqueue detail url", "error", err, "url", url)
 		}
@@ -249,10 +236,7 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 			return
 		}
 
-		// In 202, this won't run; no need to handle this codepath.
-		// xPathPaginationArrow matches both prev and next arrows. Prev-page links
-		// are skipped naturally: those pages are already in the visited table, so
-		// Visit returns AlreadyVisitedError and the error handler drops it silently.
+		// XPath matches both prev and next; visited dedup prevents backtracking loops.
 		nextURL := e.Request.AbsoluteURL(e.Attr("href"))
 		slog.Debug("visiting next page", "url", nextURL)
 		e.Request.Visit(nextURL)

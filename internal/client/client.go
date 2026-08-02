@@ -212,6 +212,24 @@ func (w *Colly) ClearVisited() error {
 	return err
 }
 
+// ClearCookies removes persisted cookies without touching queue/visited state.
+// If host is empty, all cookie rows are removed.
+func (w *Colly) ClearCookies(host string) error {
+	db, err := sql.Open("sqlite3", w.config.StoragePath)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	if host == "" {
+		_, err = db.Exec("DELETE FROM cookies")
+		return err
+	}
+
+	_, err = db.Exec("DELETE FROM cookies WHERE host = ?", host)
+	return err
+}
+
 // EnqueueURLWithContext enqueues a GET request that carries a colly.Context
 // (e.g. location) through the queue boundary into the next phase.
 // queue.AddURL cannot be used here because it always creates a bare request
