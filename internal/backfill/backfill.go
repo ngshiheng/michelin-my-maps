@@ -3,7 +3,9 @@ package backfill
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -14,12 +16,10 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/handlers"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/storage"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/utils"
-	log "github.com/sirupsen/logrus"
 )
 
 const xPathDetailRoot = "html"
 
-// defaultConfig returns a default config for Wayback backfill
 func defaultConfig() *client.Config {
 	return &client.Config{
 		AllowedDomains: []string{"web.archive.org"},
@@ -64,7 +64,7 @@ func New(ignoreCache bool) (*Scraper, error) {
 		ThreadCount:    cfg.ThreadCount,
 	}
 	if ignoreCache {
-		log.Debug("running with no cache")
+		slog.Debug("running with no cache")
 		clientCfg.CachePath = ""
 	}
 
@@ -88,56 +88,68 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 		return fmt.Errorf("failed to list restaurants: %w", err)
 	}
 
-	log.WithFields(log.Fields{
-		"count": len(restaurants),
-	}).Info("running backfill for restaurants")
+	slog.Info("running backfill for restaurants", "count", len(restaurants))
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
 
-	s.setupHandlers(collector, detailCollector)
+	s.setupHandlers(ctx, collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
 	for _, r := range restaurants {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
 		if err := s.client.EnqueueURL(api); err != nil {
 			return err
 		}
 	}
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := s.client.RunQueue(collector); err != nil {
 		return err
 	}
 
 	// TODO: add summary of results
-	log.WithField("scraped", s.scraped.Load()).Info("completed backfill")
+	slog.Info("completed backfill", "scraped", s.scraped.Load())
 	return nil
 }
 
 // Run runs the backfill workflow for a single restaurant URL
 func (s *Scraper) Run(ctx context.Context, url string) error {
-	log.WithField("url", url).Debug("running backfill for restaurant")
+	slog.Debug("running backfill for restaurant", "url", url)
 
 	collector := s.client.GetCollector()
 	detailCollector := s.client.GetDetailCollector()
 
-	s.setupHandlers(collector, detailCollector)
+	s.setupHandlers(ctx, collector, detailCollector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	api := "https://web.archive.org/cdx/search/cdx?url=" + url + "&output=json&fl=timestamp,original"
 	if err := collector.Visit(api); err != nil {
-		log.WithError(err).WithField("url", url).Error("failed to visit restaurant URL")
+		slog.Error("failed to visit restaurant URL", "error", err, "url", url)
 		return err
 	}
 
-	log.WithField("url", url).Debug("completed backfill for one restaurant")
+	slog.Debug("completed backfill for one restaurant", "url", url)
 	return nil
 }
 
-func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *colly.Collector) {
-	collector.OnError(s.createErrorHandler())
+func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector, detailCollector *colly.Collector) {
+	collector.OnError(s.createErrorHandler(ctx))
 
 	collector.OnRequest(func(r *colly.Request) {
+		if ctx.Err() != nil {
+			r.Abort()
+			return
+		}
+
 		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
 
 		attempt := r.Ctx.GetAny("attempt")
@@ -149,33 +161,24 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 
 		r.Ctx.Put("cache_hit", cacheHit)
 
-		log.WithFields(log.Fields{
-			"attempt":   attempt,
-			"cache_hit": cacheHit,
-			"url":       r.URL,
-		}).Debug("requesting cdx api")
+		slog.Debug("requesting cdx api", "attempt", attempt, "cache_hit", cacheHit, "url", r.URL)
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
+		if ctx.Err() != nil {
+			return
+		}
+
 		url := r.Request.URL.Query().Get("url")
 
 		var rows [][]string
 		if err := json.Unmarshal(r.Body, &rows); err != nil {
-			log.WithError(err).WithFields(log.Fields{
-				"url":         url,
-				"status_code": r.StatusCode,
-				"cdx_api":     r.Request.URL,
-			}).Warn("failed to parse cdx api response")
+			slog.Warn("failed to parse cdx api response", "error", err, "url", url, "status_code", r.StatusCode, "cdx_api", r.Request.URL)
 			return
 		}
 
 		if len(rows) <= 1 {
-			log.WithFields(log.Fields{
-				"url":         url,
-				"rows":        rows,
-				"status_code": r.StatusCode,
-				"cdx_api":     r.Request.URL,
-			}).Debug("no snapshots found")
+			slog.Debug("no snapshots found", "url", url, "rows", rows, "status_code", r.StatusCode, "cdx_api", r.Request.URL)
 			// FIXME: this is currently cached because CDX api returns 200
 			return
 		}
@@ -183,6 +186,9 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 		minTimestampLen := 14
 		snapshot := 0
 		for i, row := range rows {
+			if ctx.Err() != nil {
+				return
+			}
 			if i == 0 || len(row) == 0 {
 				continue // skip header or malformed
 			}
@@ -197,29 +203,25 @@ func (s *Scraper) setupHandlers(collector *colly.Collector, detailCollector *col
 			snapshotURL := fmt.Sprintf("https://web.archive.org/web/%sid_/%s", ts, url)
 			err := detailCollector.Visit(snapshotURL)
 			if err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"url":         url,
-					"wayback_url": snapshotURL,
-				}).Debug("failed to visit snapshot URL")
+				slog.Debug("failed to visit snapshot URL", "error", err, "url", url, "wayback_url", snapshotURL)
 				continue
 			}
 			snapshot++
 		}
 
-		log.WithFields(log.Fields{
-			"cache_hit":   r.Ctx.GetAny("cache_hit"),
-			"cdx_api":     r.Request.URL,
-			"snapshot":    snapshot,
-			"status_code": r.StatusCode,
-			"url":         url,
-		}).Debug("processing cdx api")
+		slog.Debug("processing cdx api", "cache_hit", r.Ctx.GetAny("cache_hit"), "cdx_api", r.Request.URL, "snapshot", snapshot, "status_code", r.StatusCode, "url", url)
 	})
 }
 
 func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
-	detailCollector.OnError(s.createErrorHandler())
+	detailCollector.OnError(s.createErrorHandler(ctx))
 
 	detailCollector.OnRequest(func(r *colly.Request) {
+		if ctx.Err() != nil {
+			r.Abort()
+			return
+		}
+
 		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
 
 		attempt := r.Ctx.GetAny("attempt")
@@ -230,25 +232,28 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		_, cacheHit := s.client.IsCached(r.URL.String())
 		r.Ctx.Put("cache_hit", cacheHit)
 
-		log.WithFields(log.Fields{
-			"attempt":   attempt,
-			"cache_hit": cacheHit,
-			"url":       r.URL,
-		}).Debug("requesting wayback snapshot")
+		slog.Debug("requesting wayback snapshot", "attempt", attempt, "cache_hit", cacheHit, "url", r.URL)
 	})
 
 	detailCollector.OnXML(xPathDetailRoot, func(e *colly.XMLElement) {
+		if ctx.Err() != nil {
+			return
+		}
+
 		err := handlers.Handle(ctx, e, s.repository)
 		if err != nil {
-			log.WithError(err).WithField("url", e.Request.URL).Error("failed to handle restaurant extraction")
+			if errors.Is(err, context.Canceled) {
+				slog.Debug("restaurant extraction canceled", "error", err, "url", e.Request.URL)
+				return
+			}
+			slog.Error("failed to handle restaurant extraction", "error", err, "url", e.Request.URL)
 			return
 		}
 		s.scraped.Add(1)
 	})
 }
 
-// createErrorHandler creates a reusable error handler for collectors with retry logic.
-func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
+func (s *Scraper) createErrorHandler(ctx context.Context) func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
 		if v := r.Ctx.GetAny("attempt"); v != nil {
@@ -258,7 +263,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		}
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
-		fields := log.Fields{
+		fields := map[string]any{
 			"attempt":      attempt,
 			"cookie_count": len(cookies),
 			"status_code":  r.StatusCode,
@@ -266,7 +271,12 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithError(err).WithFields(fields).Debug("already visited, skip retry")
+			slog.Debug("already visited, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
+			return
+		}
+
+		if errors.Is(err, context.Canceled) {
+			slog.Debug("context canceled, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
 			return
 		}
 
@@ -274,27 +284,42 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		// In the Wayback Machine, a 403 typically means the site owner has blocked archiving.
 		switch r.StatusCode {
 		case http.StatusForbidden:
-			log.WithError(err).WithFields(fields).Debug("request forbidden, skip retry")
+			slog.Debug("request forbidden, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
 			return
 		case http.StatusNotFound:
-			log.WithError(err).WithFields(fields).Debug("request not found, skip retry")
+			slog.Debug("request not found, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
 			return
 		}
 
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
+			if ctx.Err() != nil {
+				slog.Debug("context canceled, skip retry", utils.FieldsToArgs(fields)...)
+				return
+			}
+
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed to clear cache")
+				slog.Error("failed to clear cache", append(utils.FieldsToArgs(fields), "error", err, "request_headers", utils.FlattenHeaders(r.Request.Headers))...)
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).WithField("backoff", backoff).Debug("failed request, retrying")
-			time.Sleep(backoff)
+			slog.Debug("failed request, retrying", append(utils.FieldsToArgs(fields), "backoff", backoff)...)
+			select {
+			case <-ctx.Done():
+				slog.Debug("context canceled during backoff, skip retry", utils.FieldsToArgs(fields)...)
+				return
+			case <-time.After(backoff):
+			}
+
+			if ctx.Err() != nil {
+				slog.Debug("context canceled before retry, skip retry", utils.FieldsToArgs(fields)...)
+				return
+			}
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed request, max retries reached")
+			slog.Error("failed request, max retries reached", append(utils.FieldsToArgs(fields), "error", err, "request_headers", utils.FlattenHeaders(r.Request.Headers))...)
 		}
 	}
 }

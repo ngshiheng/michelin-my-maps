@@ -27,8 +27,6 @@ check_environment() {
     check_env_var "MINIO_BUCKET"
     check_env_var "MINIO_ENDPOINT"
     check_env_var "MINIO_SECRET_KEY"
-    check_env_var "MYM_EMAIL"
-    check_env_var "MYM_PASSWORD"
     check_env_var "RAILWAY_API_TOKEN"
 }
 
@@ -100,7 +98,7 @@ run_mym() {
     echo "database will be created at $DB_FILE"
 
     rm -rf cache/
-    mym login
+    mym session
 
     while true; do
         mym scrape -log warn
@@ -108,8 +106,8 @@ run_mym() {
         if [ $exit_code -eq 0 ]; then
             break
         elif [ $exit_code -eq 2 ]; then
-            echo "session expired, re-logging in"
-            mym login
+            echo "session expired, refreshing session"
+            mym session
         else
             echo "error: mym scrape failed with exit code $exit_code. exit"
             exit $exit_code

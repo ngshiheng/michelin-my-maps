@@ -17,3 +17,11 @@ func FlattenHeaders(h *http.Header) map[string]string {
 	}
 	return out
 }
+
+func FieldsToArgs(fields map[string]any) []any {
+	args := make([]any, 0, len(fields)*2)
+	for key, value := range fields {
+		args = append(args, key, value)
+	}
+	return args
+}

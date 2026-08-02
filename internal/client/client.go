@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"encoding/hex"
+	"log/slog"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
@@ -16,7 +17,6 @@ import (
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/gocolly/colly/v2/storage"
-	log "github.com/sirupsen/logrus"
 	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
@@ -180,7 +180,7 @@ func (w *Colly) IsCached(urlStr string) (cacheEnabled bool, cacheHit bool) {
 // EnqueueURL adds a URL to the queue for processing
 func (w *Colly) EnqueueURL(url string) error {
 	if err := w.queue.AddURL(url); err != nil {
-		log.WithError(err).WithField("url", url).Warn("failed to enqueue url")
+		slog.Warn("failed to enqueue url", "error", err, "url", url)
 		return err
 	}
 	return nil
@@ -189,7 +189,7 @@ func (w *Colly) EnqueueURL(url string) error {
 // RunQueue drains the queue by dispatching each request to dc
 func (w *Colly) RunQueue(dc *colly.Collector) error {
 	if err := w.queue.Run(dc); err != nil {
-		log.WithError(err).Warn("failed to run queue")
+		slog.Warn("failed to run queue", "error", err)
 		return err
 	}
 	return nil
