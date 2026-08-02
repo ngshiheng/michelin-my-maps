@@ -60,7 +60,7 @@ func launchBrowser() (*rod.Browser, func(), error) {
 		l = l.NoSandbox(true)
 	}
 
-	slog.Info("launching browser", "browser_bin", browserBin, "no_sandbox", noSandbox)
+	slog.Debug("launching browser", "browser_bin", browserBin, "no_sandbox", noSandbox)
 
 	urlStr, err := l.Launch()
 	if err != nil {

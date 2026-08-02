@@ -7,20 +7,16 @@ import (
 )
 
 var commands = map[string]func(ctx context.Context, args []string) error{
+	"version":  runVersion,
 	"scrape":   runScrape,
 	"session":  runSession,
 	"backfill": runBackfill,
-	"version":  runVersion,
 }
 
 const usageText = `usage:
-	%s scrape [url]     scrape latest data
-	%s backfill [url]   backfill from wayback
 	%s version          show version
-
-common flags:
-	--log-level <level> debug|info|warning|error
-	-log-format <fmt>   text|json
+	%s scrape [url]     scrape latest data
+	%s backfill [url]   backfill wayback data
 `
 
 func Run(ctx context.Context, args []string) error {

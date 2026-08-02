@@ -20,18 +20,9 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// NOTE: first signal triggers graceful shutdown via context cancellation
-	// second signal exits immediately so users are not stuck waiting
-	forceExitSignals := make(chan os.Signal, 1)
-
-	signal.Notify(forceExitSignals, os.Interrupt, syscall.SIGTERM)
-	defer signal.Stop(forceExitSignals)
-
 	go func() {
 		<-ctx.Done()
-		<-forceExitSignals
-		slog.Error("received second interrupt, forcing exit")
-		os.Exit(130)
+		stop()
 	}()
 
 	if err := cli.Run(ctx, os.Args[1:]); err != nil {
