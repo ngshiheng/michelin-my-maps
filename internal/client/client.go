@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/sha1"
 	"database/sql"
 	"encoding/hex"
@@ -25,6 +26,7 @@ const (
 	DefaultCacheWayback = "cache/wayback"
 	DefaultDataPath     = "data/michelin.db"
 	DefaultStoragePath  = "data/colly.db"
+	acceptLanguage      = "en-SG,en;q=0.9"
 )
 
 // Config defines the minimal config needed for Colly
@@ -252,4 +254,23 @@ func (w *Colly) EnqueueURLWithContext(rawURL, location string) error {
 		return err
 	}
 	return w.storage.AddRequest(data)
+}
+
+// PrepareRequest applies shared request context fields for scraper collectors.
+func PrepareRequest(ctx context.Context, r *colly.Request, cacheHit bool) (attempt any, aborted bool) {
+	if ctx.Err() != nil {
+		r.Abort()
+		return nil, true
+	}
+
+	r.Headers.Set("Accept-Language", acceptLanguage)
+
+	attempt = r.Ctx.GetAny("attempt")
+	if attempt == nil {
+		r.Ctx.Put("attempt", 1)
+		attempt = 1
+	}
+
+	r.Ctx.Put("cache_hit", cacheHit)
+	return attempt, false
 }

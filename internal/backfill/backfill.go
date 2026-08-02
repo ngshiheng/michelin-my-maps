@@ -145,21 +145,11 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector,
 	collector.OnError(s.createErrorHandler(ctx))
 
 	collector.OnRequest(func(r *colly.Request) {
-		if ctx.Err() != nil {
-			r.Abort()
+		_, cacheHit := s.client.IsCached(r.URL.String())
+		attempt, aborted := client.PrepareRequest(ctx, r, cacheHit)
+		if aborted {
 			return
 		}
-
-		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
-
-		attempt := r.Ctx.GetAny("attempt")
-		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
-			attempt = 1
-		}
-		_, cacheHit := s.client.IsCached(r.URL.String())
-
-		r.Ctx.Put("cache_hit", cacheHit)
 
 		slog.Debug("requesting cdx api", "attempt", attempt, "cache_hit", cacheHit, "url", r.URL)
 	})
@@ -217,20 +207,11 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	detailCollector.OnError(s.createErrorHandler(ctx))
 
 	detailCollector.OnRequest(func(r *colly.Request) {
-		if ctx.Err() != nil {
-			r.Abort()
+		_, cacheHit := s.client.IsCached(r.URL.String())
+		attempt, aborted := client.PrepareRequest(ctx, r, cacheHit)
+		if aborted {
 			return
 		}
-
-		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
-
-		attempt := r.Ctx.GetAny("attempt")
-		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
-			attempt = 1
-		}
-		_, cacheHit := s.client.IsCached(r.URL.String())
-		r.Ctx.Put("cache_hit", cacheHit)
 
 		slog.Debug("requesting wayback snapshot", "attempt", attempt, "cache_hit", cacheHit, "url", r.URL)
 	})
