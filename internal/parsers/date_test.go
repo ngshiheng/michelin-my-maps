@@ -71,14 +71,14 @@ func TestValidateYear(t *testing.T) {
 	}
 }
 
-func TestExtractPublishedYearPrefersMetaBeforeReviewDate(t *testing.T) {
+func TestExtractPublishedYearPrefersReviewDateBeforeMeta(t *testing.T) {
 	html := `<html><head>
 	<meta name="description" content="Christopher Coutanceau – a Three MICHELIN Stars: Exceptional cuisine, worth a special journey! restaurant in the 2022 MICHELIN Guide France." />
 	<script type="application/ld+json"><![CDATA[{"@context":"http://schema.org","@type":"Restaurant","review":{"datePublished":"2021-01-18T09:34"}}]]></script>
 	</head><body><div class="restaurant-details__heading--label-title">MICHELIN Guide France</div></body></html>`
 
 	e := mustTestXMLElement(t, html, "https://guide.michelin.com/test")
-	if year := ExtractPublishedYear(e); year != 2022 {
-		t.Fatalf("ExtractPublishedYear() = %d; want %d", year, 2022)
+	if year := ExtractPublishedYear(e); year != 2021 {
+		t.Fatalf("ExtractPublishedYear() = %d; want %d", year, 2021)
 	}
 }

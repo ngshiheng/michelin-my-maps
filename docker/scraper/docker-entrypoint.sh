@@ -4,7 +4,7 @@ set -eu
 
 CSV_FILE="data/michelin_my_maps.csv"
 DB_FILE="data/michelin.db"
-MIN_CSV_LINES=18000
+MIN_CSV_LINES=19000
 
 REQUIRED_TOOLS="curl jq mym sqlite3 mc"
 
@@ -97,7 +97,6 @@ run_mym() {
     echo "run mym"
     echo "database will be created at $DB_FILE"
 
-    rm -rf cache/
     mym session
 
     while true; do
