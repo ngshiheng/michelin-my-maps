@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+type commandOptions struct {
+	ignoreCache bool
+	logFormat   string
+	logLevel    string
+}
+
 const (
 	envLogLevel          = "MYM_LOG_LEVEL"
 	envLogFormat         = "MYM_LOG_FORMAT"
@@ -46,6 +52,30 @@ func parseCommandFlags(fs *flag.FlagSet, args []string) (helpShown bool, err err
 		return true, nil
 	}
 	return false, err
+}
+
+func parseCommandOptions(cmd *flag.FlagSet, cacheHelp string, args []string) (*commandOptions, bool, error) {
+	logLevel := cmd.String("log-level", defaultLogLevel(), "log level (debug, info, warning, error, fatal, panic)")
+	logFormat := cmd.String("log-format", defaultLogFormat(), "log format (text or json)")
+	ignoreCache := cmd.Bool("no-cache", false, cacheHelp)
+
+	helpShown, err := parseCommandFlags(cmd, args)
+	if err != nil {
+		return nil, false, err
+	}
+	if helpShown {
+		return nil, true, nil
+	}
+
+	if err := setupLogging(*logLevel, *logFormat); err != nil {
+		return nil, false, err
+	}
+
+	return &commandOptions{
+		ignoreCache: *ignoreCache,
+		logFormat:   *logFormat,
+		logLevel:    *logLevel,
+	}, false, nil
 }
 
 func parseLogFormat(value string) (string, error) {

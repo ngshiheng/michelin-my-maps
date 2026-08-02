@@ -10,11 +10,8 @@ import (
 
 func runBackfill(ctx context.Context, args []string) error {
 	cmd := newFlagSet("backfill")
-	logLevel := cmd.String("log-level", defaultLogLevel(), "log level (debug, info, warning, error, fatal, panic)")
-	logFormat := cmd.String("log-format", defaultLogFormat(), "log format (text or json)")
-	ignoreCache := cmd.Bool("no-cache", false, "skip using wayback cache")
 
-	helpShown, err := parseCommandFlags(cmd, args)
+	opts, helpShown, err := parseCommandOptions(cmd, "skip using wayback cache", args)
 	if err != nil {
 		return err
 	}
@@ -24,11 +21,8 @@ func runBackfill(ctx context.Context, args []string) error {
 	if cmd.NArg() > 1 {
 		return fmt.Errorf("backfill accepts at most one URL argument")
 	}
-	if err := setupLogging(*logLevel, *logFormat); err != nil {
-		return err
-	}
 
-	app, err := backfill.New(*ignoreCache)
+	app, err := backfill.New(opts.ignoreCache)
 	if err != nil {
 		return fmt.Errorf("failed to create backfill scraper: %w", err)
 	}

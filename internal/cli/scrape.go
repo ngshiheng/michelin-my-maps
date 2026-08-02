@@ -10,11 +10,8 @@ import (
 
 func runScrape(ctx context.Context, args []string) error {
 	cmd := newFlagSet("scrape")
-	logLevel := cmd.String("log-level", defaultLogLevel(), "log level (debug, info, warning, error, fatal, panic)")
-	logFormat := cmd.String("log-format", defaultLogFormat(), "log format (text or json)")
-	ignoreCache := cmd.Bool("no-cache", false, "skip using scrape cache")
 
-	helpShown, err := parseCommandFlags(cmd, args)
+	opts, helpShown, err := parseCommandOptions(cmd, "skip using scrape cache", args)
 	if err != nil {
 		return err
 	}
@@ -24,11 +21,8 @@ func runScrape(ctx context.Context, args []string) error {
 	if cmd.NArg() > 1 {
 		return fmt.Errorf("scrape accepts at most one URL argument")
 	}
-	if err := setupLogging(*logLevel, *logFormat); err != nil {
-		return err
-	}
 
-	app, err := scraper.New(*ignoreCache)
+	app, err := scraper.New(opts.ignoreCache)
 	if err != nil {
 		return fmt.Errorf("failed to create live scraper: %w", err)
 	}
