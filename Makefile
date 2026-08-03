@@ -20,19 +20,11 @@ lint:   ## run lint with golangci-lint in docker.
 	@if [ -z $(DOCKER) ]; then echo "Docker could not be found. See https://docs.docker.com/"; exit 2; fi
 	docker run --rm -v $$(pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run -v
 	
-.PHONY: build
-build:  ## build go binary to bin/.
-	@go build -o bin/ cmd/mym/mym.go
-	
 .PHONY: install
 install:    ## install go binary to $GOPATH/bin.
 	@go install cmd/mym/mym.go
 
 ##@ Usage
-.PHONY: scrape
-scrape: ## scrape data and save it into /data directory.
-	@go run cmd/mym/mym.go scrape
-
 .PHONY: datasette
 datasette:  ## run datasette with metadata.json for local development.
 	@if [ -z $(DATASETTE) ]; then echo "Datasette could not be found. See https://docs.datasette.io/en/stable/installation.html"; exit 2; fi
@@ -82,8 +74,6 @@ docker-run-scraper: ## run scraper docker container.
         -e MINIO_BUCKET=$(MINIO_BUCKET) \
         -e MINIO_ENDPOINT=$(MINIO_ENDPOINT) \
         -e MINIO_SECRET_KEY=$(MINIO_SECRET_KEY) \
-        -e MYM_EMAIL=$(MYM_EMAIL) \
-        -e MYM_PASSWORD=$(MYM_PASSWORD) \
         -e RAILWAY_API_TOKEN=$(RAILWAY_API_TOKEN) \
         --name mym-scraper mym-scraper
 

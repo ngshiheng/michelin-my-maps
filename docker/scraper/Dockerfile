@@ -31,6 +31,8 @@ RUN apk add --no-cache \
 
 ENV MYM_BROWSER_BIN=/usr/bin/chromium
 ENV MYM_NO_SANDBOX=1
+ENV MYM_LOG_FORMAT=json
+ENV MYM_LOG_LEVEL=warn
 
 RUN adduser -D -s /bin/sh appuser
 

@@ -2,219 +2,31 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
+	"log/slog"
 	"os"
-	"runtime/debug"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/auth"
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/backfill"
-	"github.com/ngshiheng/michelin-my-maps/v4/internal/scraper"
-	log "github.com/sirupsen/logrus"
+	"github.com/ngshiheng/michelin-my-maps/v4/internal/cli"
 )
 
-const (
-	defaultBrowserTimeout = 60 * time.Second
-	helpLongFlag          = "--help"
-	helpShortFlag         = "-h"
-)
-
-const (
-	commandBackfill = "backfill"
-	commandScrape   = "scrape"
-	commandLogin    = "login"
-	commandVersion  = "version"
-)
-
-// run contains the main application logic of the CLI tool
-func run() error {
-	if len(os.Args) < 2 {
-		printUsage()
-		return nil
-	}
-
-	arg := os.Args[1]
-	switch arg {
-	case helpLongFlag, helpShortFlag:
-		printUsage()
-		return nil
-	default:
-		return handleCommand(os.Args)
-	}
-}
-
-// handleCommand processes the main command and its subcommands
-func handleCommand(arg []string) error {
-	command := arg[1]
-
-	switch command {
-	case commandVersion:
-		return handleVersion()
-	case commandScrape:
-		return handleScrape(arg[2:])
-	case commandBackfill:
-		return handleBackfill(arg[2:])
-	case commandLogin:
-		return handleLogin(arg[2:])
-	default:
-		fmt.Fprintf(os.Stderr, "unknown command: \"%s\"\n\n", command)
-		printUsage()
-		return fmt.Errorf("unknown command: %s", command)
-	}
-}
-
-// handleVersion prints the application version information
-func handleVersion() error {
-	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
-		fmt.Println("unable to determine build information")
-		return nil
-	}
-
-	version := "development"
-	if buildInfo.Main.Version != "" {
-		version = buildInfo.Main.Version
-	}
-
-	fmt.Printf("version: %s\n", version)
-	return nil
-}
-
-// printUsage prints the custom usage message
-func printUsage() {
-	fmt.Printf("usage: %s <command> [options]\n\n", os.Args[0])
-	fmt.Println("<command>")
-	fmt.Println("  scrape     scrape latest restaurant data or a single restaurant if <url> is provided")
-	fmt.Println("  backfill   backfill restaurant data or a single restaurant if <url> is provided")
-	fmt.Println("  login      login and store session cookies in sqlite storage")
-	fmt.Println("  version    show version")
-	fmt.Println("")
-	fmt.Println("[options]")
-	fmt.Println("  -log <level>   set log level")
-	fmt.Println("  -help          show help")
-	fmt.Println("")
-}
-
-// setupLogging configures the logging level and output
-func setupLogging(levelStr string) error {
-	level, err := log.ParseLevel(levelStr)
-	if err != nil {
-		return fmt.Errorf("invalid log level %q: %w", levelStr, err)
-	}
-
-	log.SetLevel(level)
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp:   true,
-		TimestampFormat: time.RFC3339,
-	})
-	log.SetOutput(os.Stdout)
-	return nil
-}
-
-// handleScrape handles the 'scrape' subcommand
-func handleScrape(args []string) error {
-	scrapeCmd := flag.NewFlagSet(commandScrape, flag.ExitOnError)
-	logLevel := scrapeCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-	ignoreCache := scrapeCmd.Bool("no-cache", false, "skip using scrape cache")
-
-	if err := scrapeCmd.Parse(args); err != nil {
-		return err
-	}
-
-	if err := setupLogging(*logLevel); err != nil {
-		return err
-	}
-
-	urlArg := scrapeCmd.Arg(0)
-
-	app, err := scraper.New(*ignoreCache)
-	if err != nil {
-		return fmt.Errorf("failed to create live scraper: %w", err)
-	}
-
-	log.Info("running scrape command")
-	ctx := context.Background()
-	if urlArg != "" {
-		return app.Run(ctx, urlArg)
-	}
-	return app.RunAll(ctx)
-}
-
-// handleBackfill handles the 'backfill' subcommand
-func handleBackfill(args []string) error {
-	backfillCmd := flag.NewFlagSet(commandBackfill, flag.ExitOnError)
-	logLevel := backfillCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-	ignoreCache := backfillCmd.Bool("no-cache", false, "skip using wayback cache")
-
-	if err := backfillCmd.Parse(args); err != nil {
-		return err
-	}
-
-	if err := setupLogging(*logLevel); err != nil {
-		return err
-	}
-
-	urlArg := backfillCmd.Arg(0)
-
-	app, err := backfill.New(*ignoreCache)
-	if err != nil {
-		return fmt.Errorf("failed to create backfill scraper: %w", err)
-	}
-
-	log.Info("running backfill command")
-	ctx := context.Background()
-	if urlArg != "" {
-		return app.Run(ctx, urlArg)
-	}
-	return app.RunAll(ctx)
-}
-
-// handleLogin handles the 'login' subcommand
-func handleLogin(args []string) error {
-	loginCmd := flag.NewFlagSet("login", flag.ExitOnError)
-	logLevel := loginCmd.String("log", log.InfoLevel.String(), "log level (debug, info, warning, error, fatal, panic)")
-	email := loginCmd.String("email", os.Getenv("MYM_EMAIL"), "email to use for login (falls back to MYM_EMAIL env var)")
-	password := loginCmd.String("password", os.Getenv("MYM_PASSWORD"), "password for login (falls back to MYM_PASSWORD env var)")
-	headless := loginCmd.Bool("headless", true, "run browser headless")
-	timeout := loginCmd.Duration("timeout", defaultBrowserTimeout, "login flow timeout")
-	ignoreCache := loginCmd.Bool("no-cache", false, "skip using wayback cache")
-
-	if err := loginCmd.Parse(args); err != nil {
-		return err
-	}
-
-	if err := setupLogging(*logLevel); err != nil {
-		return err
-	}
-
-	ctx := context.Background()
-	log.Info("running login command")
-	cookies, err := auth.Login(ctx, *email, *password, *headless, *timeout)
-	if err != nil {
-		return err
-	}
-	app, err := scraper.New(*ignoreCache)
-	if err != nil {
-		return fmt.Errorf("failed to create scraper: %w", err)
-	}
-	if err := app.InitCookies(cookies); err != nil {
-		return fmt.Errorf("failed to persist session cookies: %w", err)
-	}
-	log.WithField("cookie_count", len(cookies)).Info("session stored")
-	log.Info("login command completed")
-	return nil
-}
-
-// main is the entry point for the mym CLI tool
 func main() {
 	if err := os.Setenv("TZ", time.UTC.String()); err != nil {
-		log.WithError(err).Warn("failed to set TZ")
+		slog.Warn("failed to set TZ", "error", err)
 	}
 	time.Local = time.UTC
 
-	if err := run(); err != nil {
-		log.Error(err)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		<-ctx.Done()
+		stop()
+	}()
+
+	if err := cli.Run(ctx, os.Args[1:]); err != nil {
+		slog.Error("command failed", "error", err)
 		os.Exit(1)
 	}
 }

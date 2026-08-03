@@ -27,7 +27,7 @@ const (
 	xPathMeta = "//meta[@name='description']"
 )
 
-// ExtractPublishedYear tries JSON-LD, then XPath, then meta, returning the first valid year.
+// ExtractPublishedYear returns the first valid year in this order: JSON-LD award, JSON-LD review, XPath, then meta.
 func ExtractPublishedYear(e *colly.XMLElement) int {
 	if year := extractYearFromJSONLDAward(e); year != 0 {
 		return year

@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/parsers"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/storage"
-	log "github.com/sirupsen/logrus"
 )
 
 // Handle handles the extraction and saving of restaurant data for both scraper and backfill
@@ -22,17 +23,12 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	if data.WaybackURL != "" {
 		restaurant, err = repo.FindRestaurantByURL(ctx, data.URL)
 		if err != nil {
-			log.WithError(err).WithFields(log.Fields{
-				"wayback_url": data.WaybackURL,
-				"url":         data.URL,
-			}).Debug("restaurant not found, recreating from wayback data")
+			slog.Debug("restaurant not found, recreating from wayback data", "error", err, "wayback_url", data.WaybackURL, "url", data.URL)
 		}
 	}
 
 	if data.Price == "" {
-		log.WithFields(log.Fields{
-			"wayback_url": e.Request.URL,
-		}).Warn("skipping award, price is empty")
+		slog.Warn("skipping award, price is empty", "wayback_url", e.Request.URL)
 		return nil
 	}
 
@@ -59,10 +55,11 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	}
 
 	if err := repo.SaveRestaurant(ctx, restaurant); err != nil {
-		log.WithError(err).WithFields(log.Fields{
-			"id":  restaurant.ID,
-			"url": data.URL,
-		}).Error("failed to save restaurant")
+		if errors.Is(err, context.Canceled) {
+			slog.Debug("save restaurant canceled", "error", err, "id", restaurant.ID, "url", data.URL)
+			return err
+		}
+		slog.Error("failed to save restaurant", "error", err, "id", restaurant.ID, "url", data.URL)
 		return err
 	}
 
@@ -76,19 +73,15 @@ func Handle(ctx context.Context, e *colly.XMLElement, repo storage.RestaurantRep
 	}
 
 	if err := repo.SaveAward(ctx, award); err != nil {
-		log.WithError(err).WithFields(log.Fields{
-			"id":          restaurant.ID,
-			"wayback_url": data.WaybackURL,
-		}).Error("failed to save restaurant award")
+		if errors.Is(err, context.Canceled) {
+			slog.Debug("save restaurant award canceled", "error", err, "id", restaurant.ID, "wayback_url", data.WaybackURL)
+			return err
+		}
+		slog.Error("failed to save restaurant award", "error", err, "id", restaurant.ID, "wayback_url", data.WaybackURL)
 		return err
 	}
 
-	log.WithFields(log.Fields{
-		"distinction": data.Distinction,
-		"name":        restaurant.Name,
-		"year":        data.Year,
-		"has_wayback": data.WaybackURL != "",
-	}).Debug("saved restaurant and award")
+	slog.Debug("saved restaurant and award", "distinction", data.Distinction, "name", restaurant.Name, "year", data.Year, "has_wayback", data.WaybackURL != "")
 
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,7 +18,6 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/storage"
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/utils"
-	log "github.com/sirupsen/logrus"
 	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
@@ -29,7 +29,6 @@ const (
 	xPathDetailRoot             = "html"
 )
 
-// defaultConfig returns a default config for the scraper
 func defaultConfig() *client.Config {
 	return &client.Config{
 		AllowedDomains: []string{"guide.michelin.com"},
@@ -70,7 +69,7 @@ func New(ignoreCache bool) (*Scraper, error) {
 		ThreadCount:    cfg.ThreadCount,
 	}
 	if ignoreCache {
-		log.Debug("running with no cache")
+		slog.Debug("running with no cache")
 		clientCfg.CachePath = ""
 	}
 
@@ -88,8 +87,8 @@ func New(ignoreCache bool) (*Scraper, error) {
 }
 
 // InitCookies persists Michelin Guide session cookies to the cookie storage.
-// Existing rows are cleared first since the sqlite3 backend uses plain INSERT (not upsert)
-// We need to Init -> Clear -> Init because Clear does not do DROP TABLE IF EXISTS
+// Existing cookie rows are cleared first since the sqlite3 backend uses plain
+// INSERT (not upsert). Queue and visited tables are preserved.
 func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 	url := &url.URL{Host: "guide.michelin.com"}
 
@@ -100,12 +99,8 @@ func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	if err := store.Clear(); err != nil {
-		return fmt.Errorf("failed to clear storage: %w", err)
-	}
-
-	if err := store.Init(); err != nil {
-		return fmt.Errorf("failed to re-initialize storage: %w", err)
+	if err := s.client.ClearCookies(url.Host); err != nil {
+		return fmt.Errorf("failed to clear cookies: %w", err)
 	}
 
 	lines := make([]string, len(cookies))
@@ -120,34 +115,32 @@ func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 
 // RunAll crawls Michelin Guide restaurant information from the configured URLs.
 func (s *Scraper) RunAll(ctx context.Context) error {
-	collector := s.client.GetCollector()
-	detailCollector := s.client.GetDetailCollector()
+	collector := s.client.Collector
+	detailCollector := s.client.Collector.Clone()
 
 	s.setupHandlers(ctx, collector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	queueSize, err := s.client.QueueSize()
+	listingURLs, err := s.listingQueueURLs()
 	if err != nil {
-		return fmt.Errorf("failed to check queue size: %w", err)
+		return fmt.Errorf("failed to load listing queue urls: %w", err)
 	}
 
-	if queueSize > 0 {
-		// Resume an interrupted run: the queue still has unprocessed detail URLs
-		// from the previous Phase 1. Skip Phase 1 to avoid appending duplicate
-		// rows (AddRequest has no dedup — it's a plain INSERT).
-		log.WithField("queue_size", queueSize).Info("non-empty queue detected, resuming detail scrape")
-	} else {
-		// Fresh start (first run, or resuming after a fully completed prior run).
-		// Clear visited so seed listing pages can be re-visited; on a truly first
-		// run the table is already empty so this is a no-op.
+	if len(listingURLs) > 0 {
+		slog.Info("non-empty listing queue detected, resuming listing scrape", "listing_queue_size", len(listingURLs))
+		for _, listingURL := range listingURLs {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if err := collector.Visit(listingURL); err != nil {
+				slog.Error("failed to resume listing url", "url", listingURL, "error", err)
+			}
+		}
+	} else if size, err := s.client.Queue.Size(); err == nil && size == 0 {
 		if err := s.client.ClearVisited(); err != nil {
 			return fmt.Errorf("failed to clear visited table: %w", err)
 		}
 
-		// Phase 1: visit all 5 seed listing pages. Each page visit follows pagination
-		// via e.Request.Visit (synchronous, collector's WaitGroup tracks it) and
-		// enqueues discovered detail page URLs into colly.db via EnqueueURLWithContext.
-		// TODO: allow user to specify initial URL
 		michelinGuideURLs := map[string]string{
 			models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
 			models.TwoStars:            "https://guide.michelin.com/en/restaurants/2-stars-michelin",
@@ -157,58 +150,76 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 		}
 
 		for _, url := range michelinGuideURLs {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			if err := collector.Visit(url); err != nil {
-				log.WithField("url", url).WithError(err).Error("failed to visit seed url")
+				slog.Error("failed to visit seed url", "url", url, "error", err)
 			}
 		}
 	}
 
-	// Phase 2: drain all ~18k detail page URLs accumulated in colly.db queue
-	log.Info("starting detail scrape, draining queue")
-	if err := s.client.RunQueue(detailCollector); err != nil {
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 
-	log.WithField("scraped", s.scraped.Load()).Info("completed scraping")
+	pendingListingURLs, err := s.listingQueueURLs()
+	if err != nil {
+		return fmt.Errorf("failed to load listing queue urls after phase 1: %w", err)
+	}
+	if len(pendingListingURLs) > 0 {
+		return fmt.Errorf("listing phase incomplete: %d listing urls still pending", len(pendingListingURLs))
+	}
+
+	slog.Info("starting detail scrape, draining queue")
+	if err := s.client.Queue.Run(detailCollector); err != nil {
+		return err
+	}
+
+	slog.Info("completed scraping", "scraped", s.scraped.Load())
 	return nil
 }
 
 // Run scrapes a single restaurant URL for its details.
 func (s *Scraper) Run(ctx context.Context, url string) error {
-	log.WithField("url", url).Debug("running scrape for restaurant")
+	slog.Debug("running scrape for restaurant", "url", url)
 
 	detailCollector := s.client.GetDetailCollector()
 	s.setupDetailHandlers(ctx, detailCollector)
 
 	err := detailCollector.Visit(url)
 	if err != nil {
-		log.WithError(err).WithField("url", url).Error("failed to visit restaurant URL")
+		slog.Error("failed to visit restaurant URL", "error", err, "url", url)
 		return err
 	}
 
-	log.WithField("url", url).Debug("completed scraping for one restaurant")
+	slog.Debug("completed scraping for one restaurant", "url", url)
 	return nil
 }
 
 func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector) {
-	collector.OnError(s.createErrorHandler())
+	collector.OnError(s.createErrorHandler(ctx))
 
 	collector.OnRequest(func(r *colly.Request) {
-		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
-
-		attempt := r.Ctx.GetAny("attempt")
-		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
-			attempt = 1
-		}
 		_, cacheHit := s.client.IsCached(r.URL.String())
-		r.Ctx.Put("cache_hit", cacheHit)
+		attempt, aborted := client.PrepareRequest(ctx, r, cacheHit)
+		if aborted {
+			return
+		}
 
-		log.WithFields(log.Fields{
-			"attempt":   attempt,
-			"cache_hit": cacheHit,
-			"url":       r.URL,
-		}).Info("requesting restaurant listing page")
+		if _, err := s.client.Database.Exec(`
+			CREATE TABLE IF NOT EXISTS listing_queue (
+				url TEXT PRIMARY KEY
+			)
+		`); err != nil {
+			slog.Warn("failed to initialize listing queue", "error", err, "url", r.URL)
+			return
+		}
+		if _, err := s.client.Database.Exec("INSERT OR IGNORE INTO listing_queue(url) VALUES (?)", r.URL.String()); err != nil {
+			slog.Warn("failed to enqueue listing url", "error", err, "url", r.URL)
+		}
+
+		slog.Info("requesting restaurant listing page", "attempt", attempt, "cache_hit", cacheHit, "url", r.URL)
 	})
 
 	collector.OnResponse(func(r *colly.Response) {
@@ -217,74 +228,80 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 			return
 		}
 
-		log.WithFields(log.Fields{
-			"cache_hit":   r.Ctx.GetAny("cache_hit"),
-			"url":         r.Request.URL,
-			"status_code": r.StatusCode,
-		}).Debug("fetched listing page, enqueuing restaurant details")
+		if _, err := s.client.Database.Exec("DELETE FROM listing_queue WHERE url = ?", r.Request.URL.String()); err != nil {
+			slog.Warn("failed to dequeue listing url", "error", err, "url", r.Request.URL)
+		}
+
+		slog.Debug("fetched listing page, enqueuing restaurant details", "cache_hit", r.Ctx.GetAny("cache_hit"), "url", r.Request.URL, "status_code", r.StatusCode)
 	})
 
 	collector.OnXML(xPathRestaurantCard, func(e *colly.XMLElement) {
-		// In 202, this won't run; no need to handle this codepath.
+		if ctx.Err() != nil {
+			return
+		}
+
 		url := e.Request.AbsoluteURL(e.ChildAttr(xPathRestaurantCardLink, "href"))
 		location := e.ChildText(xPathRestaurantCardLocation)
 
-		// Enqueue the detail URL into colly.db so phase 2 (RunQueue) can
-		// process it with detailCollector. EnqueueURLWithContext is required
-		// (instead of queue.AddURL) to carry the location through the queue.
+		// Preserve location context for phase 2 processing.
 		if err := s.client.EnqueueURLWithContext(url, location); err != nil {
-			log.WithError(err).WithField("url", url).Warn("failed to enqueue detail url")
+			slog.Warn("failed to enqueue detail url", "error", err, "url", url)
 		}
 	})
 
 	collector.OnXML(xPathPaginationArrow, func(e *colly.XMLElement) {
-		// In 202, this won't run; no need to handle this codepath.
-		// xPathPaginationArrow matches both prev and next arrows. Prev-page links
-		// are skipped naturally: those pages are already in the visited table, so
-		// Visit returns AlreadyVisitedError and the error handler drops it silently.
+		if ctx.Err() != nil {
+			return
+		}
+
+		// XPath matches both prev and next; visited dedup prevents backtracking loops.
 		nextURL := e.Request.AbsoluteURL(e.Attr("href"))
-		log.WithField("url", nextURL).Debug("visiting next page")
+		slog.Debug("visiting next page", "url", nextURL)
 		e.Request.Visit(nextURL)
 	})
 }
 
-// retryAccepted handles a 202 response from Michelin Guide, which (almost)
-// always indicates session expiry
 func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
-	fields := log.Fields{
+	fields := map[string]any{
 		"request_type": requestType,
 		"status_code":  r.StatusCode,
 		"url":          r.Request.URL,
 	}
 
-	if err := s.client.ClearCache(r.Request); err != nil {
-		log.WithFields(fields).WithError(err).Warn("failed to clear cache")
+	if requestType == "restaurant detail" {
+		location := r.Ctx.Get("location")
+		ctx := colly.NewContext()
+		ctx.Put("location", location)
+		req := &colly.Request{URL: r.Request.URL, Method: "GET", Ctx: ctx}
+		data, err := req.Marshal()
+		if err != nil {
+			slog.Warn("failed to marshal accepted detail request", append(utils.FieldsToArgs(fields), "error", err)...)
+		} else if err := s.client.Storage.AddRequest(data); err != nil {
+			slog.Warn("failed to re-enqueue accepted request", append(utils.FieldsToArgs(fields), "error", err)...)
+		} else {
+			slog.Info("re-enqueued accepted request for retry", utils.FieldsToArgs(fields)...)
+		}
 	}
 
-	log.WithFields(fields).Error("session expired")
+	if err := s.client.ClearCache(r.Request); err != nil {
+		slog.Warn("failed to clear cache", append(utils.FieldsToArgs(fields), "error", err)...)
+	}
+
+	slog.Error("session expired", utils.FieldsToArgs(fields)...)
 	os.Exit(2)
 }
 
 func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *colly.Collector) {
-	detailCollector.OnError(s.createErrorHandler())
+	detailCollector.OnError(s.createErrorHandler(ctx))
 
 	detailCollector.OnRequest(func(r *colly.Request) {
-		r.Headers.Set("Accept-Language", "en-SG,en;q=0.9")
-
-		attempt := r.Ctx.GetAny("attempt")
-		if attempt == nil {
-			r.Ctx.Put("attempt", 1)
-			attempt = 1
-		}
 		_, cacheHit := s.client.IsCached(r.URL.String())
+		attempt, aborted := client.PrepareRequest(ctx, r, cacheHit)
+		if aborted {
+			return
+		}
 
-		r.Ctx.Put("cache_hit", cacheHit)
-
-		log.WithFields(log.Fields{
-			"attempt":   attempt,
-			"cache_hit": cacheHit,
-			"url":       r.URL,
-		}).Info("requesting restaurant details")
+		slog.Info("requesting restaurant details", "attempt", attempt, "cache_hit", cacheHit, "url", r.URL)
 	})
 
 	detailCollector.OnResponse(func(r *colly.Response) {
@@ -294,6 +311,10 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 	})
 
 	detailCollector.OnXML(xPathDetailRoot, func(e *colly.XMLElement) {
+		if ctx.Err() != nil {
+			return
+		}
+
 		if e.Response.StatusCode == http.StatusAccepted {
 			// 202 retries are handled in OnResponse; ignore this response body.
 			return
@@ -301,15 +322,51 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 
 		err := handlers.Handle(ctx, e, s.repository)
 		if err != nil {
-			log.WithError(err).WithField("url", e.Request.URL).Error("failed to handle restaurant extraction")
+			if errors.Is(err, context.Canceled) {
+				slog.Debug("restaurant extraction canceled", "error", err, "url", e.Request.URL)
+				return
+			}
+			slog.Error("failed to handle restaurant extraction", "error", err, "url", e.Request.URL)
 			return
 		}
 		s.scraped.Add(1)
 	})
 }
 
-// createErrorHandler creates a reusable error handler for collectors with retry logic.
-func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
+func (s *Scraper) listingQueueURLs() ([]string, error) {
+	if s.client.Database == nil {
+		return nil, nil
+	}
+	if _, err := s.client.Database.Exec(`
+		CREATE TABLE IF NOT EXISTS listing_queue (
+			url TEXT PRIMARY KEY
+		)
+	`); err != nil {
+		return nil, err
+	}
+	rows, err := s.client.Database.Query("SELECT url FROM listing_queue")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	urls := make([]string, 0)
+	for rows.Next() {
+		var rawURL string
+		if err := rows.Scan(&rawURL); err != nil {
+			return nil, err
+		}
+		urls = append(urls, rawURL)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return urls, nil
+}
+
+func (s *Scraper) createErrorHandler(ctx context.Context) func(*colly.Response, error) {
 	return func(r *colly.Response, err error) {
 		attempt := 1
 		if v := r.Ctx.GetAny("attempt"); v != nil {
@@ -319,7 +376,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		}
 
 		cookies := s.client.GetCookies(r.Request.URL.String())
-		fields := log.Fields{
+		fields := map[string]any{
 			"attempt":      attempt,
 			"cookie_count": len(cookies),
 			"status_code":  r.StatusCode,
@@ -327,7 +384,7 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		}
 
 		if strings.Contains(err.Error(), "already visited") {
-			log.WithError(err).WithFields(fields).Debug("already visited, skip retry")
+			slog.Debug("already visited, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
 			return
 		}
 
@@ -335,33 +392,48 @@ func (s *Scraper) createErrorHandler() func(*colly.Response, error) {
 		// context.Canceled means the program is shutting down — retrying is pointless
 		// and delays shutdown by burning through all MaxRetry attempts.
 		if errors.Is(err, context.Canceled) {
-			log.WithError(err).WithFields(fields).Debug("context canceled, skip retry")
+			slog.Debug("context canceled, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
 			return
 		}
 
 		switch r.StatusCode {
 		case http.StatusTooManyRequests:
-			log.WithError(err).WithFields(fields).Warn("request rate limited, skip retry")
+			slog.Warn("request rate limited, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
 			return
 		case http.StatusNotFound:
-			log.WithError(err).WithFields(fields).Debug("request not found, skip retry")
+			slog.Debug("request not found, skip retry", append(utils.FieldsToArgs(fields), "error", err)...)
 			return
 		}
 
 		shouldRetry := attempt < s.config.MaxRetry
 		if shouldRetry {
+			if ctx.Err() != nil {
+				slog.Debug("context canceled, skip retry", utils.FieldsToArgs(fields)...)
+				return
+			}
+
 			if err := s.client.ClearCache(r.Request); err != nil {
-				log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed to clear cache")
+				slog.Error("failed to clear cache", append(utils.FieldsToArgs(fields), "error", err, "request_headers", utils.FlattenHeaders(r.Request.Headers))...)
 			}
 
 			backoff := time.Duration(attempt) * s.config.Delay
-			log.WithFields(fields).WithField("backoff", backoff).Debug("failed request, retrying")
-			time.Sleep(backoff)
+			slog.Debug("failed request, retrying", append(utils.FieldsToArgs(fields), "backoff", backoff)...)
+			select {
+			case <-ctx.Done():
+				slog.Debug("context canceled during backoff, skip retry", utils.FieldsToArgs(fields)...)
+				return
+			case <-time.After(backoff):
+			}
+
+			if ctx.Err() != nil {
+				slog.Debug("context canceled before retry, skip retry", utils.FieldsToArgs(fields)...)
+				return
+			}
 
 			r.Ctx.Put("attempt", attempt+1)
 			r.Request.Retry()
 		} else {
-			log.WithError(err).WithFields(fields).WithField("request_headers", utils.FlattenHeaders(r.Request.Headers)).Error("failed request, max retries reached")
+			slog.Error("failed request, max retries reached", append(utils.FieldsToArgs(fields), "error", err, "request_headers", utils.FlattenHeaders(r.Request.Headers))...)
 		}
 	}
 }

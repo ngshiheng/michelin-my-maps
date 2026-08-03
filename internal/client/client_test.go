@@ -1,6 +1,7 @@
 package client
 
 import (
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/storage"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
@@ -18,11 +20,8 @@ func sessionCookies(name, value string) []*http.Cookie {
 	return []*http.Cookie{{Name: name, Value: value}}
 }
 
-// TestNewSeedsCookiesFromSQLite verifies that cookies already stored in the
-// SQLite backend are seeded into the in-memory jar when New() is called.
-// This guards against the colly-sqlite3-storage plain-INSERT bug where the
-// stale first row would be returned on every read, causing the scraper to send
-// expired session cookies after a re-login.
+// TestNewSeedsCookiesFromSQLite verifies that cookies already stored in SQLite
+// are seeded into the in-memory jar when New() starts.
 func TestNewSeedsCookiesFromSQLite(t *testing.T) {
 	dir := t.TempDir()
 	storagePath := filepath.Join(dir, "colly.db")
@@ -59,15 +58,11 @@ func TestNewSeedsCookiesFromSQLite(t *testing.T) {
 	}
 }
 
-// TestNewStaleRowWinsOnDuplicateCookies documents the colly-sqlite3-storage
-// plain-INSERT bug: when two SetCookies calls write the same cookie name,
-// Cookies() returns only the first (stale) row — the latest value is silently
-// discarded. New() seeds memJar from that stale row, so the scraper sends an
-// expired session cookie after a re-login. This is exactly the bug that
-// InitCookies (Clear+Init) is designed to prevent.
+// TestNewStaleRowWinsOnDuplicateCookies documents upstream storage behavior:
+// duplicate SetCookies writes keep the oldest value on read.
 //
-// If this test ever fails (val == "fresh"), the library has been fixed and
-// the InitCookies workaround can be removed.
+// If this test ever fails (val == "fresh"), the upstream behavior changed and
+// cookie reset logic should be re-evaluated.
 func TestNewStaleRowWinsOnDuplicateCookies(t *testing.T) {
 	dir := t.TempDir()
 	storagePath := filepath.Join(dir, "colly.db")
@@ -99,42 +94,14 @@ func TestNewStaleRowWinsOnDuplicateCookies(t *testing.T) {
 
 	cookies := cl.GetCookies(target.String())
 	val := cookies["michelin_session"]
-	// Expect "stale": the plain-INSERT bug means Cookies() returns the first row.
-	// A failure here means the library now returns "fresh" — the bug is fixed.
+	// Expect "stale": sqlite backend returns the oldest cookie row.
 	if val != "stale" {
-		t.Errorf("sqlite3 storage returned %q; expected \"stale\" (plain-INSERT bug) — if \"fresh\", the bug is fixed and InitCookies workaround can be removed", val)
+		t.Errorf("sqlite3 storage returned %q; expected \"stale\" (oldest row wins)", val)
 	}
 }
 
-// TestMemJarPropagatesRotatedCookies is the programmatic proof that the
-// in-memory jar correctly propagates server-rotated session cookies across
-// successive requests — the behaviour confirmed by the debug logs on
-// 2026-04-03. guide.michelin.com rotates JSESSIONID on every response; this
-// test verifies that each outgoing request carries the value received from the
-// immediately preceding response.
-//
-// How the proof was collected in production:
-//
-//  1. Added a temporary OnRequest hook to client.New() and GetDetailCollector()
-//     that logged the JSESSIONID value from memJar at the moment each request
-//     was dispatched.
-//
-//  2. Added a temporary OnResponse hook that logged the Set-Cookie header
-//     (with cache_hit context to filter out replayed cached headers).
-//
-//  3. Ran `mym scrape --log debug` and observed the following repeating pattern
-//     in the output — every received value appeared as the outgoing value on
-//     the very next request:
-//
-//     DEBU received JSESSIONID cookie  Set-Cookie="JSESSIONID=18A457F4..." cache_hit=false url=".../les-plats-canailles..."
-//     DEBU outgoing request cookies    JSESSIONID=18A457F4...              url=".../l-amandier..."         ← matches ✓
-//     DEBU received JSESSIONID cookie  Set-Cookie="JSESSIONID=218539931D..." cache_hit=false url=".../l-amandier..."
-//     DEBU outgoing request cookies    JSESSIONID=218539931D...             url=".../atelier-de-bossime..."  ← matches ✓
-//     DEBU received JSESSIONID cookie  Set-Cookie="JSESSIONID=99DEE023..."  cache_hit=false url=".../atelier-de-bossime..."
-//     DEBU outgoing request cookies    JSESSIONID=99DEE023...               url=".../mout..."               ← matches ✓
-//
-// The test below reproduces this with a local httptest server so it can be
-// verified deterministically without network access.
+// TestMemJarPropagatesRotatedCookies verifies that cookies rotated by server
+// responses are sent on the next request from the in-memory jar.
 func TestMemJarPropagatesRotatedCookies(t *testing.T) {
 	rotations := []string{"SESS-001", "SESS-002", "SESS-003"}
 	idx := 0
@@ -193,5 +160,72 @@ func TestMemJarPropagatesRotatedCookies(t *testing.T) {
 		if sent[i] != want {
 			t.Errorf("request %d: sent JSESSIONID=%q, want %q", i+1, sent[i], want)
 		}
+	}
+}
+
+func TestClearCookiesPreservesQueueAndVisited(t *testing.T) {
+	dir := t.TempDir()
+	storagePath := filepath.Join(dir, "colly.db")
+
+	store := &sqlite3.Storage{Filename: storagePath}
+	if err := store.Init(); err != nil {
+		t.Fatalf("store.Init: %v", err)
+	}
+
+	guideURL := &url.URL{Scheme: "https", Host: "guide.michelin.com"}
+	otherURL := &url.URL{Scheme: "https", Host: "example.com"}
+	store.SetCookies(guideURL, storage.StringifyCookies(sessionCookies("michelin_session", "stale")))
+	store.SetCookies(otherURL, storage.StringifyCookies(sessionCookies("sid", "keep")))
+	if err := store.AddRequest([]byte("queued-request")); err != nil {
+		t.Fatalf("store.AddRequest: %v", err)
+	}
+	if err := store.Visited(42); err != nil {
+		t.Fatalf("store.Visited: %v", err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatalf("store.Close: %v", err)
+	}
+
+	cl := &Colly{config: &Config{StoragePath: storagePath}}
+	if err := cl.ClearCookies("guide.michelin.com"); err != nil {
+		t.Fatalf("ClearCookies: %v", err)
+	}
+
+	db, err := sql.Open("sqlite3", storagePath)
+	if err != nil {
+		t.Fatalf("sql.Open: %v", err)
+	}
+	defer db.Close()
+
+	var cookieGuideCount int
+	if err := db.QueryRow("SELECT COUNT(*) FROM cookies WHERE host = ?", "guide.michelin.com").Scan(&cookieGuideCount); err != nil {
+		t.Fatalf("count guide cookies: %v", err)
+	}
+	if cookieGuideCount != 0 {
+		t.Fatalf("expected guide cookies to be cleared, got %d", cookieGuideCount)
+	}
+
+	var cookieOtherCount int
+	if err := db.QueryRow("SELECT COUNT(*) FROM cookies WHERE host = ?", "example.com").Scan(&cookieOtherCount); err != nil {
+		t.Fatalf("count other cookies: %v", err)
+	}
+	if cookieOtherCount != 1 {
+		t.Fatalf("expected other host cookies to be preserved, got %d", cookieOtherCount)
+	}
+
+	var queueCount int
+	if err := db.QueryRow("SELECT COUNT(*) FROM queue").Scan(&queueCount); err != nil {
+		t.Fatalf("count queue rows: %v", err)
+	}
+	if queueCount != 1 {
+		t.Fatalf("expected queue rows to be preserved, got %d", queueCount)
+	}
+
+	var visitedCount int
+	if err := db.QueryRow("SELECT COUNT(*) FROM visited").Scan(&visitedCount); err != nil {
+		t.Fatalf("count visited rows: %v", err)
+	}
+	if visitedCount != 1 {
+		t.Fatalf("expected visited rows to be preserved, got %d", visitedCount)
 	}
 }

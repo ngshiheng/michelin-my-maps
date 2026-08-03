@@ -6,7 +6,7 @@ import (
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
 )
 
-func TestParsePrefersJSONLDAndKeepsFallbacks(t *testing.T) {
+func TestParseAllowsSelectorOverrideAndKeepsFallbacks(t *testing.T) {
 	html := `<html><body>
 	<script type="application/ld+json"><![CDATA[` + wakuGhinJSONLD + `]]></script>
 	<div class="data-sheet__title">Wrong Name</div>
@@ -27,7 +27,7 @@ func TestParsePrefersJSONLDAndKeepsFallbacks(t *testing.T) {
 	if data.Description != "The contemporary room is divided into three sections." {
 		t.Fatalf("Description = %q", data.Description)
 	}
-	if data.Address != "The Shoppes at Marina Bay Sands, Level 2 Dining, L2-03, 10 Bayfront Avenue, Singapore, 018956, SGP" {
+	if data.Address != "Ignored address" {
 		t.Fatalf("Address = %q", data.Address)
 	}
 	if data.Location != "Singapore, SGP" {

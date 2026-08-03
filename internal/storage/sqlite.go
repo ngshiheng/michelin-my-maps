@@ -3,10 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/ngshiheng/michelin-my-maps/v4/internal/models"
-	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -60,10 +60,7 @@ func NewSQLiteRepository(dbPath string) (*SQLiteRepository, error) {
 
 // SaveRestaurant saves or updates a restaurant in the database
 func (r *SQLiteRepository) SaveRestaurant(ctx context.Context, restaurant *models.Restaurant) error {
-	log.WithFields(log.Fields{
-		"url":  restaurant.URL,
-		"name": restaurant.Name,
-	}).Debug("upserting restaurant") // Added name for easier human-reading in logs
+	slog.Debug("upserting restaurant", "url", restaurant.URL, "name", restaurant.Name)
 
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "url"}},
@@ -131,11 +128,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			}
 
 			if _, ok := diff["distinction"]; ok {
-				log.WithFields(log.Fields{
-					"restaurant_id": existing.RestaurantID,
-					"year":          existing.Year,
-					"diff":          diff,
-				}).Warn("overwriting award with wayback data")
+				slog.Warn("overwriting award with wayback data", "restaurant_id", existing.RestaurantID, "year", existing.Year, "diff", diff)
 			}
 		}
 
@@ -172,11 +165,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 			if shouldOverride {
 				if _, ok := diff["distinction"]; ok {
 					diff["distinction"] = fmt.Sprintf("%v → %v", existing.Distinction, award.Distinction)
-					log.WithFields(log.Fields{
-						"restaurant_id": existing.RestaurantID,
-						"year":          existing.Year,
-						"diff":          diff,
-					}).Warn("upgrading award distinction from live scrape")
+					slog.Warn("upgrading award distinction from live scrape", "restaurant_id", existing.RestaurantID, "year", existing.Year, "diff", diff)
 				}
 
 				updates := map[string]any{
@@ -193,11 +182,7 @@ func (r *SQLiteRepository) SaveAward(ctx context.Context, award *models.Restaura
 					Model(&existing).
 					Updates(updates).Error
 			} else {
-				log.WithFields(log.Fields{
-					"restaurant_id": existing.RestaurantID,
-					"year":          existing.Year,
-					"diff":          diff,
-				}).Debug("skipping award update: wayback priority")
+				slog.Debug("skipping award update: wayback priority", "restaurant_id", existing.RestaurantID, "year", existing.Year, "diff", diff)
 			}
 		}
 		return nil
@@ -222,6 +207,6 @@ func (r *SQLiteRepository) ListRestaurants(ctx context.Context) ([]models.Restau
 		return nil, fmt.Errorf("failed to list restaurants: %w", err)
 	}
 
-	log.WithField("count", len(restaurants)).Debug("fetched restaurants from database")
+	slog.Debug("fetched restaurants from database", "count", len(restaurants))
 	return restaurants, nil
 }
