@@ -115,28 +115,32 @@ func (s *Scraper) InitCookies(cookies []*http.Cookie) error {
 
 // RunAll crawls Michelin Guide restaurant information from the configured URLs.
 func (s *Scraper) RunAll(ctx context.Context) error {
-	collector := s.client.GetCollector()
-	detailCollector := s.client.GetDetailCollector()
+	collector := s.client.Collector
+	detailCollector := s.client.Collector.Clone()
 
 	s.setupHandlers(ctx, collector)
 	s.setupDetailHandlers(ctx, detailCollector)
 
-	queueSize, err := s.client.QueueSize()
+	listingURLs, err := s.listingQueueURLs()
 	if err != nil {
-		return fmt.Errorf("failed to check queue size: %w", err)
+		return fmt.Errorf("failed to load listing queue urls: %w", err)
 	}
 
-	if queueSize > 0 {
-		// Resume mode: pending detail URLs already exist in the queue.
-		slog.Info("non-empty queue detected, resuming detail scrape", "queue_size", queueSize)
-	} else {
-		// Fresh start: clear visited so seed listing pages can be crawled again.
+	if len(listingURLs) > 0 {
+		slog.Info("non-empty listing queue detected, resuming listing scrape", "listing_queue_size", len(listingURLs))
+		for _, listingURL := range listingURLs {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if err := collector.Visit(listingURL); err != nil {
+				slog.Error("failed to resume listing url", "url", listingURL, "error", err)
+			}
+		}
+	} else if size, err := s.client.Queue.Size(); err == nil && size == 0 {
 		if err := s.client.ClearVisited(); err != nil {
 			return fmt.Errorf("failed to clear visited table: %w", err)
 		}
 
-		// Phase 1: visit seed listing pages and enqueue discovered detail URLs.
-		// TODO: allow user to specify initial URL
 		michelinGuideURLs := map[string]string{
 			models.ThreeStars:          "https://guide.michelin.com/en/restaurants/3-stars-michelin",
 			models.TwoStars:            "https://guide.michelin.com/en/restaurants/2-stars-michelin",
@@ -159,9 +163,16 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 		return err
 	}
 
-	// Phase 2: drain queued detail page URLs.
+	pendingListingURLs, err := s.listingQueueURLs()
+	if err != nil {
+		return fmt.Errorf("failed to load listing queue urls after phase 1: %w", err)
+	}
+	if len(pendingListingURLs) > 0 {
+		return fmt.Errorf("listing phase incomplete: %d listing urls still pending", len(pendingListingURLs))
+	}
+
 	slog.Info("starting detail scrape, draining queue")
-	if err := s.client.RunQueue(detailCollector); err != nil {
+	if err := s.client.Queue.Run(detailCollector); err != nil {
 		return err
 	}
 
@@ -196,6 +207,18 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 			return
 		}
 
+		if _, err := s.client.Database.Exec(`
+			CREATE TABLE IF NOT EXISTS listing_queue (
+				url TEXT PRIMARY KEY
+			)
+		`); err != nil {
+			slog.Warn("failed to initialize listing queue", "error", err, "url", r.URL)
+			return
+		}
+		if _, err := s.client.Database.Exec("INSERT OR IGNORE INTO listing_queue(url) VALUES (?)", r.URL.String()); err != nil {
+			slog.Warn("failed to enqueue listing url", "error", err, "url", r.URL)
+		}
+
 		slog.Info("requesting restaurant listing page", "attempt", attempt, "cache_hit", cacheHit, "url", r.URL)
 	})
 
@@ -203,6 +226,10 @@ func (s *Scraper) setupHandlers(ctx context.Context, collector *colly.Collector)
 		if r.StatusCode == http.StatusAccepted {
 			s.retryAccepted(r, "restaurant listing page")
 			return
+		}
+
+		if _, err := s.client.Database.Exec("DELETE FROM listing_queue WHERE url = ?", r.Request.URL.String()); err != nil {
+			slog.Warn("failed to dequeue listing url", "error", err, "url", r.Request.URL)
 		}
 
 		slog.Debug("fetched listing page, enqueuing restaurant details", "cache_hit", r.Ctx.GetAny("cache_hit"), "url", r.Request.URL, "status_code", r.StatusCode)
@@ -239,6 +266,21 @@ func (s *Scraper) retryAccepted(r *colly.Response, requestType string) {
 		"request_type": requestType,
 		"status_code":  r.StatusCode,
 		"url":          r.Request.URL,
+	}
+
+	if requestType == "restaurant detail" {
+		location := r.Ctx.Get("location")
+		ctx := colly.NewContext()
+		ctx.Put("location", location)
+		req := &colly.Request{URL: r.Request.URL, Method: "GET", Ctx: ctx}
+		data, err := req.Marshal()
+		if err != nil {
+			slog.Warn("failed to marshal accepted detail request", append(utils.FieldsToArgs(fields), "error", err)...)
+		} else if err := s.client.Storage.AddRequest(data); err != nil {
+			slog.Warn("failed to re-enqueue accepted request", append(utils.FieldsToArgs(fields), "error", err)...)
+		} else {
+			slog.Info("re-enqueued accepted request for retry", utils.FieldsToArgs(fields)...)
+		}
 	}
 
 	if err := s.client.ClearCache(r.Request); err != nil {
@@ -289,6 +331,39 @@ func (s *Scraper) setupDetailHandlers(ctx context.Context, detailCollector *coll
 		}
 		s.scraped.Add(1)
 	})
+}
+
+func (s *Scraper) listingQueueURLs() ([]string, error) {
+	if s.client.Database == nil {
+		return nil, nil
+	}
+	if _, err := s.client.Database.Exec(`
+		CREATE TABLE IF NOT EXISTS listing_queue (
+			url TEXT PRIMARY KEY
+		)
+	`); err != nil {
+		return nil, err
+	}
+	rows, err := s.client.Database.Query("SELECT url FROM listing_queue")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	urls := make([]string, 0)
+	for rows.Next() {
+		var rawURL string
+		if err := rows.Scan(&rawURL); err != nil {
+			return nil, err
+		}
+		urls = append(urls, rawURL)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return urls, nil
 }
 
 func (s *Scraper) createErrorHandler(ctx context.Context) func(*colly.Response, error) {

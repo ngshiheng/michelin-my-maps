@@ -101,7 +101,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 			return err
 		}
 		api := "https://web.archive.org/cdx/search/cdx?url=" + r.URL + "&output=json&fl=timestamp,original"
-		if err := s.client.EnqueueURL(api); err != nil {
+		if err := s.client.Queue.AddURL(api); err != nil {
 			return err
 		}
 	}
@@ -109,7 +109,7 @@ func (s *Scraper) RunAll(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := s.client.RunQueue(collector); err != nil {
+	if err := s.client.Queue.Run(collector); err != nil {
 		return err
 	}
 

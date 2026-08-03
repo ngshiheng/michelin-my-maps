@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"encoding/hex"
-	"log/slog"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
@@ -44,15 +43,16 @@ type Config struct {
 
 // Colly provides HTTP client functionality for web scraping
 type Colly struct {
-	collector *colly.Collector
-	queue     *queue.Queue
-	storage   *sqlite3.Storage
-	config    *Config
+	Collector *colly.Collector
+	Config    *Config
+	Database  *sql.DB
+	Queue     *queue.Queue
+	Storage   *sqlite3.Storage
 }
 
 // New creates a new web client instance
 func New(cfg *Config) (*Colly, error) {
-	// We build collector options conditionally so cache can be disabled when CachePath is empty
+	// NOTE: build collector options conditionally so cache can be disabled when CachePath is empty
 	opts := []colly.CollectorOption{
 		colly.Async(false), // SQLite WAL only supports one write at a time
 	}
@@ -112,27 +112,33 @@ func New(cfg *Config) (*Colly, error) {
 		return nil, err
 	}
 
+	db, err := sql.Open("sqlite3", cfg.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Colly{
-		collector: collector,
-		queue:     queue,
-		storage:   collyStorage,
-		config:    cfg,
+		Collector: collector,
+		Queue:     queue,
+		Storage:   collyStorage,
+		Config:    cfg,
+		Database:  db,
 	}, nil
 }
 
 // GetCollector returns the colly collector for direct access.
 func (w *Colly) GetCollector() *colly.Collector {
-	return w.collector
+	return w.Collector
 }
 
 // GetCookies returns a map of cookie name->value for the given URL as seen by
 // the collector's cookie jar.
 func (w *Colly) GetCookies(urlStr string) map[string]string {
 	out := make(map[string]string)
-	if w == nil || w.collector == nil {
+	if w == nil || w.Collector == nil {
 		return out
 	}
-	cookies := w.collector.Cookies(urlStr)
+	cookies := w.Collector.Cookies(urlStr)
 	for _, c := range cookies {
 		out[c.Name] = c.Value
 	}
@@ -141,7 +147,7 @@ func (w *Colly) GetCookies(urlStr string) map[string]string {
 
 // GetDetailCollector creates a cloned collector for detail page scraping
 func (w *Colly) GetDetailCollector() *colly.Collector {
-	dc := w.collector.Clone()
+	dc := w.Collector.Clone()
 	extensions.RandomUserAgent(dc)
 	extensions.Referer(dc)
 	return dc
@@ -149,13 +155,13 @@ func (w *Colly) GetDetailCollector() *colly.Collector {
 
 // ClearCache removes the cache file for a given colly.Request
 func (w *Colly) ClearCache(r *colly.Request) error {
-	if w.config == nil || w.config.CachePath == "" {
+	if w.Config == nil || w.Config.CachePath == "" {
 		return nil
 	}
 
 	sum := sha1.Sum([]byte(r.URL.String()))
 	hash := hex.EncodeToString(sum[:])
-	filename := path.Join(w.config.CachePath, hash[:2], hash)
+	filename := path.Join(w.Config.CachePath, hash[:2], hash)
 
 	if err := os.Remove(filename); err != nil && !os.IsNotExist(err) {
 		return err
@@ -165,13 +171,13 @@ func (w *Colly) ClearCache(r *colly.Request) error {
 
 // IsCached reports whether cache is enabled and whether a URL exists in cache.
 func (w *Colly) IsCached(urlStr string) (cacheEnabled bool, cacheHit bool) {
-	if w == nil || w.config == nil || strings.TrimSpace(w.config.CachePath) == "" {
+	if w == nil || w.Config == nil || strings.TrimSpace(w.Config.CachePath) == "" {
 		return false, false
 	}
 
 	sum := sha1.Sum([]byte(urlStr))
 	hash := hex.EncodeToString(sum[:])
-	filename := path.Join(w.config.CachePath, hash[:2], hash)
+	filename := path.Join(w.Config.CachePath, hash[:2], hash)
 
 	if _, err := os.Stat(filename); err == nil {
 		return true, true
@@ -179,33 +185,10 @@ func (w *Colly) IsCached(urlStr string) (cacheEnabled bool, cacheHit bool) {
 	return true, false
 }
 
-// EnqueueURL adds a URL to the queue for processing
-func (w *Colly) EnqueueURL(url string) error {
-	if err := w.queue.AddURL(url); err != nil {
-		slog.Warn("failed to enqueue url", "error", err, "url", url)
-		return err
-	}
-	return nil
-}
-
-// RunQueue drains the queue by dispatching each request to dc
-func (w *Colly) RunQueue(dc *colly.Collector) error {
-	if err := w.queue.Run(dc); err != nil {
-		slog.Warn("failed to run queue", "error", err)
-		return err
-	}
-	return nil
-}
-
-// QueueSize returns the number of pending requests in the queue.
-func (w *Colly) QueueSize() (int, error) {
-	return w.queue.Size()
-}
-
 // ClearVisited removes all rows from the visited table so that a fresh Phase 1
 // run can re-visit seed listing pages that were marked visited in a prior completed run.
 func (w *Colly) ClearVisited() error {
-	db, err := sql.Open("sqlite3", w.config.StoragePath)
+	db, err := sql.Open("sqlite3", w.Config.StoragePath)
 	if err != nil {
 		return err
 	}
@@ -217,7 +200,7 @@ func (w *Colly) ClearVisited() error {
 // ClearCookies removes persisted cookies without touching queue/visited state.
 // If host is empty, all cookie rows are removed.
 func (w *Colly) ClearCookies(host string) error {
-	db, err := sql.Open("sqlite3", w.config.StoragePath)
+	db, err := sql.Open("sqlite3", w.Config.StoragePath)
 	if err != nil {
 		return err
 	}
@@ -253,7 +236,7 @@ func (w *Colly) EnqueueURLWithContext(rawURL, location string) error {
 	if err != nil {
 		return err
 	}
-	return w.storage.AddRequest(data)
+	return w.Storage.AddRequest(data)
 }
 
 // PrepareRequest applies shared request context fields for scraper collectors.
