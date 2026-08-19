@@ -7,7 +7,7 @@ require (
 	github.com/go-rod/rod v0.116.2
 	github.com/gocolly/colly/v2 v2.3.0
 	github.com/lmittmann/tint v1.2.0
-	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/mattn/go-sqlite3 v1.14.50
 	github.com/nyaruka/phonenumbers v1.8.1
 	github.com/velebak/colly-sqlite3-storage v0.0.0-20240410181914-45e8d740b550
 	golang.org/x/term v0.45.0
