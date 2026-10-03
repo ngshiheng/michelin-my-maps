@@ -10,11 +10,17 @@ if [ -z "${MINIO_ENDPOINT:-}" ] || [ -z "${MINIO_ACCESS_KEY:-}" ] || [ -z "${MIN
     exit 1
 fi
 
-# Configure mc and download DB
-mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
+s5cmd_minio() {
+    AWS_ACCESS_KEY_ID="$MINIO_ACCESS_KEY" \
+        AWS_SECRET_ACCESS_KEY="$MINIO_SECRET_KEY" \
+        AWS_REGION="${AWS_REGION:-us-east-1}" \
+        s5cmd --endpoint-url "$MINIO_ENDPOINT" "$@"
+}
+
+# Download DB from the S3-compatible MinIO endpoint
 mkdir -p /app
-if mc ls "minio/$MINIO_BUCKET/michelin.db" >/dev/null 2>&1; then
-    mc cp "minio/$MINIO_BUCKET/michelin.db" "$DB_FILE"
+if s5cmd_minio head "s3://$MINIO_BUCKET/michelin.db" >/dev/null 2>&1; then
+    s5cmd_minio cp "s3://$MINIO_BUCKET/michelin.db" "$DB_FILE"
     echo "Downloaded michelin.db from Minio."
 else
     echo "No michelin.db found in Minio bucket. Exiting."

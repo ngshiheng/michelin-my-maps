@@ -7,10 +7,12 @@ RUN pip install datasette-cluster-map \
     datasette-google-analytics \
     datasette-dashboards
 
-# Install mc (Minio client)
-RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
-    -o /usr/local/bin/mc \
-    && chmod +x /usr/local/bin/mc
+# Install s5cmd
+RUN curl -fsSL https://github.com/peak/s5cmd/releases/download/v2.3.0/s5cmd_2.3.0_Linux-64bit.tar.gz \
+    -o /tmp/s5cmd.tar.gz \
+    && tar -xzf /tmp/s5cmd.tar.gz -C /tmp s5cmd \
+    && install -m 755 /tmp/s5cmd /usr/local/bin/s5cmd \
+    && rm /tmp/s5cmd.tar.gz /tmp/s5cmd
 
 COPY docker/datasette/docker-entrypoint.sh /docker/datasette/docker-entrypoint.sh
 COPY docker/datasette/metadata.json /docker/datasette/metadata.json
