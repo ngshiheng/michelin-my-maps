@@ -6,7 +6,7 @@ CSV_FILE="data/michelin_my_maps.csv"
 DB_FILE="data/michelin.db"
 MIN_CSV_LINES=19000
 
-REQUIRED_TOOLS="curl jq mym sqlite3 mc"
+REQUIRED_TOOLS="curl jq mym sqlite3 s5cmd"
 
 main() {
     check_environment
@@ -58,9 +58,8 @@ download_from_minio() {
         echo "error: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET must be set."
         exit 1
     fi
-    mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
-    if mc ls "minio/$MINIO_BUCKET/michelin.db" >/dev/null 2>&1; then
-        mc cp "minio/$MINIO_BUCKET/michelin.db" "./data/michelin.db"
+    if s5cmd_minio head "s3://$MINIO_BUCKET/michelin.db" >/dev/null 2>&1; then
+        s5cmd_minio cp "s3://$MINIO_BUCKET/michelin.db" "./data/michelin.db"
         echo "downloaded existing DB file from MinIO to ./data"
     else
         echo "no existing DB file found in MinIO, start fresh"
@@ -85,8 +84,14 @@ upload_to_minio() {
         echo "error: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET must be set."
         exit 1
     fi
-    mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
-    mc cp "$DB_FILE" "minio/$MINIO_BUCKET/$(basename "$DB_FILE")"
+    s5cmd_minio cp "$DB_FILE" "s3://$MINIO_BUCKET/$(basename "$DB_FILE")"
+}
+
+s5cmd_minio() {
+    AWS_ACCESS_KEY_ID="$MINIO_ACCESS_KEY" \
+        AWS_SECRET_ACCESS_KEY="$MINIO_SECRET_KEY" \
+        AWS_REGION="${AWS_REGION:-us-east-1}" \
+        s5cmd --endpoint-url "$MINIO_ENDPOINT" "$@"
 }
 
 run_mym() {
