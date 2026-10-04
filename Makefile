@@ -33,7 +33,7 @@ datasette:  ## run datasette with metadata.json for local development.
 	  PORT=$$((PORT+1)); \
 	done; \
 	echo "Starting datasette on port $$PORT"; \
-	$(DATASETTE) --root data/michelin.db --metadata docker/datasette/metadata.json --port $$PORT
+	$(DATASETTE) --root data/michelin.db --metadata docker/datasette/metadata.json --port $$PORT --reload
 
 .PHONY: changelog
 changelog:  ## show per-scrape changelog of new awards added per region (top 5 per run).
