@@ -3,14 +3,14 @@ module github.com/ngshiheng/michelin-my-maps/v4
 go 1.26.4
 
 require (
-	github.com/antchfx/xmlquery v1.5.1
+	github.com/antchfx/xmlquery v1.5.2
 	github.com/go-rod/rod v0.116.2
 	github.com/gocolly/colly/v2 v2.3.0
-	github.com/lmittmann/tint v1.2.0
-	github.com/mattn/go-sqlite3 v1.14.50
+	github.com/lmittmann/tint v1.2.1
+	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/nyaruka/phonenumbers v1.8.1
 	github.com/velebak/colly-sqlite3-storage v0.0.0-20240410181914-45e8d740b550
-	golang.org/x/term v0.45.0
+	golang.org/x/term v0.47.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.2
 )
@@ -19,7 +19,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.11.0 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/antchfx/htmlquery v1.3.5 // indirect
-	github.com/antchfx/xpath v1.3.6 // indirect
+	github.com/antchfx/xpath v1.3.9 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -36,7 +36,7 @@ require (
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.9.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
